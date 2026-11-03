@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acquisition Hub · AdtreeGO</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f8a3b'/%3E%3Ccircle cx='13' cy='12' r='5' fill='white'/%3E%3Cpath d='M4 27c1-5 4.5-8 9-8s8 3 9 8' fill='white'/%3E%3Cpath d='M24 8v8M20 12h8' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Design notes (why):
+   - Dark by default to match the team's own CRM mind map; a light theme is one click away.
+   - The four group colors from that map (Growth, Operations, Revenue, Base) are the only accents.
+   - Work-tool density: 13px text, KPI strips instead of one big card per number, tight tables,
+     so a whole module fits on one screen. Every creator or merchant row opens its full profile. */
+:root{--font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--r-lg:12px;--r-md:9px;--r-sm:7px}
+:root[data-theme="dark"]{
+  --bg:#0a0c10;--side:#0d1015;--panel:#12151c;--panel2:#191d26;--hover:#1f2430;--line:rgba(255,255,255,.065);--line2:rgba(255,255,255,.11);
+  --text:#e9ecf2;--muted:#8a92a5;--faint:#5a6275;
+  --growth:#34c759;--ops:#ff9f0a;--rev:#ff6961;--base:#4da3ff;--good:#34c759;--warn:#ff9f0a;--bad:#ff6961;
+  --tint:.15;--shadow:none;color-scheme:dark}
+:root[data-theme="light"]{
+  --bg:#f6f7f9;--side:#ffffff;--panel:#ffffff;--panel2:#f1f3f6;--hover:#e9ecf1;--line:rgba(16,24,40,.08);--line2:rgba(16,24,40,.14);
+  --text:#161a22;--muted:#626a7b;--faint:#a0a6b3;
+  --growth:#1f8a3b;--ops:#b35c00;--rev:#cc2f26;--base:#0066d6;--good:#1f8a3b;--warn:#b35c00;--bad:#cc2f26;
+  --tint:.1;--shadow:0 1px 2px rgba(16,24,40,.04);color-scheme:light}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:13px/1.45 var(--font);font-feature-settings:"cv11","ss01";color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;display:flex}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;border-radius:var(--r-sm);padding:6px 10px}
+input,select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px;min-width:0;height:30px}
+textarea{height:auto}
+select{cursor:pointer}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--base);box-shadow:0 0 0 3px color-mix(in srgb,var(--base) 22%,transparent)}
+:focus-visible{outline:2px solid var(--base);outline-offset:2px}
+.btn{background:var(--panel2);border:1px solid var(--line);font-weight:500;height:30px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--base);border-color:var(--base);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.sm{height:24px;padding:0 8px;font-size:12px;border-radius:6px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.tag.on{background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-color:var(--ops);color:var(--ops)}
+
+aside{width:236px;flex-shrink:0;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.brand{display:flex;align-items:center;gap:9px;padding:14px 14px 4px;font-weight:700;font-size:13.5px;letter-spacing:-.01em}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
+.demo{margin:8px 14px 4px;font-size:11px;color:var(--ops);background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-radius:6px;padding:4px 8px}
+.navscroll{flex:1;overflow:auto;padding:2px 8px 12px}
+.navgroup{margin-top:12px}
+.navgroup-title{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 8px 4px}
+.navgroup-title i{width:6px;height:6px;border-radius:50%}
+.navitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:5px 8px;border-radius:7px;color:var(--muted);font-weight:500;font-size:13px;white-space:nowrap}
+.navitem:hover{background:var(--hover);color:var(--text)}
+.navitem.on{background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--text)}
+.navitem.on span:first-child{color:var(--c)}
+.navitem .chev{margin-left:auto;display:inline-flex;color:var(--faint);transition:transform .15s}
+.navmod.open > .navitem .chev{transform:rotate(90deg)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:1px 0 6px 16px;padding-left:9px;border-left:1px solid var(--line2)}
+.subitem{text-align:left;padding:4px 8px;font-size:12.5px;color:var(--muted);border-radius:6px;position:relative}
+.subitem:hover{color:var(--text);background:var(--hover)}
+.subitem.on{color:var(--text);font-weight:600;background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent)}
+.subitem.on::before{content:"";position:absolute;left:-10px;top:5px;bottom:5px;width:2px;border-radius:2px;background:var(--c)}
+.chartbox{width:100%;position:relative;overflow:hidden}
+.chartbox svg{display:block;position:absolute;inset:0}
+.side-foot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.side-foot label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+
+.wrap{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh}
+.top{display:flex;align-items:center;gap:10px;padding:0 20px;height:50px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(12px);position:sticky;top:0;z-index:10}
+.crumbs{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
+.crumbs b{color:var(--text);font-weight:600}
+.spacer{flex:1}
+.search{position:relative;width:230px}
+#scope{font-size:11px;color:var(--muted)}#scope b{color:var(--text);font-weight:550}
+#indf button.on{color:var(--text)}
+.search input{width:100%;padding-left:30px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);font:11px var(--font);color:var(--faint);border:1px solid var(--line2);border-radius:4px;padding:0 5px}
+.results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--panel);border:1px solid var(--line2);border-radius:var(--r-md);box-shadow:0 12px 32px rgba(0,0,0,.28);padding:4px;z-index:30;max-height:340px;overflow:auto}
+.results button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:7px 9px}
+.results button:hover{background:var(--hover)}
+.results span:last-child{color:var(--muted);font-size:12px}
+.seg{display:inline-flex;background:var(--panel2);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted)}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+main{flex:1;overflow:auto;padding:0 20px 48px}
+.page{max-width:1640px;margin:0 auto;padding-top:16px}
+
+.ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 12px}
+.ph-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--c);flex-shrink:0}
+h1{font-size:19px;line-height:1.2;letter-spacing:-.02em;margin:0;font-weight:650}
+.sub{color:var(--muted);margin:1px 0 0;font-size:12.5px}
+.scope{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:7px;padding:4px 9px;white-space:nowrap}
+.scope b{color:var(--text);font-weight:600}
+.tabs{display:flex;gap:2px;margin:0 0 16px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs button{white-space:nowrap;padding:8px 11px;border-radius:0;font-weight:500;color:var(--muted);font-size:12.5px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{color:var(--text);border-bottom-color:var(--c,var(--text))}
+
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(6,minmax(0,1fr))}.g3>*{grid-column:span 2}.g3>:nth-child(3n+1):last-child{grid-column:span 6}.g3>:nth-child(3n+1):nth-last-child(2),.g3>:nth-child(3n+2):last-child{grid-column:span 3}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.g12{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column}
+/* Cards in one row share a height; the chart or list inside grows to use it, so no empty band under a short card. */
+.card > .viz,.card > .chartbox{flex:1}
+.viz{display:flex;flex-direction:column}
+.viz > .chartbox{flex:1}
+.card > .hbars,.card > .funnel{flex:1;justify-content:space-evenly}
+.card > .donut-wrap{flex:1;justify-content:center}
+.card > .stack{flex:1}
+.card > .timeline{flex:1;justify-content:space-between}
+.fillv{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.donut-wrap.stack{flex-direction:column;align-items:stretch;justify-content:space-evenly;flex-wrap:nowrap}
+.donut-wrap.stack > div:first-child{align-self:center}
+.card{container-type:inline-size}
+@container (max-width:460px){.donut-wrap:not(.stack){flex-wrap:nowrap;gap:14px}.donut-wrap svg{width:118px;height:118px}.donut-list{min-width:0;gap:4px}.donut-list div{font-size:12px}}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:24px;flex-wrap:wrap}
+.card-h h3{margin:0;font-size:13px;font-weight:600}
+.card-h p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.mt{margin-top:12px}
+/* KPI strip: any grid of KPIs becomes one bordered bar with hairline dividers */
+.grid:has(> .kpi){display:flex;flex-wrap:wrap;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.grid:has(> .kpi) > .kpi{flex:1 1 150px;min-width:0}
+.grid:has(> .kpi:nth-child(8)) > .kpi{flex-basis:22%}
+.grid:has(> .kpi:nth-child(9)) > .kpi{flex-basis:18%}
+.kpi{display:flex;flex-direction:column;gap:2px;border:none;border-radius:0;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);padding:12px 14px;position:relative;container-type:inline-size}
+.kpi .l{font-size:11.5px;color:var(--muted);font-weight:500;line-height:1.3}
+.card .kpi .l{white-space:normal}
+.kpi .v{font-size:20px;font-weight:650;letter-spacing:-.02em;line-height:1.25;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .s{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kpi .spark{position:absolute;top:14px;right:14px;width:36%;max-width:120px;height:30px;opacity:.9}
+.kpi:has(.spark) .l{padding-right:38%}
+@container (max-width:150px){.kpi .spark{display:none}.kpi:has(.spark) .l{padding-right:0}}
+.delta{font-weight:600;font-size:11px;border-radius:5px;padding:0 5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.delta.up{color:var(--good);background:color-mix(in srgb,var(--good) calc(var(--tint)*100%),transparent)}
+.delta.down{color:var(--bad);background:color-mix(in srgb,var(--bad) calc(var(--tint)*100%),transparent)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:550;border-radius:5px;padding:1px 7px;white-space:nowrap;color:var(--tc,var(--muted));background:color-mix(in srgb,var(--tc,var(--muted)) calc(var(--tint)*100%),transparent)}
+.chip i{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tools .count{font-size:11.5px;color:var(--muted);margin-left:auto}
+.tbl{overflow:auto;margin:0 -16px -14px;border-top:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-size:11px;font-weight:550;color:var(--muted);text-align:left;padding:7px 10px;white-space:nowrap;position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);z-index:1}
+th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
+td{padding:6px 10px;border-top:1px solid var(--line);white-space:nowrap;height:38px}
+tbody tr:first-child td{border-top:none}
+th:first-child,td:first-child{padding-left:16px}th:last-child,td:last-child{padding-right:16px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:color-mix(in srgb,var(--hover) 55%,transparent)}
+tr.open{cursor:pointer}
+.who{display:flex;align-items:center;gap:8px;min-width:0}
+.ava{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.who small{display:block;color:var(--muted);font-size:11px;line-height:1.3}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:7px 16px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
+.tspark{width:84px;height:22px;display:block}
+
+.hbars{display:flex;flex-direction:column;gap:12px}
+.hbar{display:grid;grid-template-columns:minmax(84px,150px) 1fr auto;gap:12px;align-items:center;font-size:12.5px}
+.hbar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.track{position:relative;height:12px;border-radius:6px;background:color-mix(in srgb,var(--c,var(--base)) 11%,var(--panel2))}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--c,var(--base)) 70%,transparent),var(--c,var(--base)))}
+.goal{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--text);box-shadow:0 0 0 2px var(--panel)}
+.hbar .vl{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;min-width:60px}
+.hbar .vl small{color:var(--muted);font-weight:500}
+.meter{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden;min-width:50px}
+.meter span{display:block;height:100%;border-radius:99px;background:var(--c,var(--base))}
+.mrow{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:2px}
+svg text{font-family:var(--font)}
+.chart{width:100%;display:block}
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut-list{display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px}
+.donut-list div{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.donut-list i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.donut-list .dl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.donut-list b{white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
+.days td{padding:3px 1px;text-align:center;height:auto}
+.days td:first-child{text-align:left;padding-left:16px;padding-right:10px;position:sticky;left:0;background:var(--panel);z-index:1}
+.days th{text-align:center;padding:6px 1px;font-size:10.5px}
+.days th:first-child{text-align:left}
+.dot{display:inline-block;width:15px;height:15px;border-radius:4px;background:var(--panel2);vertical-align:middle}
+.dot.p{background:color-mix(in srgb,var(--base) 55%,transparent)}.dot.s{background:var(--good)}.dot.l{background:color-mix(in srgb,#bf5af2 65%,transparent)}.dot.x{background:color-mix(in srgb,var(--bad) 55%,transparent)}
+.funnel{display:flex;flex-direction:column;gap:6px}
+.fstep{display:grid;grid-template-columns:84px 1fr 110px;gap:10px;align-items:center;font-size:12.5px}
+.fbar{height:30px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--base)) 26%,transparent);border-left:3px solid var(--c,var(--base));display:flex;align-items:center;padding-left:9px;font-weight:600;font-variant-numeric:tabular-nums;min-width:44px}
+.fstep .rate{color:var(--muted);font-size:11.5px;text-align:right}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form label,.field{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);font-weight:500}
+.form .wide{grid-column:1/-1}
+.range{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center}
+.range input{padding:0;height:auto;accent-color:var(--c,var(--base));background:none;border:none;box-shadow:none}
+.range b{color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
+.big{font-size:30px;font-weight:650;letter-spacing:-.025em;line-height:1.15;font-variant-numeric:tabular-nums}
+.status-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.status-row:first-child{border-top:none}
+.status-row .grow{flex:1;min-width:0}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.col{background:var(--panel2);border-radius:var(--r-md);padding:8px}
+.col h4{margin:2px 4px 8px;font-size:12px;color:var(--muted);font-weight:600;display:flex;gap:8px;align-items:center}
+.task{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:6px;display:flex;flex-direction:column;gap:6px}
+.task b{font-size:12.5px;font-weight:600}
+.task .row{display:flex;align-items:center;gap:8px}
+.preview{aspect-ratio:16/9;border-radius:10px;background:var(--panel2);display:grid;place-items:center;color:var(--muted);text-align:center}
+.pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.tile{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) 38%;gap:12px;align-items:end;box-shadow:var(--shadow);transition:border-color .15s}
+.tile-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile-p{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
+.tile-x .muted{text-align:right;margin-bottom:5px}
+.tile:hover{border-color:color-mix(in srgb,var(--c) 55%,transparent)}
+.tile-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--c);margin-bottom:4px}
+.tile-v{font-size:19px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile-l{font-size:12px}.tile-s{font-size:11.5px;color:var(--muted)}
+.tile-x{min-width:0}
+.section-t{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:18px 0 8px}
+.task-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.task-row:first-child{border-top:none}.task-row .grow{flex:1;min-width:0}
+.tick{width:18px;height:18px;padding:0;border-radius:50%;border:1.5px solid var(--line2);flex-shrink:0}
+.tick:hover{border-color:var(--good);background:color-mix(in srgb,var(--good) 20%,transparent)}
+.link{padding:0;color:var(--base);font-size:11.5px}.link:hover{text-decoration:underline}
+.bench{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:7px 10px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.bench b{font-size:11px;color:var(--faint);font-weight:600}
+.fresh{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.fresh i{width:6px;height:6px;border-radius:50%;background:var(--good)}
+.hint{font-size:11px;color:var(--faint);font-weight:400}
+.verdict{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:var(--r-lg);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),var(--panel))}
+.verdict > div:first-child{flex:1;min-width:0}
+.verdict-v{font-size:20px;font-weight:650;color:var(--c);letter-spacing:-.02em;margin:2px 0}
+.verdict-n{text-align:right}.verdict-n b{display:block;font-size:26px;font-weight:650;color:var(--c);font-variant-numeric:tabular-nums}
+.splitbar{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:2px}
+.sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.offer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end}
+.offer b{display:block;font-size:19px;font-weight:650;margin:2px 0;font-variant-numeric:tabular-nums}
+.camp{gap:10px}.camp .card-h{margin-bottom:0}
+.camp-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px}
+.camp-n div{display:flex;flex-direction:column}.camp-n b{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.camp-f{display:flex;align-items:center;gap:6px;margin-top:auto}
+.formula{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.term{display:flex;flex-direction:column;gap:2px;padding:8px 11px;border-radius:9px;background:var(--panel2);min-width:110px}
+.term small{font-size:11px;color:var(--muted)}.term b{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+.term .delta{align-self:flex-start}
+.term.bad{outline:1.5px solid var(--bad)}.term.res{background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),var(--panel2))}
+.op{align-self:center;color:var(--faint);font-size:16px;font-weight:600}
+.lens-read p{margin:2px 0 12px;font-size:13px;line-height:1.5}
+.callout{padding:9px 11px;border-radius:8px;background:color-mix(in srgb,var(--bad) calc(var(--tint)*100%),transparent);color:var(--text);font-size:12.5px}
+.callout.good{background:color-mix(in srgb,var(--good) calc(var(--tint)*100%),transparent)}
+tr.sel td{background:color-mix(in srgb,var(--ops) 10%,transparent)}
+.split{display:inline-flex;flex-direction:column;gap:1px;width:15px;height:17px;border-radius:4px;overflow:hidden;vertical-align:middle}
+.split i{flex:1;background:var(--panel2)}
+.split .v1{background:color-mix(in srgb,var(--base) 60%,transparent)}.split .v2{background:var(--good)}
+.split .l1{background:color-mix(in srgb,#bf5af2 75%,transparent)}.split .l2{background:color-mix(in srgb,var(--bad) 60%,transparent)}
+.filters{display:flex;align-items:center;gap:16px;padding:8px 20px;border-bottom:1px solid var(--line);background:var(--side);flex-wrap:wrap}
+.fgroup{display:flex;align-items:center;gap:7px}
+.fgroup + .fgroup{padding-left:14px;border-left:1px solid var(--line)}
+.filters .seg button{padding:3px 9px}
+.freset{margin-left:auto}
+@media (max-width:1360px){.flabel{display:none}.filters{gap:12px}.fgroup + .fgroup{padding-left:12px}}
+.flabel{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.filters .seg button.on{background:color-mix(in srgb,var(--base) 22%,var(--panel));color:var(--text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--base) 45%,transparent)}
+.dates{display:inline-flex;align-items:center;gap:6px}.dates input{height:26px;padding:2px 6px;font-size:12px}
+.fsum{font-size:11.5px;color:var(--muted)}
+.rchart{display:flex;flex-direction:column;gap:14px;justify-content:center;flex:1}
+.rrow{display:grid;grid-template-columns:110px 1fr 150px;gap:14px;align-items:center}
+.rrow .nm b{display:block;font-size:12.5px}.rrow .nm small{color:var(--muted);font-size:11px}
+.rtrack{position:relative;height:22px;border-radius:6px;background:repeating-linear-gradient(90deg,var(--panel2) 0 calc(20% - 1px),var(--line) calc(20% - 1px) 20%)}
+.rtrack .band{position:absolute;top:4px;bottom:4px;border-radius:5px;background:color-mix(in srgb,var(--c) 45%,transparent);border:1px solid var(--c)}
+.rtrack .med{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--text);box-shadow:0 0 0 3px var(--panel)}
+.rtrack .p90{position:absolute;top:1px;bottom:1px;width:2px;margin-left:-1px;background:var(--good)}
+.rrow .vl{text-align:right;font-variant-numeric:tabular-nums}.rrow .vl b{display:block}.rrow .vl small{color:var(--muted);font-size:11px}
+.lg-band,.lg-med,.lg-p90{display:inline-block;width:14px;height:8px;border-radius:3px}
+.lg-band{background:color-mix(in srgb,var(--base) 45%,transparent);border:1px solid var(--base)}.lg-med{width:9px;height:9px;border-radius:50%;background:var(--text)}.lg-p90{width:2px;height:12px;background:var(--good)}
+.ladder{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}.ladder > .rung{flex:1 1 170px}
+.rung{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.rung::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--base)}
+.rung-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rung-v{font-size:21px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rung-r{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.rung-r small{display:block;font-size:11px;color:var(--muted)}.rung-r b{font-size:13px;font-variant-numeric:tabular-nums}
+.rung-f{font-size:11.5px;color:var(--base);margin-top:8px}
+.tlist{display:flex;flex-direction:column}
+.trow{display:grid;grid-template-columns:minmax(170px,1.3fr) minmax(220px,1.3fr) minmax(110px,.8fr) minmax(150px,1fr) minmax(170px,1.1fr) minmax(130px,.9fr);gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:12.5px}
+.trow.th{font-size:11px;color:var(--muted);font-weight:550;padding:4px 0 8px;border-top:none}
+.trow:nth-child(2){border-top:none}
+.tset{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.tset select{max-width:170px}
+.tbig{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.radio{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0;cursor:pointer}.radio input{height:auto;accent-color:var(--base)}
+.prog{gap:10px}.prog .card-h{margin-bottom:0}
+.pfacts{display:grid;grid-template-columns:86px 1fr;gap:6px 10px;margin:0;font-size:12.5px}.pfacts dt{color:var(--muted)}.pfacts dd{margin:0}
+.pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.pstats small{display:block;font-size:11px;color:var(--muted)}.pstats b{font-variant-numeric:tabular-nums}
+.labels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px 8px}
+.labels .navitem{border:1px solid var(--line)}
+.inbox button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 6px;border-radius:7px;border-top:1px solid var(--line)}
+.inbox button:first-child{border-top:none}
+.inbox button:hover{background:var(--hover)}
+.inbox .num{min-width:38px;font-size:16px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--c)}
+.inbox .go{color:var(--faint);font-size:12px}
+dialog{border:none;border-radius:14px;padding:0;width:min(600px,94vw);background:var(--panel);color:var(--text);box-shadow:0 24px 64px rgba(0,0,0,.45)}
+dialog::backdrop{background:rgba(5,7,10,.5);backdrop-filter:blur(2px)}
+.dlg{padding:20px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font-size:18px;letter-spacing:-.02em}
+.foot{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+/* Record drawer: the full profile of one creator or merchant */
+dialog.drawer{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(680px,100vw);border-radius:0;border-left:1px solid var(--line2)}
+.rec{display:flex;flex-direction:column;height:100%}
+.rec-h{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line)}
+.rec-h .ava{width:44px;height:44px;font-size:15px}
+.rec-h h2{margin:0;font-size:17px;letter-spacing:-.01em}
+.rec-b{flex:1;overflow:auto;padding:14px 18px 24px;display:flex;flex-direction:column;gap:16px}
+.rec-b > *{flex-shrink:0}
+.rec-b .grid:has(> .kpi) > .kpi{flex-basis:22%}
+.rec-b .hbar{grid-template-columns:minmax(120px,210px) 1fr auto}
+.rec-f{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.props{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}
+.props div{font-size:11.5px;color:var(--muted)}
+.props b{display:block;color:var(--text);font-size:12.5px;font-weight:550;margin-top:1px}
+.sec h4{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.timeline{display:flex;flex-direction:column}
+.ev{display:grid;grid-template-columns:18px 1fr auto;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.ev:first-child{border-top:none}
+.ev i{width:8px;height:8px;border-radius:50%;margin:5px 0 0 4px;background:var(--c)}
+.ev small{display:block;color:var(--muted);font-size:11.5px}
+.ev time{color:var(--faint);font-size:11.5px;white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:500;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw}
+#toast[hidden]{display:none}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.muted{color:var(--muted)}.small{font-size:11.5px}
+.menu-btn{display:none}
+@media (max-width:1180px){.grid:has(> .kpi) > .kpi{flex-basis:170px!important}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g21,.g12{grid-template-columns:minmax(0,1fr)}
+  .g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g3>*{grid-column:auto!important}.g3>:last-child:nth-child(odd){grid-column:1/-1!important}.pulse>:last-child:nth-child(odd){grid-column:1/-1}}
+@media (max-width:1180px){.trow{grid-template-columns:1fr 1fr}.trow.th{display:none}.pulse{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:820px){
+  .pulse{grid-template-columns:minmax(0,1fr)!important}
+  body{display:block}aside{position:fixed;inset:0 auto 0 0;z-index:40;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.4)}
+  body.nav-open aside{transform:none}.menu-btn{display:inline-flex}
+  .wrap{height:auto;min-height:100vh}.top{padding:8px 12px;height:auto;flex-wrap:wrap}.search{order:9;width:100%}main{padding:0 12px 40px}#scope{display:none}
+  .g4,.g2,.board,.form,.offer,.trow{grid-template-columns:minmax(0,1fr)}.labels{grid-template-columns:repeat(2,minmax(0,1fr))}.rrow{grid-template-columns:70px 1fr 96px;gap:8px}.filters{padding:8px 12px;gap:10px}.fsum{display:none}.fstep{grid-template-columns:64px 1fr 84px}.props{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid:has(> .kpi) > .kpi{flex-basis:40%!important}.g3{grid-template-columns:minmax(0,1fr)}.scope{white-space:normal}
+}
+
+/* Acquisition Hub simulation additions */
+.heat{display:inline-grid;place-items:center;min-width:22px;height:20px;border-radius:5px;font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums;background:var(--panel2)}
+.mining-res{min-height:28px;display:flex;align-items:center}
+.checks{display:flex;flex-wrap:wrap;gap:2px 14px}
+.who-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.who-btn{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}
+.who-btn:hover{border-color:var(--growth)}
+.as-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.as-chip b{color:var(--text)}
+.journey-mini{display:flex;flex-wrap:wrap;gap:4px}
+.journey-mini span{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--panel2);color:var(--faint)}
+.journey-mini span.done{color:var(--growth);background:color-mix(in srgb,var(--growth) 14%,transparent)}
+.journey-mini span.now{color:#fff;background:var(--growth);font-weight:600}
+.callout{border-radius:8px;padding:10px 12px;background:color-mix(in srgb,var(--bad) 12%,transparent);font-size:12.5px}
+.callout.good{background:color-mix(in srgb,var(--good) 12%,transparent)}
+</style>
+</head>
+<body>
+<aside aria-label="Navigation">
+  <div class="brand"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--growth)"/><circle cx="13" cy="12" r="5" fill="#fff"/><path d="M4 27c1-5 4.5-8 9-8s8 3 9 8" fill="#fff"/><path d="M24 8v8M20 12h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+    <div>AdtreeGO<small>Acquisition Hub · TTLS Ops</small></div></div>
+  <div class="demo" title="Every name and number here is made up">Simulation · sample data only</div>
+  <div class="navscroll" id="nav"></div>
+  <div class="side-foot">
+    <label>Signed in as (simulation)<select id="login" aria-label="Signed in as"></select></label>
+    <button class="btn sm" id="theme" type="button">Dark mode</button>
+  </div>
+</aside>
+<div class="wrap">
+  <div class="top">
+    <button class="btn sm menu-btn" id="menu" type="button" aria-label="Open menu">Menu</button>
+    <div class="crumbs" id="crumbs"></div>
+    <div class="spacer"></div>
+    <div id="as"></div>
+  </div>
+  <div class="filters" id="filters" aria-label="Filters"></div>
+  <main><div class="page" id="page"></div></main>
+</div>
+<dialog id="modal"></dialog>
+<dialog id="drawer" class="drawer" aria-label="Record"></dialog>
+<div id="toast" role="status" hidden></div>
+<script>
+const $ = s => document.querySelector(s);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k in e && typeof v !== 'string') e[k] = v;
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(3)) if (c != null && c !== false) e.append(c);
+  return e;
+}
+const put = (node, ...kids) => node.replaceChildren(...kids.flat(3).filter(c => c != null && c !== false));
+const N = n => Math.round(n).toLocaleString('en-US');
+const Rp = n => n >= 1e9 ? `Rp ${(n / 1e9).toFixed(2)} B` : n >= 1e6 ? `Rp ${(n / 1e6).toFixed(1)} M` : n >= 1e3 ? `Rp ${Math.round(n / 1e3)} K` : `Rp ${N(n)}`;
+const short = n => Rp(n).replace('Rp ', '');
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const sum = (rows, f) => rows.reduce((a, r) => a + f(r), 0);
+function delta(now, before) {
+  if (!before) return null;
+  const d = Math.round((now - before) / before * 100);
+  return h('span', {class: 'delta ' + (d >= 0 ? 'up' : 'down')}, `${d >= 0 ? '+' : ''}${d}%`);
+}
+let toastT;
+function toast(t) { const e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { e.hidden = true; }, 2600); }
+
+function card(title, desc, body, action) {
+  return h('section', {class: 'card'}, title ? h('div', {class: 'card-h'}, h('div', {}, h('h3', {}, title), desc ? h('p', {}, desc) : null), h('div', {class: 'spacer'}), action || null) : null, body);
+}
+function kpi(label, value, {sub, d, spark, c} = {}) {
+  return h('div', {class: 'card kpi'}, h('span', {class: 'l'}, label), h('span', {class: 'v'}, value),
+    sub || d ? h('span', {class: 's'}, d || null, sub || null) : null, spark ? h('div', {class: 'spark', html: sparkline(spark, c || '--base')}) : null);
+}
+function sparkline(vals, c, H = 34) {
+  // Own min to max, not from zero, so small moves stay visible.
+  const W = 200, max = Math.max(...vals), min = Math.min(...vals), x = i => i / (vals.length - 1) * W, y = v => H - 3 - (v - min) / (max - min || 1) * (H - 6);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" height="${H}" aria-hidden="true"><polygon points="0,${H} ${pts} ${W},${H}" fill="var(${c})" opacity=".1"/><polyline points="${pts}" fill="none" stroke="var(${c})" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+}
+const chip = (text, c = '--muted', dot = true) => h('span', {class: 'chip', style: `--tc:var(${c})`}, dot ? h('i') : null, text);
+function avatar(name) {
+  const colors = ['--growth', '--ops', '--base', '--rev'], i = [...name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 4;
+  return h('span', {class: 'ava', style: `background:var(${colors[i]})`}, name.replace('@', '').slice(0, 2).toUpperCase());
+}
+const person = (name, sub) => h('div', {class: 'who'}, avatar(name), h('div', {}, name, sub ? h('small', {}, sub) : null));
+const meter = (p, c, w = 70) => h('div', {class: 'meter', style: `--c:var(${c});width:${typeof w === 'number' ? w + 'px' : w}`}, h('span', {style: `width:${Math.max(0, Math.min(100, p))}%`}));
+const meterRow = (p, c, label, w) => h('div', {class: 'mrow'}, meter(p, c, w), label ?? (Math.round(p) + '%'));
+function chart(draw, height, label) {
+  const box = h('div', {class: 'chartbox', style: `min-height:${height}px`, role: 'img', 'aria-label': label});
+  let w0 = 0;
+  let h0 = 0;
+  new ResizeObserver(([e]) => { const w = Math.floor(e.contentRect.width), hh = Math.floor(e.contentRect.height) || height;
+    if (w > 0 && (w !== w0 || hh !== h0)) { w0 = w; h0 = hh; box.innerHTML = `<svg width="${w}" height="${hh}" viewBox="0 0 ${w} ${hh}">${draw(w, hh).replace(/>([^<>]+)</g, (m, t) => '>' + word(t) + '<')}</svg>`; } }).observe(box);
+  return box;
+}
+const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const nice = v => { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math.log10(v)), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; };
+const fit = (t, px) => { t = word(t); const n = Math.max(3, Math.floor(px / 6.3)); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+const legend = series => h('div', {class: 'legend'}, series.map(se => h('span', {}, h('i', {style: `background:var(${se.c})${se.dash ? ';height:2px' : ''}`}), se.name)));
+function hbars(items, {fmt = N, c, share} = {}) {
+  const max = Math.max(1, ...items.map(i => Math.max(i.value, i.target || 0))), tot = sum(items, i => i.value) || 1;
+  return h('div', {class: 'hbars'}, items.map(i => h('div', {class: 'hbar', title: `${i.label}: ${fmt(i.value)}${i.target ? ' of ' + fmt(i.target) : ''}`}, h('span', {class: 'nm'}, i.label),
+    h('div', {class: 'track', style: `--c:var(${i.c || c || '--base'})`}, h('div', {class: 'fill', style: `width:${i.value > 0 ? Math.max(2, i.value / max * 100) : 0}%`}), i.target ? h('div', {class: 'goal', style: `left:${i.target / max * 100}%`}) : null),
+    h('span', {class: 'vl'}, fmt(i.value), i.target ? h('small', {}, ` / ${fmt(i.target)}`) : share ? h('small', {}, ` ${pct(i.value, tot)}%`) : null))));
+}
+function donut(items, {center, fmt = N, stack} = {}) {
+  const total = sum(items, i => i.value) || 1, R0 = 46, C = 2 * Math.PI * R0;
+  let off = 0;
+  const arcs = items.map(i => { const len = i.value / total * C, s = `<circle r="${R0}" cx="60" cy="60" fill="none" stroke="var(${i.c})" stroke-width="13" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"><title>${esc(i.label)}: ${fmt(i.value)}</title></circle>`; off += len; return s; }).join('');
+  return h('div', {class: 'donut-wrap' + (stack ? ' stack' : '')}, h('div', {html: `<svg width="150" height="150" viewBox="0 0 120 120" role="img" aria-label="Share chart"><circle r="${R0}" cx="60" cy="60" fill="none" stroke="var(--panel2)" stroke-width="13"/>${arcs}<text x="60" y="61" text-anchor="middle" font-size="16" font-weight="650" fill="var(--text)">${center ?? N(total)}</text><text x="60" y="75" text-anchor="middle" font-size="9" fill="var(--muted)">total</text></svg>`}),
+    h('div', {class: 'donut-list'}, items.map(i => h('div', {}, h('i', {style: `background:var(${i.c})`}), h('span', {class: 'dl', title: i.label}, i.label), h('b', {}, fmt(i.value)), h('span', {class: 'muted', style: 'width:36px;text-align:right'}, pct(i.value, total) + '%')))));
+}
+function area(series, labels, {fmt = N, height = 220, zero = true} = {}) {
+  const vals = series.flatMap(s => s.values), top = Math.max(1, ...vals), bot = zero ? 0 : Math.min(...vals);
+  const step = nice((top - bot) / 4 || top / 4), lo = zero ? 0 : Math.max(0, Math.floor(bot / step) * step), hi = Math.max(lo + step, Math.ceil(top / step) * step);
+  return h('div', {class: 'viz'}, chart((W, H) => {
+    const L = 54, R = 14, T = 10, B = 22, n = labels.length, x = i => L + i * (W - L - R) / Math.max(1, n - 1), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    let s = '';
+    for (let t = lo; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 8}" y="${y(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${fmt(t)}</text>`;
+    const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - L - R) / 46))));
+    s += labels.map((l, i) => i === n - 1 || (i % every === 0 && n - 1 - i >= every) ? `<text x="${x(i)}" y="${H - 6}" font-size="10.5" fill="var(--muted)" text-anchor="${i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'}">${esc(l)}</text>` : '').join('');
+    for (const se of series) {
+      const pts = se.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+      if (se.fill !== false) s += `<polygon points="${x(0)},${y(lo)} ${pts} ${x(n - 1)},${y(lo)}" fill="var(${se.c})" opacity=".09"/>`;
+      s += `<polyline points="${pts}" fill="none" stroke="var(${se.c})" stroke-width="${se.dash ? 1.5 : 2}" ${se.dash ? 'stroke-dasharray="4 4"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
+      if (!se.dash) s += `<circle cx="${x(n - 1)}" cy="${y(se.values.at(-1))}" r="3.5" fill="var(${se.c})" stroke="var(--panel)" stroke-width="2"/>` +
+        se.values.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="9" fill="transparent"><title>${esc(labels[i])} · ${esc(se.name)}: ${fmt(v)}</title></circle>`).join('');
+    }
+    return s;
+  }, height, series.map(x => x.name).join(', ')), series.length > 1 ? legend(series) : null);
+}
+function columns(items, {fmt = N, height = 220, ref} = {}) {
+  const top = Math.max(1, ref ? ref.value : 0, ...items.map(i => Math.max(i.value, i.target || 0))), step = nice(top / 3), hi = Math.ceil(top * 1.12 / step) * step;
+  return chart((W, H) => {
+    const L = 48, T = 14, B = 24, bw = (W - L - 4) / Math.max(1, items.length), w = Math.min(42, bw * 0.6), y = v => T + (H - T - B) * (1 - v / hi), small = bw < 44;
+    let s = '';
+    for (let t = 0; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" ${t ? 'stroke-dasharray="2 4"' : ''}/><text x="${L - 8}" y="${y(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${fmt(t)}</text>`;
+    s += items.map((it, i) => {
+      const cx = L + bw * i + bw / 2, top = y(it.value), bh = Math.max(2, H - B - top), r = Math.min(5, w / 2, bh), x0 = cx - w / 2;
+      const path = `M${x0},${H - B} V${top + r} Q${x0},${top} ${x0 + r},${top} H${x0 + w - r} Q${x0 + w},${top} ${x0 + w},${top + r} V${H - B} Z`;
+      return `<path d="${path}" fill="var(${it.c || '--base'})"><title>${esc(it.label)}: ${fmt(it.value)}${it.target ? ' of ' + fmt(it.target) : ''}</title></path>` +
+        (it.target ? `<line x1="${x0 - 5}" x2="${x0 + w + 5}" y1="${y(it.target)}" y2="${y(it.target)}" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>` : '') +
+        (small ? '' : `<text x="${cx}" y="${Math.min(top, it.target ? y(it.target) : 1e9) - 6}" font-size="10.5" text-anchor="middle" fill="var(--text)" font-weight="600">${fmt(it.value)}</text>`) +
+        `<text x="${cx}" y="${H - 7}" font-size="10.5" text-anchor="middle" fill="var(--muted)">${esc(fit(it.label, bw - 4))}</text>`;
+    }).join('');
+    if (ref) { const yy = y(ref.value), tw = ref.label.length * 5.9 + 10;
+      s += `<line x1="${L}" x2="${W}" y1="${yy}" y2="${yy}" stroke="var(--text)" stroke-width="1.2" stroke-dasharray="5 4" opacity=".6"/><rect x="${W - tw}" y="${yy - 18}" width="${tw}" height="15" rx="4" fill="var(--panel2)"/><text x="${W - 5}" y="${yy - 7}" font-size="10.5" text-anchor="end" fill="var(--text)">${esc(ref.label)}</text>`; }
+    return s;
+  }, height, 'Column chart');
+}
+function table(cols, rows, {pageSize = 10, sortKey, dir = -1, search = true, tools} = {}) {
+  let q = '', key = sortKey, d = dir, page = 0;
+  const box = h('div');
+  const draw = () => {
+    let list = rows.filter(r => !q || cols.some(c => c.k && String(r[c.k] ?? '').toLowerCase().includes(q)));
+    if (key) list = [...list].sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * d);
+    const pages = Math.max(1, Math.ceil(list.length / pageSize)); page = Math.min(page, pages - 1);
+    const shown = list.slice(page * pageSize, page * pageSize + pageSize);
+    put(box,
+      search || tools ? h('div', {class: 'tools'}, search ? h('input', {type: 'search', placeholder: 'Filter', value: q, 'aria-label': 'Filter rows', style: 'width:200px', oninput: e => { q = e.target.value.toLowerCase(); page = 0; draw(); box.querySelector('input').focus(); }}) : null,
+        tools || null, h('span', {class: 'count'}, `${list.length} ${list.length === 1 ? 'row' : 'rows'}`), h('button', {class: 'btn sm', onclick: () => exportCsv(cols, list)}, 'Export CSV')) : null,
+      h('div', {class: 'tbl'}, h('table', {}, h('thead', {}, h('tr', {}, cols.map(c => h('th', {class: (c.num ? 'n ' : '') + (c.k && !c.fixed ? 'sort' : ''),
+        onclick: c.k && !c.fixed ? () => { d = key === c.k ? -d : -1; key = c.k; draw(); } : null}, c.label, key === c.k ? (d > 0 ? ' ↑' : ' ↓') : '')))),
+        h('tbody', {}, shown.length ? shown.map(r => { const open = opener(r); return h('tr', {class: open ? 'open' : null, onclick: open ? e => { if (!e.target.closest('button,select,input,a')) open(); } : null}, cols.map(c => h('td', {class: c.num ? 'n' : ''}, c.render ? c.render(r) : c.fmt ? c.fmt(r[c.k], r) : String(r[c.k] ?? '')))); })
+          : h('tr', {}, h('td', {colspan: cols.length, class: 'empty'}, 'Nothing here for this filter.')))),
+        pages > 1 ? h('div', {class: 'pager'}, `${page + 1} of ${pages}`, h('button', {class: 'btn sm', disabled: page === 0, onclick: () => { page--; draw(); }}, 'Previous'), h('button', {class: 'btn sm', disabled: page >= pages - 1, onclick: () => { page++; draw(); }}, 'Next')) : null));
+    reword(box);
+  };
+  draw();
+  return box;
+}
+const seg = (options, value, onPick, label) => h('div', {class: 'seg', role: 'group', 'aria-label': label}, options.map(([v, t]) => h('button', {class: v === value ? 'on' : '', 'aria-pressed': String(v === value), onclick: () => onPick(v)}, t)));
+const row = (...kids) => h('div', {class: 'mt'}, ...kids);
+
+function progressLine(label, v, target, fmt = Rp) {
+  const p = pct(v, target);
+  return h('div', {}, h('div', {style: 'display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:5px'}, h('span', {class: 'muted'}, label),
+    h('span', {}, h('b', {}, fmt(v)), h('span', {class: 'muted'}, ` / ${fmt(target)} · ${p}%`))), meter(p, p >= 100 ? '--growth' : p >= 70 ? '--base' : '--ops', '100%'));
+}
+const funnel = (steps, c) => h('div', {class: 'funnel'}, steps.map(([n, v], i) => h('div', {class: 'fstep', style: `--c:var(${c})`}, h('span', {}, n),
+  h('div', {}, h('div', {class: 'fbar', style: `width:${Math.max(10, pct(v, steps[0][1]))}%`}, N(v))), h('span', {class: 'rate'}, i ? pct(v, steps[i - 1][1]) + '% of previous' : ''))));
+function drawer(head, body, foot) {
+  const d = $('#drawer');
+  put(d, h('div', {class: 'rec'}, h('div', {class: 'rec-h'}, ...head, h('button', {class: 'btn sm', onclick: () => d.close()}, 'Close')), h('div', {class: 'rec-b'}, ...body), h('div', {class: 'rec-f'}, ...foot)));
+  if (!d.open) d.showModal();
+  d.querySelector('.rec-b').scrollTop = 0;
+  reword(d);
+}
+const sec = (title, ...kids) => h('div', {class: 'sec'}, h('h4', {}, title), ...kids);
+const mini = (l, v, s) => h('div', {class: 'kpi'}, h('span', {class: 'l'}, l), h('span', {class: 'v', style: 'font-size:16px'}, v), s ? h('span', {class: 's'}, s) : null);
+const props = list => h('div', {class: 'props'}, list.map(([l, v]) => h('div', {}, l, h('b', {}, v))));
+const rate = (a, b) => (a / Math.max(1, b) * 100).toFixed(1) + '%';
+const tspark = (vals, c) => h('div', {class: 'tspark', html: sparkline(vals, c, 22)});
+// ================= Acquisition Hub simulation: sample data only, nothing is saved =================
+const word = t => t, reword = () => {};
+function exportCsv(cols, list) {
+  const cs = cols.filter(c => c.k && c.label && !c.fixed);
+  const q = v => { const t = typeof v === 'number' ? Math.round(v * 100) / 100 : v ?? ''; return `"${(typeof t === 'string' && /^[=+\-@\t\r]/.test(t) ? "'" + t : String(t)).replace(/"/g, '""')}"`; };
+  const url = URL.createObjectURL(new Blob(['﻿' + [cs.map(c => q(c.label)), ...list.map(r => cs.map(c => q(r[c.k])))].map(x => x.join(',')).join('\r\n')], {type: 'text/csv'}));
+  h('a', {href: url, download: `acquisition-hub-${ui.page.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`}).click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`Exported ${list.length} rows.`);
+}
+function opener(r) { return r && r._rec ? () => openRecord(r._rec) : null; }
+
+// ---------- sample data (seeded, the same every time) ----------
+let seed = 20261103;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const pick = a => a[Math.floor(rnd() * a.length)];
+const int = (a, b) => Math.floor(a + rnd() * (b - a + 1));
+const MONTH = 'October 2026', DAYS = 31, TODAY = 20; // sample month, day 20 of 31
+const CORE = ['Jakarta', 'Bandung', 'Surabaya', 'Bali', 'Yogyakarta'];
+const CITIES = [...CORE, 'Bekasi', 'Tangerang', 'Bogor', 'Depok', 'Semarang', 'Medan', 'Makassar'];
+const INDUSTRIES = ['Dining SV', 'Dining LS', 'Accommodation', 'Things To Do'];
+const IC = {'Dining SV': 'food', 'Dining LS': 'live', Accommodation: 'stay', 'Things To Do': 'trip'};
+const CC = {Jakarta: 'jkt', Bandung: 'bdg', Surabaya: 'sby', Bali: 'bli', Yogyakarta: 'yog', Bekasi: 'bks', Tangerang: 'tgr', Bogor: 'bgr', Depok: 'dpk', Semarang: 'smg', Medan: 'mdn', Makassar: 'mks'};
+const LEVELS = ['L0', 'L1', 'L2', 'L3', 'L4'], PODS = ['L1', 'L2', 'L3', 'L4', 'LIVE'];
+const SOURCES = ['Marketplace scrape', 'Lookalikes', 'Referral', 'Region gap', 'Win-back', 'Manual'];
+const STAGE = {mined: ['Mined', '--muted'], claimed: ['Claimed', '--base'], contacted: ['Contacted', '--base'], interested: ['Interested', '--ops'], invited: ['Invited', '--ops'], onboarded: ['Onboarded', '--growth'],
+  not_interested: ['Not interested', '--rev'], no_response: ['No response', '--rev'], duplicate: ['Duplicate', '--rev']};
+const podOf = (level, industry) => industry === 'Dining LS' && level !== 'L0' ? 'LIVE' : level;
+const dayLabel = d => `${d} Oct`;
+
+function makeData() {
+  const team = [{id: 'n0', name: 'CA Lead', type: 'ca_lead', emails: ['ca.lead@sample.id'], pod: '', cities: [], industries: [], levels: [], active: true, notes: 'Runs the team'}];
+  [['L2', ['Bandung', 'Jakarta'], ['Dining SV']], ['L2', ['Surabaya', 'Bali'], []], ['L3', [], []], ['L4', [], ['Accommodation', 'Dining SV']], ['LIVE', [], ['Dining LS']], ['L1', ['Bekasi', 'Tangerang', 'Bogor'], []]]
+    .forEach(([pod, cities, industries], i) => team.push({id: 'n' + (i + 1), name: `CA ${i + 1}`, type: 'fte_ca', emails: [`ca${i + 1}@sample.id`], pod, cities, industries, levels: [], active: true, notes: 'FTE'}));
+  for (let i = 1; i <= 12; i++) team.push({id: 'i' + i, name: `Intern ${String(i).padStart(2, '0')}`, type: 'intern', emails: ['intern@sample.id'], pod: i > 10 ? 'LIVE' : 'L1', cities: i % 3 ? [] : ['Bandung'], industries: i > 10 ? ['Dining LS'] : [], levels: [], active: i !== 12, notes: i === 12 ? 'Internship ended 15 Oct' : 'Intern batch Sep 2026'});
+  const workers = team.filter(t => t.type !== 'ca_lead' && t.active);
+  // creators we already have, renamed accounts and partner agencies, for the duplicate check
+  const roster = new Set(), renamed = new Map(), agency = new Set(), pastLinked = new Set();
+  for (let i = 1; i <= 120; i++) roster.add(`@${IC[pick(INDUSTRIES)]}.${CC[pick(CITIES)]}.${String(500 + i)}`);
+  for (let i = 1; i <= 15; i++) renamed.set(`@old.${CC[pick(CITIES)]}.${700 + i}`, `@${IC[pick(INDUSTRIES)]}.${CC[pick(CITIES)]}.${String(800 + i)}`);
+  for (let i = 1; i <= 15; i++) agency.add(`@agency.${CC[pick(CITIES)]}.${900 + i}`);
+  for (let i = 1; i <= 20; i++) pastLinked.add(`@back.${CC[pick(CITIES)]}.${950 + i}`);
+  const programs = [
+    {id: 'g1', name: 'Paid per Post', industry: 'Dining SV', level: 'L2', slots: 180, price: 150000, requirement: 'Qualified video, once', scope: '30 videos a month', budget: 9e6, owner: 'Ops', source: 'Ops'},
+    {id: 'g2', name: 'Paid per Post', industry: 'Dining SV', level: 'L3', slots: 14, price: 1e6, requirement: 'Qualified video, once', scope: '10 videos a month', budget: 14e6, owner: 'Ops', source: 'Ops'},
+    {id: 'g3', name: 'Paid per Post', industry: 'Dining SV', level: 'L4', slots: 10, price: 2.5e6, requirement: 'Qualified video, once', scope: '10 videos a month', budget: 25e6, owner: 'Ops', source: 'Ops'},
+    {id: 'g4', name: 'Paid per Post', industry: 'Accommodation', level: 'L3', slots: 17, price: 1e6, requirement: 'Qualified video, once', scope: '10 videos a month', budget: 17e6, owner: 'Ops', source: 'Ops'},
+    {id: 'g5', name: 'Gas Live!', industry: 'Dining LS', level: 'L2+', slots: 107, price: 350000, requirement: '10 LIVE sessions', scope: '10 valid sessions a month', budget: 17.5e6, owner: 'Ops', source: 'Ops'},
+    {id: 'g6', name: 'City push', industry: 'Dining SV', level: 'L2+', slots: 45, price: 200000, requirement: 'Bandung, Yogyakarta, Surabaya', scope: '5 videos', budget: 9e6, owner: 'Ops', source: 'Ops'}];
+  // onboardings logged by the team
+  const onb = [];
+  const levelWeight = () => { const r = rnd(); return r < 0.08 ? 'L0' : r < 0.78 ? 'L1' : r < 0.93 ? 'L2' : r < 0.97 ? 'L3' : 'L4'; };
+  for (let i = 1; i <= 430; i++) {
+    const t = pick(workers), lvl = t.pod === 'L1' ? levelWeight() : t.pod === 'LIVE' ? pick(['L1', 'L2', 'L2', 'L3']) : rnd() < 0.7 ? t.pod : levelWeight();
+    const industry = t.pod === 'LIVE' ? 'Dining LS' : t.industries.length ? pick(t.industries) : pick(['Dining SV', 'Dining SV', 'Dining SV', 'Accommodation', 'Things To Do']);
+    const city = t.cities.length && rnd() < 0.7 ? pick(t.cities) : pick(CITIES), day = int(1, TODAY);
+    const missing = rnd() < 0.06, status = day > TODAY - 6 ? (rnd() < 0.55 ? 'pending' : 'confirmed') : rnd() < 0.05 ? 'not_confirmed' : 'confirmed';
+    onb.push({id: 'o' + i, team: t.id, day, username: `@${IC[industry]}.${CC[city]}.${String(i).padStart(3, '0')}`, level: lvl, pod: podOf(lvl, industry), industry: missing && rnd() < 0.4 ? '' : industry, city,
+      phone: missing ? '' : '08' + int(1e8, 9e8), gmv: int(1, 900) * [20e3, 50e3, 300e3, 1.2e6, 3e6][LEVELS.indexOf(lvl)], agency: rnd() < 0.05 ? pick(['Partner A', 'Partner B', 'Partner C']) : 'Adtree Digital Indonesia',
+      status, linkedDay: status === 'confirmed' ? Math.min(TODAY, day + int(0, 3)) : null, firstPost: null, posts: 0});
+  }
+  for (const o of onb) { o.complete = !!(o.phone && o.industry); if (o.status === 'confirmed' && rnd() < 0.78) { o.firstPost = int(0, 16); o.posts = o.firstPost <= TODAY - o.linkedDay ? int(1, 18) : 0; if (!o.posts) o.firstPost = null; } }
+  // creators Total Creator Data shows as Linked that nobody logged: credit stays empty
+  const notLogged = [];
+  for (let i = 1; i <= 140; i++) { const industry = pick(INDUSTRIES), city = pick(CITIES), lvl = levelWeight(); notLogged.push({id: 'u' + i, day: int(1, TODAY), username: `@${IC[industry]}.${CC[city]}.${String(600 + i)}`, level: lvl, pod: podOf(lvl, industry), industry, city}); }
+  // deals on L2 and above
+  const deals = [];
+  onb.filter(o => LEVELS.indexOf(o.level) >= 2 && o.complete && rnd() < 0.55).forEach((o, i) => {
+    const prog = programs.find(p => p.industry === o.industry && (p.level === o.level || (p.level === 'L2+' && LEVELS.indexOf(o.level) >= 2))) || programs[0];
+    const live = o.industry === 'Dining LS', amount = Math.round(prog.price * (rnd() < 0.2 ? 1.6 + rnd() : 0.8 + rnd() * 0.3) / 50000) * 50000;
+    const scope = {v: live ? 5 : [5, 10, 15][LEVELS.indexOf(o.level) - 2] || 5, ls: live ? 10 : 0, ps: 0};
+    const stage = o.status !== 'confirmed' ? 'proposed' : pick(['proposed', 'approved', 'approved', 'delivering', 'delivering', 'delivered', 'released', 'paid']);
+    const done = ['delivered', 'released', 'paid'].includes(stage);
+    deals.push({id: 'd' + (i + 1), onb: o.id, program: prog.id, amount, scope, delivered: {v: done ? scope.v : int(0, scope.v - 1), ls: done ? scope.ls : int(0, Math.max(0, scope.ls - 1))}, stage, above: amount > prog.price});
+    o.deal = 'd' + (i + 1);
+  });
+  // leads in the pipeline
+  const leads = [];
+  for (let i = 1; i <= 260; i++) {
+    const industry = pick(INDUSTRIES), city = pick(CITIES), lvl = pick(['L1', 'L1', 'L2', 'L2', 'L3', 'L4']), t = rnd() < 0.7 ? pick(workers) : null;
+    const stage = !t ? 'mined' : pick(['claimed', 'claimed', 'contacted', 'contacted', 'interested', 'invited', 'no_response', 'not_interested']);
+    const claimDay = t ? int(TODAY - 13, TODAY) : null;
+    leads.push({id: 'l' + i, username: `@${IC[industry]}.${CC[city]}.${String(300 + i)}`, industry, city, level: lvl, followers: int(2, 250) * 1000, source: pick(SOURCES), fit: int(30, 98), stage,
+      assigned: t ? t.id : null, claim: t ? {by: t.id, day: claimDay, expires: claimDay + 14, contacted: stage !== 'claimed'} : null, foundDay: t ? claimDay - int(0, 5) : int(1, TODAY)});
+  }
+  // outreach per person per day
+  const out = {};
+  for (const t of workers) out[t.id] = Array.from({length: TODAY}, (_, d) => { const c = (d + 1) % 7 === 0 ? int(0, 6) : int(8, t.type === 'intern' ? 30 : 45); const r = Math.round(c * (0.2 + rnd() * 0.2)), it = Math.round(r * (0.3 + rnd() * 0.3)); return {contacts: c, replies: r, interested: it, invites: Math.round(it * (0.6 + rnd() * 0.3))}; });
+  const agencies = [{name: 'Adtree Digital Indonesia', own: true, fee: 0, start: '-', end: '-', contact: 'Internal'},
+    {name: 'Partner A', fee: 5, start: '1 Jan 2026', end: '31 Dec 2026', contact: 'PIC Partner A'}, {name: 'Partner B', fee: 5, start: '1 Apr 2026', end: '31 Mar 2027', contact: 'PIC Partner B'}, {name: 'Partner C', fee: 7, start: '1 Jul 2026', end: '30 Jun 2027', contact: 'PIC Partner C'}];
+  const T = (id, metric, value, scope = {}, note = '', status = 'active', unit = 'count', month = 'Oct') => ({id, metric, value, unit, note, status, month, pod: '', industry: '', city: '', team: '', d0: 1, d1: DAYS, ...scope});
+  const targets = [
+    T('t1', 'onboarded', 260, {pod: 'L1'}, 'Sample: volume pod, interns do most of it'),
+    T('t2', 'onboarded', 120, {pod: 'L2'}, 'Sample: L2 is the hardest level to find'),
+    T('t3', 'onboarded', 20, {pod: 'L3'}, 'Sample: deals above program price need the Head'),
+    T('t4', 'onboarded', 12, {pod: 'L4'}, 'Sample'),
+    T('t5', 'onboarded', 60, {pod: 'LIVE'}, 'Sample: Gas Live creators, Dining LS'),
+    T('t6', 'onboarded', 40, {pod: 'L2', industry: 'Dining SV', city: 'Bandung', d0: 10, d1: 23}, 'Sample: two-week city push in Bandung'),
+    T('t7', 'active14', 60, {}, 'Sample: onboard creators who will post', 'active', 'percent'),
+    T('t8', 'complete', 98, {}, 'Sample: phone and industry on every record', 'active', 'percent'),
+    ...['n1', 'n2', 'n3', 'n4', 'n5', 'n6'].map((n, i) => T('tc' + i, 'contacts', 35, {team: n}, 'Sample: daily outreach per FTE CA', 'active', 'per_day')),
+    ...Array.from({length: 10}, (_, i) => T('ti' + i, 'onboarded', 20, {pod: 'L1', team: 'i' + (i + 1)}, 'Sample: per intern'))];
+  const checks = [{id: 'c1', team: 'n3', handle: '@stay.bli.077', industry: 'Accommodation', level: 'L3', video: 60e6, share: 30, live: 0, bound: 1.5e6, fee: 0, months: 6, ratio: 0, verdict: ''}];
+  return {team, roster, renamed, agency, pastLinked, programs, onb, notLogged, deals, leads, out, agencies, targets, checks, history: [], log: []};
+}
+const D = makeData();
+D.log.push({at: '19 Oct 17:40', login: 'ca.lead@sample.id', as: 'CA Lead', text: 'Set October targets (sample)'}, {at: '20 Oct 08:55', login: 'intern@sample.id', as: 'Intern 03', text: 'Logged 6 contacts'});
+
+// ---------- who is signed in ----------
+const LOGINS = [['ca.lead@sample.id', 'ca_lead', 'CA Lead'], ['admin@sample.id', 'admin', 'Admin (Data Team)'], ...[1, 2, 3, 4, 5, 6].map(i => [`ca${i}@sample.id`, 'fte_ca', `CA ${i} (FTE)`]),
+  ['intern@sample.id', 'intern', 'Interns (shared login)'], ['head@sample.id', 'head', 'Head'], ['ops@sample.id', 'ops', 'Ops (program owner)'], ['finance@sample.id', 'finance', 'Finance']];
+const PAGES_ALL = ['Overview', 'Daily Tracker', 'Creator Mining', 'Impact Calculator', 'Partnership', 'Bound Cash & Programs', 'New Active Rate', 'Setup'];
+const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Daily Tracker', 'Creator Mining', 'Impact Calculator', 'Bound Cash & Programs', 'New Active Rate'],
+  intern: ['Overview', 'Daily Tracker', 'Creator Mining', 'New Active Rate'], ops: ['Overview', 'Partnership', 'Bound Cash & Programs'], finance: ['Bound Cash & Programs']};
+const ui = {login: 'ca.lead@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}};
+try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim') || '{}'), {as: null}); } catch {}
+const role = () => (LOGINS.find(l => l[0] === ui.login) || LOGINS[0])[1];
+const may = what => ({
+  seeAll: ['ca_lead', 'admin', 'head', 'ops', 'finance'], team: ['ca_lead', 'admin'], assign: ['ca_lead', 'admin'], draftTargets: ['ca_lead', 'admin'], approveTargets: ['head'],
+  work: ['ca_lead', 'fte_ca', 'intern', 'admin'], claim: ['ca_lead', 'fte_ca', 'admin'], onboard: ['ca_lead', 'fte_ca', 'admin'], money: ['ca_lead', 'fte_ca', 'head', 'ops', 'finance', 'admin'],
+  programs: ['ops', 'admin'], terms: ['ca_lead', 'admin'], credit: ['ca_lead', 'admin']}[what] || []).includes(role());
+// The team name this person works as: their own name for FTE CAs, the name picked for the shared intern login.
+const me = () => role() === 'fte_ca' ? D.team.find(t => t.emails.includes(ui.login))?.id : role() === 'intern' ? ui.as : null;
+const nameOf = id => D.team.find(t => t.id === id)?.name || 'Not assigned';
+const log = text => { D.log.unshift({at: 'Today ' + new Date().toTimeString().slice(0, 5), login: ui.login, as: me() ? nameOf(me()) : (LOGINS.find(l => l[0] === ui.login) || [])[2], text}); };
+
+// ---------- filters: pod, industry, city, person ----------
+const inScope = o => (!ui.f.pod || o.pod === ui.f.pod) && (!ui.f.ind || o.industry === ui.f.ind) && (!ui.f.city || (ui.f.city === 'Other' ? !CORE.includes(o.city) : o.city === ui.f.city));
+const personScope = id => me() ? id === me() : !ui.f.who || id === ui.f.who;
+const ONB = () => D.onb.filter(o => inScope(o) && personScope(o.team));
+const counted = l => l.filter(o => o.complete && o.level !== 'L0');
+
+// ---------- target lines ----------
+const METRICS = {onboarded: 'Onboarded', onboarded_l0: 'Onboarded with L0', confirmed: 'Confirmed', contacts: 'Contacts', invites: 'Invites sent', active14: 'Active within 14 days', complete: 'Record completeness'};
+const UNITS = {count: '', percent: '%', per_day: ' / day'};
+function lineActual(t) {
+  const rows = D.onb.filter(o => o.day >= t.d0 && o.day <= Math.min(t.d1, TODAY) && (!t.pod || o.pod === t.pod) && (!t.industry || o.industry === t.industry) && (!t.city || o.city === t.city) && (!t.team || o.team === t.team));
+  if (t.metric === 'onboarded') return counted(rows).length;
+  if (t.metric === 'onboarded_l0') return rows.filter(o => o.complete).length;
+  if (t.metric === 'confirmed') return counted(rows).filter(o => o.status === 'confirmed').length;
+  if (t.metric === 'complete') return pct(rows.filter(o => o.complete).length, rows.length);
+  if (t.metric === 'active14') { const el = rows.filter(o => o.status === 'confirmed' && TODAY - o.linkedDay >= 14); return pct(el.filter(o => o.firstPost != null && o.firstPost <= 14).length, el.length); }
+  const people = t.team ? [t.team] : Object.keys(D.out), days = Array.from({length: Math.min(t.d1, TODAY) - t.d0 + 1}, (_, i) => t.d0 - 1 + i);
+  const tot = sum(people, p => sum(days, d => D.out[p]?.[d]?.[t.metric === 'invites' ? 'invites' : 'contacts'] || 0));
+  return t.unit === 'per_day' ? Math.round(tot / Math.max(1, days.length) / (t.team ? 1 : people.length)) : tot;
+}
+function pace(actual, t) {
+  const len = t.d1 - t.d0 + 1, past = Math.max(0, Math.min(TODAY, t.d1) - t.d0 + 1), left = Math.max(0, t.d1 - Math.max(TODAY, t.d0 - 1));
+  if (t.unit !== 'count') return {proj: actual, run: t.value ? actual / t.value : 0, req: null, left};
+  const proj = past ? actual / past * len : 0;
+  return {proj, run: t.value ? proj / t.value : 0, req: left ? Math.max(0, (t.value - actual) / left) : 0, left};
+}
+const scopeChips = t => h('span', {class: 'chips', style: 'margin:0'}, [t.pod && chip(t.pod, '--base', false), t.industry && chip(t.industry, '--ops', false), t.city && chip(t.city, '--growth', false),
+  t.team && chip(nameOf(t.team), '--rev', false), (t.d0 !== 1 || t.d1 !== DAYS) && chip(`${t.d0} to ${t.d1} Oct`, '--muted', false), !t.pod && !t.industry && !t.city && !t.team && chip('Whole team', '--muted', false)].filter(Boolean));
+const fmtVal = (v, t) => t.unit === 'percent' ? v + '%' : t.unit === 'per_day' ? N(v) + ' / day' : N(v);
+
+// ---------- pages ----------
+const PAGES = {};
+const badge = st => chip(...{confirmed: ['Confirmed', '--growth'], pending: ['Pending', '--ops'], not_confirmed: ['Not confirmed', '--rev']}[st]);
+const onbCols = [{k: 'username', label: 'Creator', render: o => person(o.username, `${o.city} · ${o.industry || 'industry missing'}`)}, {k: 'teamName', label: 'Logged by'}, {k: 'level', label: 'Level'}, {k: 'pod', label: 'Pod'},
+  {k: 'day', label: 'Join date', num: true, fmt: dayLabel}, {k: 'status', label: 'Total Creator Data', render: o => badge(o.status)}, {k: 'complete', label: 'Record', render: o => o.complete ? chip('Complete', '--growth', false) : chip('Missing phone or industry', '--rev', false)}];
+const onbRow = o => ({...o, teamName: nameOf(o.team), _rec: o.id});
+
+PAGES['Overview'] = () => {
+  const L = ONB(), c = counted(L), all = L.filter(o => o.complete), nl = D.notLogged.filter(inScope);
+  const lines = D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && (!me() || !t.team || t.team === me()) && (!ui.f.pod || !t.pod || t.pod === ui.f.pod));
+  const strip = h('div', {class: 'grid'}, kpi('Onboarded', N(c.length), {sub: 'complete, L1 and up', c: '--growth', spark: Array.from({length: TODAY}, (_, d) => c.filter(o => o.day === d + 1).length)}),
+    kpi('With L0', N(all.length), {sub: `${all.length - c.length} L0, not counted`}), kpi('Confirmed', N(c.filter(o => o.status === 'confirmed').length), {sub: 'in Total Creator Data'}),
+    kpi('Pending', N(c.filter(o => o.status === 'pending').length), {sub: 'waiting for the daily upload'}), kpi('Not confirmed', N(c.filter(o => o.status === 'not_confirmed').length), {sub: 'not Linked after 7 days'}),
+    kpi('Record completeness', pct(all.length, L.length) + '%', {sub: `${L.length - all.length} records missing phone or industry`}), me() ? null : kpi('Linked, not logged', N(nl.length), {sub: 'no credit for now'}));
+  const paceTbl = table([{k: 'label', label: 'Target line', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, METRICS[t.metric]), h('div', {style: 'margin-top:3px'}, scopeChips(t)))},
+    {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'actual', label: 'Actual', num: true, fmt: (v, t) => h('b', {}, fmtVal(v, t))},
+    {k: 'ach', label: 'Achievement', render: t => meterRow(t.ach, t.run >= 1 ? '--growth' : t.run >= 0.8 ? '--base' : '--ops', null, 70)},
+    {k: 'proj', label: 'Projected end', num: true, fmt: (v, t) => t.unit === 'count' ? N(v) : '-'}, {k: 'run', label: 'Run rate', num: true, render: t => chip(Math.round(t.run * 100) + '%', t.run >= 1 ? '--growth' : t.run >= 0.8 ? '--ops' : '--rev', false)},
+    {k: 'req', label: 'Needed per day', num: true, fmt: v => v == null ? '-' : v.toFixed(1)}, {k: 'note', label: 'Note', render: t => h('span', {class: 'muted small', style: 'white-space:normal;display:block;min-width:180px'}, t.note)}],
+    lines.map(t => { const actual = lineActual(t), p = pace(actual, t); return {...t, label: METRICS[t.metric], actual, ach: pct(actual, t.value), ...p}; })
+      .sort((a, b) => !!a.team - !!b.team || a.run - b.run), {search: false, pageSize: 8}); // team lines first, furthest behind on top
+  const byLevel = LEVELS.map(lv => ({lv, team: L.filter(o => o.level === lv && o.status !== 'not_confirmed').length, tcd: L.filter(o => o.level === lv && o.status === 'confirmed').length + (me() ? 0 : nl.filter(o => o.level === lv).length)}));
+  const cityRows = [...CORE, 'Other'].map(cy => ({label: cy, value: c.filter(o => cy === 'Other' ? !CORE.includes(o.city) : o.city === cy).length}));
+  return [strip,
+    row(card(`Pace against targets · ${MONTH}, day ${TODAY} of ${DAYS}`, 'Every active target line from Setup → Targets. Sample targets.', paceTbl)),
+    h('div', {class: 'grid g3 mt'},
+      card('Team log vs Total Creator Data', 'Per level, this month. Total Creator Data is uploaded daily by BI.', h('div', {class: 'tbl'}, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Level'), h('th', {class: 'n'}, 'Team log'), h('th', {class: 'n'}, 'Total Creator Data'), h('th', {class: 'n'}, 'Gap'))),
+        h('tbody', {}, byLevel.map(r => h('tr', {}, h('td', {}, r.lv), h('td', {class: 'n'}, N(r.team)), h('td', {class: 'n'}, N(r.tcd)), h('td', {class: 'n'}, h('span', {class: 'delta ' + (r.tcd - r.team > 0 ? 'down' : 'up')}, (r.tcd - r.team > 0 ? '+' : '') + (r.tcd - r.team))))))))),
+      card('Onboarded by city', 'Five core cities and other regions.', hbars(cityRows, {c: '--growth', share: true})),
+      card('Onboarded by industry', null, donut(INDUSTRIES.map((i, n) => ({label: i, value: c.filter(o => o.industry === i).length, c: ['--growth', '--rev', '--base', '--ops'][n]})).filter(x => x.value), {stack: true}))),
+    row(card('Newly onboarded', 'Latest first. Click a row for the creator’s record.', table(onbCols, L.sort((a, b) => b.day - a.day).map(onbRow), {sortKey: 'day', pageSize: 10})))];
+};
+
+PAGES['Daily Tracker'] = () => {
+  const L = ONB(), people = D.team.filter(t => t.type !== 'ca_lead' && t.active && personScope(t.id) && (!ui.f.pod || t.pod === ui.f.pod));
+  const m = ui.tab.dt || 'onb', days = Array.from({length: TODAY}, (_, i) => i + 1);
+  const val = (p, d) => m === 'onb' ? counted(L.filter(o => o.team === p.id && o.day === d)).length : D.out[p.id]?.[d - 1]?.[m] || 0;
+  const max = Math.max(1, ...people.flatMap(p => days.map(d => val(p, d))));
+  const grid = h('div', {class: 'tbl'}, h('table', {class: 'days'}, h('thead', {}, h('tr', {}, h('th', {}, 'Name'), days.map(d => h('th', {}, String(d))), h('th', {class: 'n'}, 'Total'))),
+    h('tbody', {}, people.map(p => h('tr', {}, h('td', {}, p.name, h('small', {class: 'muted', style: 'margin-left:6px'}, p.pod)), days.map(d => { const v = val(p, d); return h('td', {}, h('span', {class: 'heat', style: v ? `background:color-mix(in srgb,var(--growth) ${15 + v / max * 70}%,transparent)` : '', title: `${p.name}, ${dayLabel(d)}: ${v}`}, v || '')); }),
+      h('td', {class: 'n'}, h('b', {}, N(sum(days, d => val(p, d))))))))));
+  const lists = {inc: ['Incomplete records', L.filter(o => !o.complete)], pend: ['Logged, not linked yet', L.filter(o => o.status !== 'confirmed')], nl: ['Linked, not logged', me() ? [] : D.notLogged.filter(inScope)]};
+  const lt = ui.tab.dl || 'inc', [, lrows] = lists[lt];
+  const listTbl = lt === 'nl'
+    ? table([{k: 'username', label: 'Creator', render: o => person(o.username, `${o.city} · ${o.industry}`)}, {k: 'level', label: 'Level'}, {k: 'day', label: 'Linked', num: true, fmt: dayLabel}, {k: 'c', label: 'Credit', fixed: true, render: () => h('span', {class: 'muted'}, 'Empty for now')}], lrows, {sortKey: 'day'})
+    : table([...onbCols, {k: 'fix', label: '', fixed: true, render: o => !o.complete && may('onboard') ? h('button', {class: 'btn sm primary', onclick: () => onboardForm(o)}, 'Complete record') : null}], lrows.map(onbRow), {sortKey: 'day'});
+  const funnelRows = people.map(p => { const o = D.out[p.id] || [], f = k2 => sum(o, x => x[k2]), on = counted(L.filter(x => x.team === p.id)).length;
+    return {name: p.name, pod: p.pod, contacts: f('contacts'), replies: f('replies'), interested: f('interested'), invites: f('invites'), on, conv: pct(on, f('contacts'))}; });
+  return [h('div', {class: 'grid'}, kpi('Onboarded', N(counted(L).length), {c: '--growth'}), kpi('Contacts', N(sum(people, p => sum(D.out[p.id] || [], x => x.contacts)))), kpi('Invites sent', N(sum(people, p => sum(D.out[p.id] || [], x => x.invites)))),
+      kpi('Active people', N(people.filter(p => (D.out[p.id] || []).at(-1)?.contacts).length), {sub: 'contacted someone today'}), kpi('Incomplete records', N(lists.inc[1].length), {c: '--rev'})),
+    row(card('Day by day', `${MONTH}, days 1 to ${TODAY}. Onboards count complete records only.`, grid, seg([['onb', 'Onboards'], ['contacts', 'Contacts'], ['invites', 'Invites']], m, v => { ui.tab.dt = v; render(); }, 'Metric'))),
+    h('div', {class: 'grid g21 mt'},
+      card('Records to look at', 'Fix these the same day so the numbers stay true.', listTbl, seg(Object.entries(lists).map(([k2, [l, r]]) => [k2, `${l} (${r.length})`]), lt, v => { ui.tab.dl = v; render(); }, 'List')),
+      card('Funnel per person', 'Contacts to onboards this month.', table([{k: 'name', label: 'Name'}, {k: 'contacts', label: 'Contacts', num: true, fmt: N}, {k: 'interested', label: 'Interested', num: true, fmt: N}, {k: 'invites', label: 'Invites', num: true, fmt: N},
+        {k: 'on', label: 'Onboarded', num: true, fmt: N}, {k: 'conv', label: 'Contact → onboard', num: true, fmt: v => v + '%'}], funnelRows, {search: false, sortKey: 'on', pageSize: 10})))];
+};
+
+// ---------- duplicate check, in the agreed order ----------
+function dupCheck(u) {
+  u = u.trim().toLowerCase().replace(/^@?/, '@');
+  if (u.length < 4) return null;
+  if (D.roster.has(u) || D.onb.some(o => o.username === u)) return ['ours', 'Already our creator', '--rev'];
+  if (D.renamed.has(u)) return ['renamed', `Renamed: now ${D.renamed.get(u)}, already ours`, '--rev'];
+  const l = D.leads.find(x => x.username === u);
+  if (l && l.claim && l.claim.expires >= TODAY && l.claim.by !== me()) return ['claimed', `Claimed by ${nameOf(l.claim.by)} until ${dayLabel(l.claim.expires)}`, '--rev'];
+  if (D.agency.has(u)) return ['agency', 'With another agency: goes to Partnership', '--rev'];
+  if (D.pastLinked.has(u)) return ['renewal', 'Linked with us before: allowed, counts as Renewal', '--ops'];
+  if (l) return ['lead', `Already a lead (${STAGE[l.stage][0]})`, '--ops'];
+  return ['new', 'New: safe to add', '--growth'];
+}
+const workDaysLeft = l => Math.max(0, l.claim.day + 4 - TODAY); // 3 working days, roughly 4 calendar days
+PAGES['Creator Mining'] = () => {
+  const mine = me(), who = ui.tab.mw || (mine ? 'me' : 'all');
+  const L = D.leads.filter(l => inScope({...l, pod: l.level}) && (who === 'all' || (who === 'me' ? l.assigned === mine : who === 'none' ? !l.assigned : l.assigned === who)));
+  const openClaims = mine ? D.leads.filter(l => l.claim && l.claim.by === mine && l.claim.expires >= TODAY && !['onboarded', 'not_interested', 'no_response'].includes(l.stage)).length : null;
+  const input = h('input', {placeholder: '@username', 'aria-label': 'TikTok username', style: 'flex:1;min-width:200px'}), res = h('div', {class: 'mining-res'}, h('span', {class: 'muted small'}, 'Type a username to check it against the roster, renamed accounts, open claims, agencies and past links.'));
+  const ind = h('select', {'aria-label': 'Industry'}, INDUSTRIES.map(i => h('option', {}, i))), city = h('select', {'aria-label': 'City'}, CITIES.map(c => h('option', {}, c)));
+  input.oninput = () => { const r = dupCheck(input.value); put(res, r ? chip(r[1], r[2]) : h('span', {class: 'muted small'}, 'Keep typing…')); };
+  const add = h('button', {class: 'btn primary', disabled: !may('claim'), onclick: () => { const r = dupCheck(input.value); if (!r) return toast('Type a TikTok username first.'); if (!['new', 'renewal'].includes(r[0])) return toast('Not added: ' + r[1] + '.');
+    const u = input.value.trim().toLowerCase().replace(/^@?/, '@'); D.leads.unshift({id: 'l' + Date.now(), username: u, industry: ind.value, city: city.value, level: 'L1', followers: 0, source: 'Manual', fit: 50, stage: 'mined', assigned: null, claim: null, foundDay: TODAY, renewal: r[0] === 'renewal'});
+    log(`Added lead ${u}`); toast(`${u} added to the mined list.`); render(); }}, 'Add lead');
+  const act = (l, stage, text) => { l.stage = stage; if (l.claim) l.claim.contacted = true; log(`${text} ${l.username}`); toast(`${l.username}: ${STAGE[stage][0]}.`); render(); };
+  const actions = row => {
+    const l = D.leads.find(x => x.id === row.id); // table rows are copies; change the real lead
+    if (!may('work')) return null;
+    const holder = l.claim && l.claim.expires >= TODAY ? l.claim.by : null, mineL = holder && holder === mine;
+    if (!holder) return may('claim') ? h('button', {class: 'btn sm primary', disabled: openClaims >= 60, title: openClaims >= 60 ? 'You hold 60 open claims' : '', onclick: () => { const by = mine || l.assigned || 'n0'; l.claim = {by, day: TODAY, expires: TODAY + 14, contacted: false}; l.assigned = by; l.stage = 'claimed'; log(`Claimed ${l.username}`); toast(`${l.username} is yours for 14 days. Log first contact within 3 working days.`); render(); }}, 'Claim')
+      : h('span', {class: 'muted small'}, 'Interns work claimed leads');
+    if (!mineL && !may('assign')) return h('span', {class: 'muted small'}, `Held by ${nameOf(holder)}`);
+    const next = {claimed: ['contacted', 'Log contact'], contacted: ['interested', 'Interested'], interested: ['invited', 'Invite sent'], invited: ['onboarded', 'Log onboarding']}[l.stage];
+    if (!next) return null;
+    if (next[0] === 'onboarded') return may('onboard') ? h('button', {class: 'btn sm primary', onclick: () => onboardForm(null, l)}, next[1]) : h('span', {class: 'muted small'}, 'A CA logs the onboarding');
+    if (next[0] === 'invited' && role() === 'intern') return h('span', {class: 'muted small'}, 'Handed to a CA');
+    return h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm primary', onclick: () => act(l, next[0], next[1] + ':')}, next[1]),
+      l.stage === 'contacted' ? h('button', {class: 'btn sm', onclick: () => act(l, 'not_interested', 'Not interested:')}, 'No') : null);
+  };
+  const due = mine ? D.leads.filter(l => l.claim && l.claim.by === mine && !l.claim.contacted && l.claim.expires >= TODAY) : [];
+  return [h('div', {class: 'grid'}, kpi('Leads in view', N(L.length), {c: '--growth'}), kpi('Not assigned', N(D.leads.filter(l => !l.assigned).length)),
+      mine ? kpi('My open claims', `${openClaims} / 60`, {sub: 'claims last 14 days'}) : kpi('Open claims', N(D.leads.filter(l => l.claim && l.claim.expires >= TODAY).length)),
+      mine ? kpi('First contact due', N(due.length), {sub: 'within 3 working days of claiming', c: due.length ? '--rev' : '--growth'}) : kpi('Interested', N(D.leads.filter(l => l.stage === 'interested').length)),
+      kpi('Average fit score', String(Math.round(sum(L, l => l.fit) / Math.max(1, L.length))), {sub: 'out of 100'})),
+    row(
+      card('Mining box', 'Checked in this order: our roster, renamed accounts, open claims, other agencies, linked before. One phone on several accounts is fine.', h('div', {class: 'stack', style: 'gap:10px'}, h('div', {class: 'tools', style: 'margin:0'}, input, ind, city, add), res,
+        may('claim') ? null : h('div', {class: 'muted small'}, 'Interns log contacts on leads the CA Lead assigned to them.')))),
+    row(card('Lead list', mine ? `Working as ${nameOf(mine)}.` : 'All leads. Claims last 14 days; first contact within 3 working days or the claim drops back.', table([
+        {k: 'username', label: 'Lead', render: l => person(l.username, `${l.city} · ${l.industry}`)}, {k: 'level', label: 'Level'}, {k: 'fit', label: 'Fit', render: l => meterRow(l.fit, l.fit >= 75 ? '--growth' : '--base', String(l.fit), 46)},
+        {k: 'stage', label: 'Stage', render: l => chip(...STAGE[l.stage])}, {k: 'assignedName', label: 'Assigned to'},
+        {k: 'claimLeft', label: 'Claim', render: l => !l.claim ? h('span', {class: 'muted small'}, '-') : l.claim.expires < TODAY ? chip('Expired', '--muted', false) : !l.claim.contacted ? chip(`Contact in ${workDaysLeft(l)} d`, workDaysLeft(l) <= 1 ? '--rev' : '--ops', false) : h('span', {class: 'small'}, `${l.claim.expires - TODAY} days left`)},
+        {k: 'act', label: '', fixed: true, render: actions}], L.map(l => ({...l, assignedName: l.assigned ? nameOf(l.assigned) : 'Not assigned', claimLeft: l.claim ? l.claim.expires : 0, _rec: l.id})), {sortKey: 'fit', pageSize: 12,
+        tools: seg([...(mine ? [['me', 'Me']] : []), ['all', 'All'], ['none', 'Not assigned']], who, v => { ui.tab.mw = v; render(); }, 'Assigned to')})))];
+};
+
+// ---------- onboarding form: phone and industry are required ----------
+function onboardForm(o, lead) {
+  o = o && D.onb.find(x => x.id === o.id); lead = lead && D.leads.find(x => x.id === lead.id); // table rows are copies
+  const f = o ? {...o} : {username: lead ? lead.username : '', level: lead ? lead.level : 'L1', industry: lead ? lead.industry : '', city: lead ? lead.city : 'Bandung', phone: '', day: TODAY, gmv: 0, agency: 'Adtree Digital Indonesia'};
+  const m = $('#modal'), err = h('div', {class: 'callout', style: 'display:none;background:var(--bad-soft,#f8e4e1);margin:0'});
+  const inp = (k2, label, attrs = {}) => h('label', {}, label, h('input', {value: f[k2] ?? '', ...attrs, oninput: e => { f[k2] = e.target.value; }}));
+  const sel = (k2, label, opts) => h('label', {}, label, h('select', {onchange: e => { f[k2] = e.target.value; }}, opts.map(x => h('option', {selected: f[k2] === x, value: x}, x || 'Choose…'))));
+  const progs = D.programs, deal = {on: false, program: '', amount: 0, v: 5, ls: 0, ps: 0};
+  const dealBox = h('div', {class: 'form', style: 'display:none'}, h('label', {class: 'wide'}, 'Program', h('select', {onchange: e => { deal.program = e.target.value; }}, h('option', {value: ''}, 'Choose…'), progs.map(p => h('option', {value: p.id}, `${p.name} · ${p.industry} ${p.level} · ${Rp(p.price)}`)))),
+    h('label', {}, 'Bound cash (Rp)', h('input', {type: 'number', min: 0, step: 50000, oninput: e => { deal.amount = +e.target.value; }})), h('label', {}, 'Videos', h('input', {type: 'number', min: 0, value: 5, oninput: e => { deal.v = +e.target.value; }})),
+    h('label', {}, 'LIVE sessions', h('input', {type: 'number', min: 0, value: 0, oninput: e => { deal.ls = +e.target.value; }})), h('label', {}, 'Photo slides', h('input', {type: 'number', min: 0, value: 0, oninput: e => { deal.ps = +e.target.value; }})));
+  const save = () => {
+    const miss = [!f.username && 'TikTok username', !/^0?8\d{7,12}$/.test(String(f.phone).replace(/\D/g, '')) && 'a WhatsApp number (starts with 08)', !f.industry && 'industry'].filter(Boolean);
+    if (miss.length) { err.style.display = 'block'; err.textContent = `Add ${miss.join(', ')}. A record without phone and industry does not count.`; return; }
+    if (deal.on && (!deal.program || !deal.amount)) { err.style.display = 'block'; err.textContent = 'Pick a program and an amount for the deal, or switch the deal off.'; return; }
+    if (o) { Object.assign(o, {phone: f.phone, industry: f.industry, complete: true, pod: podOf(o.level, f.industry)}); log(`Completed record ${o.username}`); toast(`${o.username}: record complete, it now counts.`); }
+    else {
+      const id = 'o' + Date.now(), lvl = f.level, rec = {id, team: me() || 'n0', day: +f.day || TODAY, username: f.username.trim().replace(/^@?/, '@'), level: lvl, pod: podOf(lvl, f.industry), industry: f.industry, city: f.city, phone: f.phone, gmv: +f.gmv || 0, agency: f.agency, status: 'pending', linkedDay: null, firstPost: null, posts: 0, complete: true};
+      D.onb.unshift(rec); if (lead) lead.stage = 'onboarded';
+      if (deal.on) { const p = D.programs.find(x => x.id === deal.program); D.deals.unshift({id: 'd' + Date.now(), onb: id, program: p.id, amount: deal.amount, scope: {v: deal.v, ls: deal.ls, ps: deal.ps}, delivered: {v: 0, ls: 0}, stage: 'proposed', above: deal.amount > p.price}); rec.deal = D.deals[0].id; }
+      log(`Logged onboarding ${rec.username}${deal.on ? ' with a deal' : ''}`); toast(`${rec.username} logged. It is confirmed once Total Creator Data shows it as Linked.`);
+    }
+    m.close(); render();
+  };
+  put(m, h('div', {class: 'dlg'}, h('h2', {}, o ? 'Complete the record' : 'Log onboarding'), h('p', {class: 'muted small', style: 'margin:0'}, 'Phone and industry are required. Confirmation comes from Total Creator Data, uploaded daily by BI.'),
+    h('div', {class: 'form'}, inp('username', 'TikTok username', {disabled: !!o}), sel('level', 'Level at join', LEVELS), sel('industry', 'Industry *', ['', ...INDUSTRIES]), sel('city', 'City', CITIES),
+      inp('phone', 'WhatsApp number *', {placeholder: '08…', inputmode: 'tel'}), inp('day', 'Join date (day of October)', {type: 'number', min: 1, max: TODAY, disabled: !!o}), inp('gmv', 'GMV at join (Rp)', {type: 'number', min: 0, disabled: !!o}), sel('agency', 'Agency', D.agencies.map(a => a.name))),
+    o ? null : h('label', {class: 'radio'}, h('input', {type: 'checkbox', onchange: e => { deal.on = e.target.checked; dealBox.style.display = deal.on ? 'grid' : 'none'; }}), 'Add a deal (bound cash for a scope of work)'), o ? null : dealBox, err,
+    h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: save}, o ? 'Save' : 'Log onboarding'))));
+  m.showModal();
+}
+
+PAGES['Impact Calculator'] = () => {
+  const f = ui.calc ||= {industry: 'Dining SV', level: 'L3', video: 40e6, share: 35, live: 0, bound: 1.5e6, fee: 0, months: 6, hurdle: 10};
+  const out = h('div', {class: 'stack'});
+  const num = (k2, label, step = 500000) => h('label', {class: 'field'}, label, h('input', {type: 'number', min: 0, step, value: f[k2], oninput: e => { f[k2] = Math.max(0, +e.target.value || 0); draw(); }}));
+  const draw = () => {
+    const prog = D.programs.find(p => p.industry === f.industry && (p.level === f.level || (p.level === 'L2+' && LEVELS.indexOf(f.level) >= 2)));
+    const RAMP = [0.6, 0.85, 1, 1, 1, 1], full = f.video * f.share / 100 + f.live;
+    const gmv = sum(RAMP.slice(0, f.months), r => full * r), cost = f.bound + f.fee * f.months, ratio = cost ? gmv / cost : 0;
+    const verdict = !cost ? ['Enter a payment', '--muted'] : ratio >= f.hurdle ? ['Worth it', '--growth'] : ratio >= f.hurdle * 0.7 ? ['Borderline, negotiate', '--ops'] : ['Not worth it at this price', '--rev'];
+    const above = prog && f.bound > prog.price;
+    put(out, h('div', {class: 'verdict', style: `--c:var(${verdict[1]})`}, h('div', {}, h('div', {class: 'small muted'}, `${f.months}-month forecast`), h('div', {class: 'verdict-v'}, verdict[0]),
+        h('div', {class: 'small muted'}, cost ? `Rp 1 paid brings ${ratio.toFixed(1)} of GMV that counts. Your minimum is ${f.hurdle}×.` : 'Add bound cash or a monthly fee.')), h('div', {class: 'verdict-n'}, h('b', {}, cost ? ratio.toFixed(1) + '×' : '-'), h('span', {class: 'small muted'}, 'GMV per Rp 1'))),
+      h('div', {class: 'grid'}, kpi('GMV that counts / month', Rp(full), {sub: 'LIVE in full, new videos only', c: '--growth'}), kpi('Forecast GMV', Rp(gmv), {sub: 'months 1 and 2 at 60% and 85%'}), kpi('Total paid', Rp(cost)),
+        kpi('Program price', prog ? Rp(prog.price) : 'No program', {sub: prog ? `${prog.name} · ${prog.industry} ${prog.level}` : 'for this industry and level'}), kpi('Approval', above ? 'Head' : 'CA Lead', {sub: above ? 'above the program price' : 'within the program price', c: above ? '--rev' : '--growth'})),
+      card('Most you should offer', `Keeps the deal at ${f.hurdle}× or better.`, h('div', {class: 'offer'}, h('div', {}, h('div', {class: 'small muted'}, 'Bound cash, one time'), h('b', {}, Rp(Math.max(0, gmv / f.hurdle - f.fee * f.months)))),
+        h('div', {}, h('div', {class: 'small muted'}, 'Monthly fee instead'), h('b', {}, Rp(Math.max(0, (gmv / f.hurdle - f.bound) / f.months)))),
+        h('div', {}, h('button', {class: 'btn primary', disabled: !may('onboard'), onclick: () => { D.checks.unshift({id: 'c' + Date.now(), team: me() || 'n0', handle: '(check)', industry: f.industry, level: f.level, video: f.video, share: f.share, live: f.live, bound: f.bound, fee: f.fee, months: f.months, ratio, verdict: verdict[0]}); log(`Saved an impact check (${verdict[0]})`); toast('Saved. Use it when you log the onboarding with a deal.'); render(); }}, 'Save check')))));
+  };
+  draw();
+  return [h('div', {class: 'grid g12'}, card('What the creator shared', 'Last month’s numbers from the creator. Updates as you type.', h('div', {class: 'stack fillv'},
+      h('div', {class: 'form'}, h('label', {class: 'field'}, 'Industry', h('select', {onchange: e => { f.industry = e.target.value; draw(); }}, INDUSTRIES.map(i => h('option', {selected: i === f.industry}, i)))),
+        h('label', {class: 'field'}, 'Level', h('select', {onchange: e => { f.level = e.target.value; draw(); }}, LEVELS.slice(1).map(l => h('option', {selected: l === f.level}, l))))),
+      h('div', {class: 'form'}, num('video', 'Video GMV / month (Rp)'), num('live', 'LIVE GMV / month (Rp)')),
+      h('label', {class: 'field'}, `Share of video GMV from new videos (${f.share}%)`, h('input', {type: 'range', min: 0, max: 100, step: 5, value: f.share, oninput: e => { f.share = +e.target.value; e.target.parentElement.firstChild.textContent = `Share of video GMV from new videos (${f.share}%)`; draw(); }})),
+      h('div', {class: 'form'}, num('bound', 'Bound cash (Rp)', 50000), num('fee', 'Monthly fee (Rp)', 50000)),
+      h('div', {class: 'form'}, h('label', {class: 'field'}, 'Months', seg([[3, '3'], [6, '6']], f.months, v => { f.months = v; render(); }, 'Months')), num('hurdle', 'Minimum GMV per Rp 1', 1)),
+      h('div', {class: 'callout good', style: 'margin-top:auto'}, 'Old videos keep selling but are never new GMV for us, so only the new-video share and LIVE count.'))), out),
+    row(card('Saved checks', null, table([{k: 'teamName', label: 'Checked by'}, {k: 'industry', label: 'Industry'}, {k: 'level', label: 'Level'}, {k: 'bound', label: 'Bound cash', num: true, fmt: Rp}, {k: 'ratio', label: 'GMV per Rp 1', num: true, fmt: v => v ? v.toFixed(1) + '×' : '-'},
+      {k: 'verdict', label: 'Verdict'}], D.checks.filter(c => personScope(c.team)).map(c => ({...c, teamName: nameOf(c.team)})), {search: false})))];
+};
+
+PAGES['Partnership'] = () => {
+  const rows = D.agencies.map(a => { const l = ONB().filter(o => o.agency === a.name), conf = l.filter(o => o.status === 'confirmed');
+    return {...a, n: l.length, active: pct(conf.filter(o => o.posts > 0).length, conf.length), l2: l.filter(o => LEVELS.indexOf(o.level) >= 2).length, gmv: sum(l, o => o.gmv)}; });
+  const edit = a => { const m = $('#modal'), f = {...a};
+    put(m, h('div', {class: 'dlg'}, h('h2', {}, `Terms · ${a.name}`), h('div', {class: 'form'}, ...[['fee', 'Fee (% of GMV)', 'number'], ['start', 'Contract start'], ['end', 'Contract end'], ['contact', 'Contact person']].map(([k2, l, t]) => h('label', {}, l, h('input', {type: t || 'text', value: f[k2], oninput: e => { f[k2] = t ? +e.target.value : e.target.value; }})))),
+      h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => { Object.assign(a, f); log(`Updated terms for ${a.name}`); m.close(); render(); }}, 'Save')))); m.showModal(); };
+  return [h('div', {class: 'grid'}, kpi('Agencies', N(rows.length - 1), {sub: 'partners besides our own', c: '--base'}), kpi('Onboarded via partners', N(sum(rows.filter(r => !r.own), r => r.n))), kpi('Via Adtree', N(rows.find(r => r.own).n))),
+    row(card('Agency partners', 'Creators who came through each agency. Rebind creators count here, not toward CA targets.', table([{k: 'name', label: 'Agency'}, {k: 'n', label: 'Onboarded', num: true}, {k: 'active', label: 'Active rate', render: r => meterRow(r.active, '--growth', null, 60)},
+      {k: 'l2', label: 'L2 and up', num: true}, {k: 'gmv', label: 'GMV at join', num: true, fmt: Rp}, {k: 'fee', label: 'Fee', num: true, fmt: v => v ? v + '%' : '-'}, {k: 'end', label: 'Contract ends'},
+      {k: 'e', label: '', fixed: true, render: r => !r.own && may('terms') ? h('button', {class: 'btn sm', onclick: () => edit(D.agencies.find(a => a.name === r.name))}, 'Edit terms') : null}], rows, {search: false, sortKey: 'n'})))];
+};
+
+PAGES['Bound Cash & Programs'] = () => {
+  const deals = D.deals.map(d => { const o = D.onb.find(x => x.id === d.onb), p = D.programs.find(x => x.id === d.program); return {...d, o, p, creator: o.username, teamName: nameOf(o.team), team: o.team, progName: `${p.name} · ${p.industry} ${p.level}`,
+    pctDone: pct(d.delivered.v + d.delivered.ls, d.scope.v + d.scope.ls), _rec: o.id}; }).filter(d => personScope(d.team) && inScope(d.o));
+  const used = p => sum(D.deals.filter(d => d.program === p.id && d.stage !== 'proposed'), d => d.amount);
+  const next = {proposed: 'approved', approved: 'delivering', delivering: 'delivered', delivered: 'released', released: 'paid'};
+  const stepBtn = d => {
+    const p = d.p, over = used(p) + d.amount > p.budget;
+    if (d.stage === 'proposed') { const who = d.above ? 'head' : 'ca_lead'; if (role() !== who && role() !== 'admin') return h('span', {class: 'muted small'}, d.above ? 'Head approves' : 'CA Lead approves');
+      return h('button', {class: 'btn sm primary', disabled: over, title: over ? 'Program budget used up' : '', onclick: () => { const x = D.deals.find(y => y.id === d.id); x.stage = 'approved'; log(`Approved deal ${d.creator} (${Rp(d.amount)})`); toast('Deal approved.'); render(); }}, over ? 'No budget left' : 'Approve'); }
+    if (d.stage === 'delivered' && (role() === 'ops' || role() === 'admin')) return h('button', {class: 'btn sm primary', onclick: () => { D.deals.find(y => y.id === d.id).stage = 'released'; log(`Released payment ${d.creator}`); render(); }}, 'Release');
+    if (d.stage === 'released' && (role() === 'finance' || role() === 'admin')) return h('button', {class: 'btn sm primary', onclick: () => { D.deals.find(y => y.id === d.id).stage = 'paid'; log(`Paid ${d.creator}`); render(); }}, 'Mark paid');
+    return d.stage === 'paid' ? null : h('span', {class: 'muted small'}, {approved: 'Waiting for posts', delivering: 'Posting', delivered: 'Ops releases', released: 'Finance pays'}[d.stage]);
+  };
+  const ST = {proposed: ['Proposed', '--muted'], approved: ['Approved', '--base'], delivering: ['Delivering', '--ops'], delivered: ['Delivered', '--growth'], released: ['Released', '--growth'], paid: ['Paid', '--growth']};
+  const addProg = () => { const m = $('#modal'), f = {name: '', industry: 'Dining SV', level: 'L2', slots: 50, price: 150000, requirement: '', scope: '', budget: 5e6};
+    put(m, h('div', {class: 'dlg'}, h('h2', {}, 'New program'), h('div', {class: 'form'}, ...[['name', 'Name'], ['requirement', 'Requirement'], ['scope', 'Scope of work'], ['slots', 'Slots', 'number'], ['price', 'Price (Rp)', 'number'], ['budget', 'Budget (Rp)', 'number']].map(([k2, l, t]) => h('label', {}, l, h('input', {type: t || 'text', value: f[k2], oninput: e => { f[k2] = t ? +e.target.value : e.target.value; }}))),
+      h('label', {}, 'Industry', h('select', {onchange: e => { f.industry = e.target.value; }}, INDUSTRIES.map(i => h('option', {}, i)))), h('label', {}, 'Level', h('select', {onchange: e => { f.level = e.target.value; }}, ['L1', 'L2', 'L3', 'L4', 'L2+'].map(i => h('option', {selected: i === 'L2'}, i))))),
+      h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => { if (!f.name.trim()) return toast('Give the program a name.'); D.programs.push({id: 'g' + Date.now(), owner: 'Ops', source: 'Ops', ...f}); log(`Added program ${f.name}`); m.close(); render(); }}, 'Add')))); m.showModal(); };
+  const total = sum(D.programs, p => p.budget), usedAll = sum(D.programs, used);
+  return [h('div', {class: 'grid'}, kpi('Program budget', Rp(total), {sub: `${D.programs.length} programs this month`, c: '--rev'}), kpi('Used', Rp(usedAll), {sub: pct(usedAll, total) + '% of budget'}),
+      kpi('Waiting for approval', N(deals.filter(d => d.stage === 'proposed').length), {sub: `${deals.filter(d => d.stage === 'proposed' && d.above).length} need the Head`}),
+      kpi('Delivered, to release', N(deals.filter(d => d.stage === 'delivered').length)), kpi('Paid', Rp(sum(deals.filter(d => d.stage === 'paid'), d => d.amount)), {c: '--growth'})),
+    row(card('Programs this month', 'The incentive programs (“weapons”) and how much of each budget is used.', table([{k: 'name', label: 'Program'}, {k: 'industry', label: 'Industry'}, {k: 'level', label: 'Level'}, {k: 'price', label: 'Price', num: true, fmt: Rp},
+      {k: 'slotsUsed', label: 'Slots', num: true, fmt: (v, p) => `${v} / ${p.slots}`}, {k: 'requirement', label: 'Requirement'}, {k: 'scope', label: 'Scope'}, {k: 'usedPct', label: 'Budget used', render: p => meterRow(p.usedPct, p.usedPct > 90 ? '--rev' : p.usedPct > 60 ? '--ops' : '--growth', `${p.usedPct}% of ${Rp(p.budget)}`, 70)}],
+      D.programs.map(p => ({...p, slotsUsed: D.deals.filter(d => d.program === p.id && d.stage !== 'proposed').length, usedPct: pct(used(p), p.budget)})), {search: false, pageSize: 8}),
+      may('programs') ? h('button', {class: 'btn sm primary', onclick: addProg}, 'New program') : null)),
+    row(card('Deals', 'Bound cash is paid to the creator after the scope of work is delivered. Within the program price the CA Lead approves; above it, the Head.', table([{k: 'creator', label: 'Creator', render: d => person(d.creator, d.teamName)}, {k: 'progName', label: 'Program'},
+      {k: 'amount', label: 'Amount', num: true, render: d => h('span', {}, Rp(d.amount), d.above ? h('span', {class: 'chip', style: '--tc:var(--rev);margin-left:6px'}, 'above price') : null)},
+      {k: 'scopeTxt', label: 'Scope'}, {k: 'pctDone', label: 'Delivered', render: d => meterRow(d.pctDone, d.pctDone >= 100 ? '--growth' : '--ops', `${d.delivered.v + d.delivered.ls} / ${d.scope.v + d.scope.ls}`, 60)},
+      {k: 'stage', label: 'Stage', render: d => chip(...ST[d.stage])}, {k: 'act', label: '', fixed: true, render: stepBtn}],
+      deals.map(d => ({...d, scopeTxt: [d.scope.v && `${d.scope.v} videos`, d.scope.ls && `${d.scope.ls} LIVE`, d.scope.ps && `${d.scope.ps} photo slides`].filter(Boolean).join(' + ')})), {sortKey: 'amount', pageSize: 10})))];
+};
+
+PAGES['New Active Rate'] = () => {
+  const L = counted(ONB()).filter(o => o.status === 'confirmed');
+  const ar = (l, d) => { const e = l.filter(o => TODAY - o.linkedDay >= d); return e.length ? pct(e.filter(o => o.firstPost != null && o.firstPost <= d).length, e.length) : null; };
+  const heat = v => v == null ? h('span', {class: 'muted small'}, 'too early') : chip(v + '%', v >= 60 ? '--growth' : v >= 35 ? '--ops' : '--rev', false);
+  const cols = label => [{k: 'name', label}, {k: 'n', label: 'Linked', num: true}, ...[7, 14].map(d => ({k: 'd' + d, label: `Active in ${d} days`, num: true, render: r => heat(r['d' + d])}))];
+  const weeks = [['1 to 7 Oct', 1, 7], ['8 to 14 Oct', 8, 14], ['15 to 20 Oct', 15, 20]].map(([n, a, b]) => { const l = L.filter(o => o.linkedDay >= a && o.linkedDay <= b); return {name: n, n: l.length, d7: ar(l, 7), d14: ar(l, 14)}; });
+  const people = D.team.filter(t => t.type !== 'ca_lead' && personScope(t.id)).map(t => { const l = L.filter(o => o.team === t.id); return {name: t.name, n: l.length, d7: ar(l, 7), d14: ar(l, 14)}; }).filter(r => r.n);
+  const idle = L.filter(o => o.firstPost == null);
+  return [h('div', {class: 'grid'}, kpi('Linked creators', N(L.length), {c: '--growth'}), kpi('Active within 7 days', (ar(L, 7) ?? 0) + '%'), kpi('Active within 14 days', (ar(L, 14) ?? 0) + '%'),
+      kpi('No post yet', N(idle.length), {c: '--rev'}), kpi('Deals fully delivered', pct(D.deals.filter(d => ['delivered', 'released', 'paid'].includes(d.stage)).length, D.deals.filter(d => d.stage !== 'proposed').length) + '%')),
+    h('div', {class: 'grid g2 mt'}, card('By link week', 'How fast each week’s creators started posting.', table(cols('Linked in'), weeks, {search: false})), card('By person', null, table(cols('Name'), people, {search: false, sortKey: 'n', pageSize: 8}))),
+    row(card('Linked, no post yet', 'Longest wait first. A reminder goes out as a WhatsApp template.', table([{k: 'username', label: 'Creator', render: o => person(o.username, `${o.level} · ${o.industry}`)}, {k: 'teamName', label: 'Onboarded by'},
+      {k: 'linkedDay', label: 'Linked', num: true, fmt: dayLabel}, {k: 'wait', label: 'Days waiting', num: true}, {k: 'r', label: '', fixed: true, render: o => may('work') ? h('button', {class: 'btn sm', onclick: () => { log(`Sent reminder to ${o.username}`); toast(`Reminder sent to ${o.username}.`); }}, 'Send reminder') : null}],
+      idle.map(o => ({...onbRow(o), wait: TODAY - o.linkedDay})), {sortKey: 'wait'})))];
+};
+
+// ---------- setup: team names, targets, assignment, activity ----------
+PAGES['Setup'] = () => {
+  const tabs = [...(may('team') ? [['team', 'Team']] : []), ['targets', 'Targets'], ...(may('assign') ? [['assign', 'Assign leads']] : []), ['activity', 'Activity']];
+  const tab = tabs.some(t => t[0] === ui.tab.setup) ? ui.tab.setup : tabs[0][0];
+  const head = h('div', {class: 'tools'}, seg(tabs, tab, v => { ui.tab.setup = v; render(); }, 'Setup section'));
+  return [head, ...({team: setupTeam, targets: setupTargets, assign: setupAssign, activity: setupActivity}[tab])()];
+};
+function nameForm(t) {
+  const m = $('#modal'), f = t ? {...t, emails: t.emails.join(', '), cities: [...t.cities], industries: [...t.industries]} : {name: '', type: 'intern', emails: 'intern@sample.id', pod: 'L1', cities: [], industries: [], notes: '', active: true};
+  const multi = (k2, opts) => h('div', {class: 'checks'}, opts.map(o => h('label', {class: 'radio'}, h('input', {type: 'checkbox', checked: f[k2].includes(o), onchange: e => { f[k2] = e.target.checked ? [...f[k2], o] : f[k2].filter(x => x !== o); }}), o)));
+  const err = h('div', {class: 'muted small', style: 'color:var(--rev)'});
+  put(m, h('div', {class: 'dlg'}, h('h2', {}, t ? `Edit ${t.name}` : 'Add a name'), h('p', {class: 'muted small', style: 'margin:0'}, 'A name is a person, not a login. All interns share one login email; each intern gets their own name here.'),
+    h('div', {class: 'form'}, h('label', {}, 'Name', h('input', {value: f.name, oninput: e => { f.name = e.target.value; }})),
+      h('label', {}, 'Type', h('select', {onchange: e => { f.type = e.target.value; }}, [['fte_ca', 'FTE CA'], ['intern', 'Intern']].map(([v, l]) => h('option', {value: v, selected: f.type === v}, l)))),
+      h('label', {class: 'wide'}, 'Login emails (comma separated)', h('input', {value: f.emails, oninput: e => { f.emails = e.target.value; }})),
+      h('label', {}, 'Pod this month', h('select', {onchange: e => { f.pod = e.target.value; }}, PODS.map(p => h('option', {selected: f.pod === p}, p)))), h('label', {}, 'Notes', h('input', {value: f.notes, oninput: e => { f.notes = e.target.value; }})),
+      h('div', {class: 'wide field'}, 'Cities (none ticked = all)', multi('cities', CITIES)), h('div', {class: 'wide field'}, 'Industries (none ticked = all)', multi('industries', INDUSTRIES))), err,
+    h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
+      const emails = f.emails.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+      if (!f.name.trim()) return void (err.textContent = 'Give the name.');
+      if (D.team.some(x => x !== t && x.name.toLowerCase() === f.name.trim().toLowerCase())) return void (err.textContent = 'That name is already used.');
+      if (!emails.length || emails.some(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))) return void (err.textContent = 'Add at least one valid login email.');
+      const rec = {name: f.name.trim(), type: f.type, emails, pod: f.pod, cities: f.cities, industries: f.industries, notes: f.notes};
+      if (t) { log(t.name !== rec.name ? `Renamed ${t.name} to ${rec.name}` : `Edited ${rec.name}`); Object.assign(t, rec); } else { D.team.push({id: 'x' + Date.now(), active: true, levels: [], ...rec}); log(`Added name ${rec.name}`); }
+      m.close(); render(); }}, 'Save'))));
+  m.showModal();
+}
+function setupTeam() {
+  const rows = D.team.map(t => ({...t, emailsTxt: t.emails.join(', '), coverage: [t.cities.join(', ') || 'All cities', t.industries.join(', ') || 'All industries'].join(' · '),
+    open: D.leads.filter(l => l.assigned === t.id && !['onboarded', 'not_interested', 'no_response'].includes(l.stage)).length, onb: counted(D.onb.filter(o => o.team === t.id)).length,
+    shared: t.emails.some(e => D.team.filter(x => x.emails.includes(e)).length > 1)}));
+  const toggle = t => { t.active = !t.active; if (!t.active) D.leads.forEach(l => { if (l.assigned === t.id && !['onboarded'].includes(l.stage)) { l.assigned = null; if (l.claim) l.claim.expires = TODAY - 1; } }); log(`${t.active ? 'Switched on' : 'Switched off'} ${t.name}`); toast(t.active ? `${t.name} is active.` : `${t.name} switched off. Their open leads went back to Not assigned; credit stays.`); render(); };
+  const shared = D.team.filter(t => t.emails.includes('intern@sample.id'));
+  return [h('div', {class: 'grid'}, kpi('FTE CAs', N(D.team.filter(t => t.type === 'fte_ca' && t.active).length), {c: '--base'}), kpi('Interns', N(D.team.filter(t => t.type === 'intern' && t.active).length), {sub: 'one shared login'}),
+      kpi('Switched off', N(D.team.filter(t => !t.active).length)), kpi('Leads not assigned', N(D.leads.filter(l => !l.assigned).length), {c: '--ops'})),
+    row(card('Team names', 'Created by the CA Lead and Admin. Leads, targets, claims and onboardings are given to names.', table([{k: 'name', label: 'Name', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, t.name), h('div', {class: 'muted small'}, t.notes))},
+      {k: 'type', label: 'Type', render: t => chip(t.type === 'intern' ? 'Intern' : t.type === 'fte_ca' ? 'FTE CA' : 'CA Lead', t.type === 'intern' ? '--ops' : '--base', false)}, {k: 'emailsTxt', label: 'Login', render: t => h('span', {class: 'small'}, t.emailsTxt, t.shared ? h('span', {class: 'muted'}, ' (shared)') : null)},
+      {k: 'pod', label: 'Pod'}, {k: 'coverage', label: 'Coverage', render: t => h('span', {class: 'small muted', style: 'white-space:normal'}, t.coverage)}, {k: 'open', label: 'Open leads', num: true}, {k: 'onb', label: 'Onboarded', num: true},
+      {k: 'active', label: 'Active', render: t => chip(t.active ? 'Active' : 'Off', t.active ? '--growth' : '--muted', false)},
+      {k: 'e', label: '', fixed: true, render: r => r.type === 'ca_lead' ? null : h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm', onclick: () => nameForm(D.team.find(x => x.id === r.id))}, 'Edit'), h('button', {class: 'btn sm', onclick: () => toggle(D.team.find(x => x.id === r.id))}, r.active ? 'Switch off' : 'Switch on'))}],
+      rows, {sortKey: 'type', pageSize: 12}), h('button', {class: 'btn sm primary', onclick: () => nameForm(null)}, 'Add a name'))),
+      row(card('Shared intern login', 'intern@sample.id is linked to these names. After signing in, an intern picks one under “Who is working?”.', h('div', {}, shared.map(t => h('div', {class: 'status-row'}, avatar(t.name), h('span', {class: 'grow'}, t.name, h('div', {class: 'muted small'}, `${t.pod} · ${counted(D.onb.filter(o => o.team === t.id)).length} onboarded`)), chip(t.active ? 'Active' : 'Off', t.active ? '--growth' : '--muted', false))))))];
+}
+function targetForm(t, month) {
+  const m = $('#modal'), f = t ? {...t} : {metric: 'onboarded', value: 10, unit: 'count', note: '', pod: '', industry: '', city: '', team: '', d0: 1, d1: month === 'Nov' ? 30 : DAYS, month, status: 'draft'};
+  const sel = (k2, label, opts) => h('label', {}, label, h('select', {onchange: e => { f[k2] = e.target.value; }}, opts.map(([v, l]) => h('option', {value: v, selected: String(f[k2]) === String(v)}, l))));
+  put(m, h('div', {class: 'dlg'}, h('h2', {}, t ? 'Edit target line' : 'New target line'), h('p', {class: 'muted small', style: 'margin:0'}, 'Metric + scope + period + value + note. Empty scope means the whole team.'),
+    h('div', {class: 'form'}, sel('metric', 'Metric', Object.entries(METRICS)), sel('unit', 'Unit', [['count', 'Count'], ['percent', 'Percent'], ['per_day', 'Per day']]),
+      sel('pod', 'Level / pod', [['', 'All'], ...PODS.map(p => [p, p])]), sel('industry', 'Industry', [['', 'All'], ...INDUSTRIES.map(i => [i, i])]), sel('city', 'City', [['', 'All'], ...CITIES.map(c => [c, c])]),
+      sel('team', 'Person', [['', 'Whole team'], ...D.team.filter(x => x.type !== 'ca_lead' && x.active).map(x => [x.id, x.name])]),
+      h('label', {}, 'From day', h('input', {type: 'number', min: 1, max: 31, value: f.d0, oninput: e => { f.d0 = +e.target.value; }})), h('label', {}, 'To day', h('input', {type: 'number', min: 1, max: 31, value: f.d1, oninput: e => { f.d1 = +e.target.value; }})),
+      h('label', {}, 'Value', h('input', {type: 'number', min: 0, value: f.value, oninput: e => { f.value = +e.target.value; }})), h('label', {class: 'wide'}, 'Note (why this target, what to focus on)', h('input', {value: f.note, oninput: e => { f.note = e.target.value; }}))),
+    h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
+      if (!(f.value > 0) || f.d0 < 1 || f.d1 < f.d0) return toast('Check the value and the period.');
+      if (t) { D.history.unshift({at: 'Today', by: nameOrRole(), what: `${METRICS[t.metric]}: ${t.value} → ${f.value}${t.note !== f.note ? ', note changed' : ''}`}); Object.assign(t, f, {status: t.status === 'active' ? 'draft' : t.status}); }
+      else { D.targets.push({id: 't' + Date.now(), ...f}); D.history.unshift({at: 'Today', by: nameOrRole(), what: `New line: ${METRICS[f.metric]} ${f.value}`}); }
+      log('Changed targets'); m.close(); render(); }}, 'Save as draft'))));
+  m.showModal();
+}
+const nameOrRole = () => me() ? nameOf(me()) : (LOGINS.find(l => l[0] === ui.login) || [])[2];
+function setupTargets() {
+  const month = ui.tab.tm || 'Oct', lines = D.targets.filter(t => t.month === month), canDraft = may('draftTargets'), canApprove = may('approveTargets') || role() === 'admin';
+  const ST = {draft: ['Draft', '--muted'], approved: ['Approved', '--base'], active: ['Active', '--growth']};
+  // person lines are slices of a team line: compare their sum with the team line of the same metric and pod
+  const cover = lines.filter(t => !t.team && t.metric === 'onboarded' && t.pod && !t.city && !t.industry).map(t => ({t, people: sum(lines.filter(x => x.team && x.metric === t.metric && x.pod === t.pod), x => x.value)})).filter(x => x.people);
+  const copy = () => { const src = D.targets.filter(t => t.month === 'Oct'); src.forEach(t => D.targets.push({...t, id: 't' + Date.now() + Math.random(), month: 'Nov', status: 'draft', d1: Math.min(t.d1, 30), note: t.note.replace(/^Sample: ?/, '') || 'Copied from October'}));
+    D.history.unshift({at: 'Today', by: nameOrRole(), what: `Copied ${src.length} October lines to November as drafts`}); log('Copied October targets to November'); ui.tab.tm = 'Nov'; render(); };
+  return [h('div', {class: 'tools'}, seg([['Oct', 'October 2026'], ['Nov', 'November 2026']], month, v => { ui.tab.tm = v; render(); }, 'Month'),
+      month === 'Nov' && canDraft && !lines.length ? h('button', {class: 'btn sm', onclick: copy}, 'Copy October as drafts') : null, canDraft ? h('button', {class: 'btn sm primary', onclick: () => targetForm(null, month)}, 'New target line') : null,
+      h('span', {class: 'muted small'}, month === 'Nov' ? 'November targets are set here later. Nothing is decided yet.' : 'Sample October lines.')),
+    lines.length ? null : card(null, null, h('div', {class: 'empty'}, 'No target lines for November yet. Copy October as drafts, or add lines one by one. The Head approves them before they count.')),
+    lines.length ? card('Target lines', canApprove ? 'Approve drafts to make them count.' : 'CA Lead drafts, the Head approves.', table([{k: 'metric', label: 'Metric', render: t => h('b', {style: 'font-weight:600'}, METRICS[t.metric])}, {k: 'scope', label: 'Scope', render: scopeChips},
+      {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'note', label: 'Note', render: t => h('span', {class: 'small muted', style: 'white-space:normal;display:block;min-width:200px'}, t.note)},
+      {k: 'status', label: 'Status', render: t => chip(...ST[t.status])},
+      {k: 'a', label: '', fixed: true, render: r => { const t = D.targets.find(x => x.id === r.id); return h('div', {style: 'display:flex;gap:4px'}, canDraft ? h('button', {class: 'btn sm', onclick: () => targetForm(t, month)}, 'Edit') : null,
+        t.status === 'draft' && canApprove ? h('button', {class: 'btn sm primary', onclick: () => { t.status = 'active'; D.history.unshift({at: 'Today', by: nameOrRole(), what: `Approved ${METRICS[t.metric]} ${t.value}`}); log('Approved a target line'); render(); }}, 'Approve') : null); }}],
+      lines.map(t => ({...t, scope: [t.pod, t.industry, t.city, t.team].join(' ')})), {pageSize: 12, sortKey: 'metric', dir: 1})) : null,
+    cover.length ? row(card('Coverage check', 'Person targets are a slice of the team target, never added on top.', h('div', {}, cover.map(({t, people}) => h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${METRICS[t.metric]} · ${t.pod}`), h('span', {}, `people add up to ${N(people)} of ${N(t.value)}`),
+      chip(people >= t.value ? 'Covered' : `${N(t.value - people)} not given to anyone`, people >= t.value ? '--growth' : '--ops', false)))))) : null,
+    row(card('History', 'Every change to a target line.', D.history.length ? h('div', {class: 'timeline'}, D.history.slice(0, 12).map(e => h('div', {class: 'ev', style: '--c:var(--base)'}, h('i'), h('div', {}, e.what, h('small', {}, e.by)), h('time', {}, e.at))))
+      : h('div', {class: 'muted small'}, 'No changes yet.')))];
+}
+function setupAssign() {
+  const L = D.leads.filter(l => !l.assigned && l.stage === 'mined'), picked = new Set(), people = D.team.filter(t => t.type !== 'ca_lead' && t.active);
+  const to = h('select', {'aria-label': 'Assign to'}, people.map(p => h('option', {value: p.id}, `${p.name} (${p.pod})`)));
+  const openOf = id => D.leads.filter(l => l.assigned === id && !['onboarded', 'not_interested', 'no_response'].includes(l.stage)).length;
+  const covers = (p, l) => (!p.cities.length || p.cities.includes(l.city)) && (!p.industries.length || p.industries.includes(l.industry)) && (!p.pod || p.pod === l.level || (p.pod === 'LIVE' && l.industry === 'Dining LS'));
+  const auto = () => { let n = 0; for (const l of D.leads.filter(x => !x.assigned && x.stage === 'mined')) { const c = people.filter(p => covers(p, l)).sort((a, b) => openOf(a.id) - openOf(b.id))[0]; if (c) { l.assigned = c.id; n++; } }
+    log(`Auto-assigned ${n} leads`); toast(`${n} leads assigned by coverage, fewest open leads first. Manual assignments were not touched.`); render(); };
+  return [h('div', {class: 'grid'}, kpi('Not assigned', N(L.length), {c: '--ops'}), kpi('Active names', N(people.length)), kpi('Most open leads', N(Math.max(0, ...people.map(p => openOf(p.id)))), {sub: 'on one name'})),
+    row(card('Leads not assigned', 'Tick leads and assign them, or let auto-assign match them to coverage.', table([{k: 'pick', label: '', fixed: true, render: l => h('input', {type: 'checkbox', 'aria-label': 'Pick ' + l.username, onchange: e => { e.target.checked ? picked.add(l.id) : picked.delete(l.id); }})},
+      {k: 'username', label: 'Lead', render: l => person(l.username, `${l.city} · ${l.industry}`)}, {k: 'level', label: 'Level'}, {k: 'fit', label: 'Fit', num: true}, {k: 'source', label: 'Source'}, {k: 'foundDay', label: 'Found', num: true, fmt: dayLabel}],
+      L, {sortKey: 'fit', pageSize: 15, tools: h('div', {class: 'tools', style: 'margin:0'}, to, h('button', {class: 'btn sm primary', onclick: () => { if (!picked.size) return toast('Tick at least one lead.'); D.leads.forEach(l => { if (picked.has(l.id)) l.assigned = to.value; }); log(`Assigned ${picked.size} leads to ${nameOf(to.value)}`); toast(`${picked.size} leads assigned to ${nameOf(to.value)}.`); render(); }}, 'Assign ticked'),
+        h('button', {class: 'btn sm', onclick: auto}, 'Auto-assign all'))})))];
+}
+function setupActivity() {
+  return [card('Activity', 'Every change records the login and the name. Interns share one login, so the name shows who did it.', table([{k: 'at', label: 'When'}, {k: 'login', label: 'Login'}, {k: 'as', label: 'Working as'}, {k: 'text', label: 'What'}], D.log, {pageSize: 15}))];
+}
+
+// ---------- record drawer ----------
+function openRecord(id) {
+  const o = D.onb.find(x => x.id === id), l = D.leads.find(x => x.id === id) || (o && D.leads.find(x => x.username === o.username));
+  const rec = o || l, steps = ['Mined', 'Claimed', 'Contacted', 'Interested', 'Invited', 'Onboarded', 'Linked', 'Delivering', 'Handed over'];
+  const at = o ? (o.status === 'confirmed' ? (o.deal ? 7 : 6) : 5) : ['mined', 'claimed', 'contacted', 'interested', 'invited', 'onboarded'].indexOf(l.stage);
+  const deal = o && D.deals.find(d => d.onb === o.id);
+  drawer([avatar(rec.username), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, rec.username), h('div', {class: 'muted small'}, `${rec.industry || 'Industry missing'} · ${rec.city} · ${rec.level}`),
+    h('div', {class: 'chips'}, o ? badge(o.status) : chip(...(STAGE[l.stage] || STAGE.mined)), o && !o.complete ? chip('Incomplete record', '--rev') : null))],
+  [h('div', {class: 'journey-mini'}, steps.map((s, i) => h('span', {class: i < at ? 'done' : i === at ? 'now' : ''}, s))),
+    props(o ? [['Logged by', nameOf(o.team)], ['Join date', dayLabel(o.day)], ['Pod', o.pod], ['Linked', o.linkedDay ? dayLabel(o.linkedDay) : 'Not yet'], ['Phone', o.phone ? 'On file' : 'Missing'], ['Agency', o.agency]]
+      : [['Assigned to', nameOf(l.assigned)], ['Source', l.source], ['Fit score', l.fit], ['Followers', N(l.followers)], ['Claim', l.claim ? `until ${dayLabel(l.claim.expires)}` : 'None'], ['Found', dayLabel(l.foundDay)]]),
+    o && o.status === 'confirmed' ? sec('First 30 days', h('div', {class: 'small'}, o.firstPost == null ? 'No post yet.' : `First post ${o.firstPost} days after linking · ${o.posts} posts so far`)) : null,
+    deal && may('money') ? sec('Deal', props([['Amount', Rp(deal.amount)], ['Scope', `${deal.scope.v} videos${deal.scope.ls ? ` + ${deal.scope.ls} LIVE` : ''}`], ['Delivered', `${deal.delivered.v + deal.delivered.ls} of ${deal.scope.v + deal.scope.ls}`], ['Stage', deal.stage]])) : null],
+  [h('span', {class: 'muted small'}, 'Sample record')]);
+}
+
+// ---------- shell ----------
+function whoPicker() {
+  const m = $('#modal'), names = D.team.filter(t => t.emails.includes(ui.login) && t.active);
+  put(m, h('div', {class: 'dlg'}, h('h2', {}, 'Who is working?'), h('p', {class: 'muted small', style: 'margin:0'}, `${ui.login} is shared by ${names.length} interns. Pick your own name; everything you do is saved under it.`),
+    h('div', {class: 'who-list'}, names.map(t => h('button', {class: 'who-btn', onclick: () => { ui.as = t.id; log('Started working'); m.close(); render(); }}, avatar(t.name), h('span', {}, t.name, h('small', {class: 'muted', style: 'display:block'}, `${t.pod} pod`)))))));
+  m.showModal();
+}
+function render() {
+  try { localStorage.setItem('acq-hub-sim', JSON.stringify({login: ui.login, page: ui.page, theme: ui.theme})); } catch {}
+  document.documentElement.dataset.theme = ui.theme;
+  $('#theme').textContent = ui.theme === 'dark' ? 'Light mode' : 'Dark mode';
+  const pages = ROLE_PAGES[role()];
+  if (!pages.includes(ui.page)) ui.page = pages[0];
+  if (role() === 'intern' && !ui.as) { put($('#page'), card(null, null, h('div', {class: 'empty'}, 'Pick your name to start.', h('div', {style: 'margin-top:10px'}, h('button', {class: 'btn primary', onclick: whoPicker}, 'Who is working?'))))); if (!$('#modal').open) whoPicker(); }
+  put($('#nav'), h('div', {class: 'navgroup'}, h('div', {class: 'navgroup-title'}, 'Acquisition Hub'), pages.map(p => h('button', {class: 'navitem' + (ui.page === p ? ' on' : ''), style: '--c:var(--growth)', onclick: () => { ui.page = p; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p))));
+  put($('#crumbs'), h('span', {}, 'TTLS Ops'), '/', h('span', {}, 'Acquisition Hub'), '/', h('b', {}, ui.page));
+  put($('#as'), me() ? h('span', {class: 'as-chip'}, 'Working as ', h('b', {}, nameOf(me())), role() === 'intern' ? h('button', {class: 'btn sm', onclick: whoPicker}, 'Switch') : null) : h('span', {class: 'as-chip'}, 'Sees ', h('b', {}, 'everyone')));
+  const fg = (label, ...kids) => h('div', {class: 'fgroup'}, h('span', {class: 'flabel'}, label), ...kids);
+  const people = D.team.filter(t => t.type !== 'ca_lead' && t.active);
+  put($('#filters'), fg('Pod', seg([['', 'All'], ...PODS.map(p => [p, p])], ui.f.pod, v => { ui.f.pod = v; render(); }, 'Pod')),
+    fg('Industry', h('select', {'aria-label': 'Industry', onchange: e => { ui.f.ind = e.target.value; render(); }}, [['', 'All industries'], ...INDUSTRIES.map(i => [i, i])].map(([v, l]) => h('option', {value: v, selected: ui.f.ind === v}, l)))),
+    fg('City', h('select', {'aria-label': 'City', onchange: e => { ui.f.city = e.target.value; render(); }}, [['', 'All cities'], ...CORE.map(c => [c, c]), ['Other', 'Other regions']].map(([v, l]) => h('option', {value: v, selected: ui.f.city === v}, l)))),
+    me() ? null : fg('Person', h('select', {'aria-label': 'Person', onchange: e => { ui.f.who = e.target.value; render(); }}, [['', 'Everyone'], ...people.map(p => [p.id, p.name])].map(([v, l]) => h('option', {value: v, selected: ui.f.who === v}, l)))),
+    h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `${MONTH} · day ${TODAY} of ${DAYS} · sample data`));
+  if (role() === 'intern' && !ui.as) return;
+  put($('#page'), PAGES[ui.page]());
+}
+$('#login').append(...LOGINS.map(([e, , l]) => h('option', {value: e, selected: e === ui.login}, `${l} · ${e}`)));
+$('#login').onchange = e => { ui.login = e.target.value; ui.as = null; ui.f.who = ''; log('Signed in'); render(); };
+$('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
+$('#menu').onclick = () => document.body.classList.toggle('nav-open');
+$('#drawer').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.close(); };
+render();
+
+</script>
+</body>
+</html>
