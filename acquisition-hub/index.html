@@ -402,6 +402,11 @@ dialog:has(.wide-dlg){width:min(820px,96vw)}
 .myday-i:hover{background:var(--hover)}
 .myday-i b{font-size:20px}
 .myday-i span{font-size:12px;color:var(--muted)}
+.lvl table{font-size:12.5px}
+.lvl th.n,.lvl td.n{min-width:64px}
+.lvl td:first-child{color:var(--muted);white-space:nowrap}
+.lvl .l0{color:var(--faint)}
+.lvl td.tot{font-weight:650;background:var(--panel2)}
 </style>
 </head>
 <body>
@@ -1149,9 +1154,9 @@ function payLines() {
     const approve = () => { b.stage = 'approved'; };
     b.terms.forEach((t, i) => out.push({id: `${b.id}-${i}`, kind: 'Bound cash', payee: o.username, team: o.team, term: n === 1 ? 'Full payment' : `Termin ${i + 1} of ${n} · ${t.pct}%`, when: WHEN_L[t.when],
       detail: `${sowTxt(b.sow)} · ${dv.done}/${dv.of} delivered`, amount: Math.round(b.amount * t.pct / 100), due: t.due, stage: head ? 'needs_head' : t.stage, ready: termReady(t, dv.frac),
-      bank: 'Creator account on file', spk: b.spk, _rec: o.id, set: st => st === 'approve' ? approve() : (t.stage = st)}));
+      bank: 'Creator account on file', spk: b.spk, lv: lvOf(o), _rec: o.id, set: st => st === 'approve' ? approve() : (t.stage = st)}));
     if (b.salary) out.push({id: `${b.id}-s`, kind: 'Salary', payee: o.username, team: o.team, term: 'October salary', when: 'Monthly', detail: sowTxt(b.sow), amount: b.salary,
-      due: `2026-10-${String(D.salaryDay).padStart(2, '0')}`, stage: head ? 'needs_head' : b.salaryStage, ready: true, bank: 'Creator account on file', spk: b.spk, _rec: o.id,
+      due: `2026-10-${String(D.salaryDay).padStart(2, '0')}`, stage: head ? 'needs_head' : b.salaryStage, ready: true, bank: 'Creator account on file', spk: b.spk, lv: lvOf(o), _rec: o.id,
       set: st => st === 'approve' ? approve() : (b.salaryStage = st)});
   }
   for (const p of D.partners.filter(x => x.active)) {
@@ -1249,6 +1254,7 @@ PAGES['Weekly Report'] = () => {
         {Item: 'Joined last week', Value: w.onbP.length}, {Item: 'Bound cash added (Rp)', Value: sum(w.bc, x => x.amount)}, {Item: 'Payments due in 7 days or overdue (Rp)', Value: sum(pays, r => r.amount)},
         {Item: 'Incomplete records', Value: w.issues.incomplete}, {Item: 'Not confirmed', Value: w.issues.notConf}, {Item: 'Bound cash without SPK', Value: w.issues.noSpk}]],
       ['Pace', w.lines.map(l => ({Metric: METRICS[l.metric], Pod: l.pod || 'All', Industry: l.industry || 'All', City: l.city || 'All', Target: l.value, Actual: l.actual, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
+      ['By level', weekLevelRows(wi).map(([label, f]) => Object.fromEntries([['Metric', label], ...[...LV, null].map(l => { const v = f(l); return [l || 'Total', v == null ? '' : typeof v === 'number' ? Math.round(v * 10) / 10 : v]; })]))],
       ['People', w.people.map(p => ({Name: p.name, Type: p.type, Pod: p.pod, Mined: p.mined, Joined: p.joined}))],
       ['Joined this week', w.onbW.map(o => ({Creator: o.username, 'Brought by': nameOf(o.team), Level: o.level, Industry: o.industry, City: o.city, Joined: dayLabel(o.day), Type: o.type, 'Total Creator Data': o.status}))],
       ['Bound cash', D.bound.map(x => { const o = D.onb.find(y => y.id === x.onb); return {Creator: o.username, 'Bound cash (Rp)': x.amount, 'Salary (Rp)': x.salary, SOW: sowTxt(x.sow), Payment: termsTxt(x), 'Paid (Rp)': bPaid(x), Stage: BSTAGE[bStage(x)][0], SPK: x.spk}; })],
@@ -1354,6 +1360,64 @@ function setupTargets() {
 }
 const setupActivity = () => [card('Activity', 'Every change records the login and the name. Interns share one login, so the name shows who did it.', table([{k: 'at', label: 'When'}, {k: 'login', label: 'Login'}, {k: 'as', label: 'Working as'}, {k: 'text', label: 'What'}], D.log, {pageSize: 15}))];
 
+// ================= By level: every page shows its numbers split per level (L0 is shown, never counted) =================
+const LV = ['L0', ...PODS], lvOf = x => x.pod || podOf(x.level, x.industry), atL = (list, l) => l ? list.filter(x => lvOf(x) === l) : list;
+const lvTarget = l => sum(D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && t.metric === 'joined' && t.pod && !t.team && !t.city && !t.industry && (!l || t.pod === l)), t => t.value);
+function levelPace(joined, target) { const p = pace(joined, {value: target, unit: 'count', d0: 1, d1: DAYS}); return {run: target ? p.proj / target : 0, req: p.req}; }
+const runChip = (run, target) => !target ? h('span', {class: 'muted'}, '-') : chip(Math.round(run * 100) + '%', run >= 1 ? '--growth' : run >= 0.8 ? '--ops' : '--rev', false);
+// metrics: [label, l => value, fmt]; l is a level, or null for the total column
+function byLevel(title, desc, metrics) {
+  const cols = [...LV.filter(l => !ui.f.pod || l === ui.f.pod), null];
+  return card(title || 'By level', desc, h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, ''), cols.map(l => h('th', {class: 'n' + (l === 'L0' ? ' l0' : '')}, l || 'Total')))),
+    h('tbody', {}, metrics.map(([label, f, fmt = N]) => h('tr', {}, h('td', {}, label), cols.map(l => { const v = f(l); return h('td', {class: 'n' + (l === 'L0' ? ' l0' : '') + (l ? '' : ' tot')}, v == null ? '-' : fmt(v)); })))))));
+}
+const pctFmt = v => v + '%';
+const LEVEL_CARDS = {
+  Overview: () => { const L = ONB(), M = MIN();
+    return [1, byLevel(`Onboarding by level · day ${TODAY} of ${DAYS}`, 'Joined counts complete records only. L0 is shown but never counted.', [
+      ['Target', l => l === 'L0' ? null : lvTarget(l) || null], ['Joined', l => counted(atL(L, l)).length || (l === 'L0' ? atL(L, l).filter(o => o.complete).length : 0)],
+      ['Achievement', l => l === 'L0' || !lvTarget(l) ? null : pct(counted(atL(L, l)).length, lvTarget(l)), pctFmt],
+      ['Run rate', l => l === 'L0' || !lvTarget(l) ? null : levelPace(counted(atL(L, l)).length, lvTarget(l)), v => runChip(v.run, 1)],
+      ['Needed / day', l => l === 'L0' || !lvTarget(l) ? null : levelPace(counted(atL(L, l)).length, lvTarget(l)).req, v => v.toFixed(1)],
+      ['Confirmed', l => atL(L, l).filter(o => o.status === 'confirmed').length], ['Mined', l => atL(M, l).length], ['Hot leads now', l => atL(M, l).filter(m => m.status === 'hot').length],
+      ['Invites sent', l => atL(M, l).filter(m => reached(m, 'invited')).length], ['Mined → joined', l => pct(atL(M, l).filter(m => m.status === 'joined').length, atL(M, l).length), pctFmt]])]; },
+  Mining: () => { const M = D.mining.filter(m => inScope(m) && (ui.tab.mw === 'me' && me() ? m.owner === me() : !ui.f.who || m.owner === ui.f.who));
+    return [1, byLevel('Pipeline by level', 'How many creators sit in each status, per level.', [...Object.entries(MSTAT).map(([k2, [l]]) => [l, lv => atL(M, lv).filter(m => m.status === k2).length]),
+      ['GMV, 3 months', l => sum(atL(M, l), g3), short], ['Mined → joined', l => pct(atL(M, l).filter(m => m.status === 'joined').length, atL(M, l).length), pctFmt]])]; },
+  'Daily Tracker': () => { const L = ONB();
+    return [0, byLevel(`Today by level · ${dayLabel(TODAY)}`, 'Joined today against what each level needs per day to hit target.', [
+      ['Joined today', l => counted(atL(L, l)).filter(o => o.day === TODAY).length], ['Joined yesterday', l => counted(atL(L, l)).filter(o => o.day === TODAY - 1).length],
+      ['Average / day', l => counted(atL(L, l)).length / TODAY, v => v.toFixed(1)], ['Needed / day', l => l === 'L0' || !lvTarget(l) ? null : levelPace(counted(atL(L, l)).length, lvTarget(l)).req, v => v.toFixed(1)],
+      ['Mined today', l => atL(D.mining.filter(m => inScope(m) && personScope(m.by)), l).filter(m => m.day === TODAY).length], ['Incomplete records', l => atL(L, l).filter(o => !o.complete).length]])]; },
+  'My Creators': () => { const L = ONB(ui.tab.mc || 'Oct').filter(o => o.status === 'confirmed');
+    return [2, byLevel('Activity by level', 'Linked creators only.', [['Creators', l => atL(L, l).length], ['Posted a video', l => atL(L, l).filter(o => o.videos).length], ['Went LIVE', l => atL(L, l).filter(o => o.lives).length],
+      ['Active last 7 days', l => pct(atL(L, l).filter(isActive).length, atL(L, l).length), pctFmt], ['No post yet', l => atL(L, l).filter(o => o.lastPost == null).length],
+      ['Videos', l => sum(atL(L, l), o => o.videos)], ['LIVE sessions', l => sum(atL(L, l), o => o.lives)], ['Redemption GMV', l => sum(atL(L, l), o => o.gmv), short]])]; },
+  'Bound Cash': () => { if (ui.tab.bc === 'programs') return null; const fresh = ONB().filter(o => o.type === 'new' && o.complete), B = D.bound.map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})).filter(b => personScope(b.o.team) && inScope(b.o)), bl = l => B.filter(b => !l || lvOf(b.o) === l);
+    return [2, byLevel('Bound cash by level', 'New joiners only; renewals never get bound cash.', [['Joined new', l => atL(fresh, l).length], ['With bound cash', l => bl(l).length],
+      ['Bound cash total', l => sum(bl(l), b => b.amount), short], ['Average per creator', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
+      ['Salary a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['On termin', l => bl(l).filter(b => b.terms.length > 1).length]])]; },
+  Partnership: () => { const sel = D.partners.find(p => p.id === ui.tab.pp) || D.partners[0], all = D.onb.filter(o => o.partner), mine = all.filter(o => o.partner === sel.id);
+    return [2, byLevel(`Partner creators by level`, `All partners, and ${sel.name} on its own.`, [['All partners: creators', l => atL(all, l).length], ['All partners: new this month', l => atL(all, l).filter(o => o.month === 'Oct' && o.type === 'new').length],
+      ['All partners: GMV', l => sum(atL(all, l), o => o.gmv), short], [`${sel.name}: creators`, l => atL(mine, l).length], [`${sel.name}: new this month`, l => atL(mine, l).filter(o => o.month === 'Oct' && o.type === 'new').length],
+      [`${sel.name}: GMV`, l => sum(atL(mine, l), o => o.gmv), short]])]; },
+  'Payment Cycle': () => { const P = payLines().filter(r => r.lv && (!r.team || personScope(r.team))), pl = (l, f) => P.filter(r => (!l || r.lv === l) && f(r));
+    return [1, byLevel('Creator payments by level', 'Bound cash and salaries. Partner fees are per partner, not per level.', [['Still to pay', l => sum(pl(l, r => r.stage !== 'paid'), r => r.amount), short],
+      ['Due in 7 days', l => sum(pl(l, r => r.stage !== 'paid' && r.due <= isoAdd(TODAY_ISO, 7)), r => r.amount), short], ['Overdue', l => sum(pl(l, overdue), r => r.amount), short],
+      ['Paid', l => sum(pl(l, r => r.stage === 'paid'), r => r.amount), short], ['Payments', l => pl(l, () => true).length]])]; },
+  'Weekly Report': () => [2, byLevel('This week by level', 'Joined counts complete records only.', weekLevelRows(ui.tab.wk ?? WEEKS.length - 1).map(([label, f, fmt]) => [label, f, fmt]))],
+  Setup: () => ui.tab.setup && ui.tab.setup !== 'team' ? null : [1, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pod === l).length],
+    ['Interns', l => D.team.filter(t => t.active && t.type === 'intern' && t.pod === l).length], ['Joined target', l => l === 'L0' ? null : lvTarget(l) || null],
+    ['Target per person per day', l => { const n = D.team.filter(t => t.active && t.type !== 'ca_lead' && (!l || t.pod === l)).length, tg = lvTarget(l); return l === 'L0' || !n || !tg ? null : Math.ceil(tg / DAYS / n); }]])]
+};
+function weekLevelRows(wi) {
+  const [, , a, b] = WEEKS[wi], prev = WEEKS[wi - 1], oct = counted(D.onb.filter(o => o.month === 'Oct')), inW = (o, w) => w && o.day >= w[2] && o.day <= w[3];
+  return [['Joined this week', l => atL(oct, l).filter(o => o.day >= a && o.day <= b).length], ['Joined last week', l => prev ? atL(oct, l).filter(o => inW(o, prev)).length : null],
+    ['Month to date', l => atL(oct, l).filter(o => o.day <= b).length], ['Target', l => l === 'L0' ? null : lvTarget(l) || null],
+    ['Achievement', l => l === 'L0' || !lvTarget(l) ? null : pct(atL(oct, l).filter(o => o.day <= b).length, lvTarget(l)), pctFmt],
+    ['Mined this week', l => atL(D.mining, l).filter(m => m.day >= a && m.day <= b).length], ['Hot leads this week', l => atL(D.mining, l).filter(m => (x => x && x.day >= a && x.day <= b)(reached(m, 'hot'))).length]];
+}
+
 // ================= record drawer =================
 function openRecord(id) {
   if (id[0] === 'm') return openMining(id);
@@ -1395,7 +1459,9 @@ function render() {
     me() ? null : fg('Person', h('select', {'aria-label': 'Person', onchange: e => { ui.f.who = e.target.value; render(); }}, [['', 'Everyone'], ...people.map(p => [p.id, p.name])].map(([v, l]) => h('option', {value: v, selected: ui.f.who === v}, l)))),
     h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `${MONTH} · day ${TODAY} of ${DAYS} · sample data`));
   if (role() === 'intern' && !ui.as) { put($('#page'), card(null, null, h('div', {class: 'empty'}, 'Pick your name to start.', h('div', {style: 'margin-top:10px'}, h('button', {class: 'btn primary', onclick: whoPicker}, 'Who is working?'))))); if (!$('#modal').open) whoPicker(); return; }
-  const y = $('main').scrollTop; put($('#page'), PAGES[ui.page]()); $('main').scrollTop = y;
+  const parts = PAGES[ui.page](), lc = LEVEL_CARDS[ui.page]?.();
+  if (lc) parts.splice(lc[0], 0, h('div', {class: lc[0] ? 'mt' : ''}, lc[1]));
+  const y = $('main').scrollTop; put($('#page'), parts); $('main').scrollTop = y;
 }
 $('#login').append(...LOGINS.map(([e, , l]) => h('option', {value: e, selected: e === ui.login}, `${l} · ${e}`)));
 $('#login').onchange = e => { ui.login = e.target.value; ui.as = null; ui.f.who = ''; log('Signed in'); render(); };
