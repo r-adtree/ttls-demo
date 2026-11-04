@@ -373,6 +373,35 @@ dialog:has(.wide-dlg){width:min(820px,96vw)}
 .report{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.45}
 .paste{white-space:pre-wrap;font-size:12px;margin:0;padding:12px;border-radius:8px;background:var(--panel2);user-select:all}
 @media (max-width:640px){.term-row{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}}
+.st-sel{appearance:none;-webkit-appearance:none;border:none;border-radius:6px;height:24px;padding:0 22px 0 9px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--tc);background:color-mix(in srgb,var(--tc) 16%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23889' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
+.st-sel:disabled{cursor:default;opacity:1;background-image:none;padding-right:9px}
+.cell-sel,.cell-in{border:1px solid transparent;background:transparent;font-size:12.5px;height:26px;padding:0 6px;border-radius:6px;color:var(--text);max-width:100%}
+.cell-sel:hover:not(:disabled),.cell-in:hover:not(:disabled),.cell-sel:focus,.cell-in:focus{border-color:var(--line);background:var(--panel2)}
+.cell-in[type=date]{width:130px}
+.note-line{font-size:11.5px;color:var(--muted);margin:3px 0 0 34px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.pipe button{text-align:left;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:9px 12px;background:var(--panel);display:flex;flex-direction:column;gap:1px;box-shadow:var(--shadow)}
+.pipe button:hover{background:var(--hover)}
+.pipe button.on{background:color-mix(in srgb,var(--c) 12%,var(--panel));border-color:var(--c)}
+.pipe b{font-size:20px;letter-spacing:-.02em}
+.pipe span{font-size:11.5px;color:var(--muted)}
+.bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--base) 12%,transparent);margin-bottom:10px;font-size:12.5px}
+.pl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:2px 10px;align-items:center;font-size:12.5px}
+.pl>span{color:var(--muted)}
+.pl .cell-in,.pl .cell-sel{width:100%}
+.comment-box{display:flex;gap:8px;align-items:flex-start}
+.comment-box textarea{flex:1;min-height:60px;resize:vertical;font:inherit;font-size:12.5px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.fu-list{display:flex;flex-direction:column}
+.fu{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(160px,2fr) auto auto auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.fu:first-child{border-top:none}
+.fu-name{font-size:13px;font-weight:600;text-align:left;color:var(--text)}
+.fu-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:760px){.fu{grid-template-columns:1fr auto}.fu-sub{grid-column:1/-1}}
+.myday{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.myday-i{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);border-left:3px solid var(--c);background:var(--panel2)}
+.myday-i:hover{background:var(--hover)}
+.myday-i b{font-size:20px}
+.myday-i span{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -514,10 +543,12 @@ function columns(items, {fmt = N, height = 220, ref} = {}) {
     return s;
   }, height, 'Column chart');
 }
-function table(cols, rows, {pageSize = 10, sortKey, dir = -1, search = true, tools} = {}) {
-  let q = '', key = sortKey, d = dir, page = 0;
+function table(cols, rows, {pageSize = 10, sortKey, dir = -1, search = true, tools, state} = {}) {
+  // state (optional) keeps filter, sort and page when the page re-renders
+  let q = state?.q ?? '', key = state?.key ?? sortKey, d = state?.d ?? dir, page = state?.page ?? 0;
   const box = h('div');
   const draw = () => {
+    if (state) Object.assign(state, {q, key, d, page});
     let list = rows.filter(r => !q || cols.some(c => c.k && String(r[c.k] ?? '').toLowerCase().includes(q)));
     if (key) list = [...list].sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * d);
     const pages = Math.max(1, Math.ceil(list.length / pageSize)); page = Math.min(page, pages - 1);
@@ -583,12 +614,13 @@ const IC = {'Dining SV': 'food', 'Dining LS': 'live', Accommodation: 'stay', 'Th
 const CC = {Jakarta: 'jkt', Bandung: 'bdg', Surabaya: 'sby', Bali: 'bli', Yogyakarta: 'yog', Bekasi: 'bks', Tangerang: 'tgr', Bogor: 'bgr', Depok: 'dpk', Semarang: 'smg', Medan: 'mdn', Makassar: 'mks'};
 const LEVELS = ['L0', 'L1', 'L2', 'L3', 'L4'], PODS = ['L1', 'L2', 'L3', 'L4', 'LIVE'], M3 = ['Jul', 'Aug', 'Sep'];
 const MSTAT = {mined: ['Mined', '--muted'], approaching: ['Approaching', '--base'], hot: ['Hot lead', '--ops'], invited: ['Invite sent', '--ops'], joined: ['Joined', '--growth'], not_interested: ['Not interested', '--rev'], no_response: ['No response', '--rev']};
-const FLOW = ['mined', 'approaching', 'hot', 'invited', 'joined'];
+const FLOW = ['mined', 'approaching', 'hot', 'invited', 'joined'], OPEN_ST = FLOW.slice(0, 4), CLOSED_ST = ['not_interested', 'no_response'];
 const podOf = (level, industry) => industry === 'Dining LS' && level !== 'L0' ? 'LIVE' : level;
 const dayLabel = d => `${d} Oct`;
 const tiktokLink = u => u ? `https://www.tiktok.com/${u}` : '';
 const waLink = p => p ? `https://wa.me/62${String(p).replace(/\D/g, '').replace(/^0/, '').replace(/^62/, '')}` : '';
 const OWN = 'Adtree Digital Indonesia';
+const NOTES = ['Sent intro on WhatsApp', 'Asked for our rate card', 'Interested, wants the bound cash details', 'Will reply after the weekend', 'Prefers LIVE over video', 'Call set for tomorrow', 'Already talks to another agency, follow up'];
 const TODAY_ISO = '2026-10-20', MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const isoAdd = (iso, n) => new Date(Date.parse(iso) + n * 864e5).toISOString().slice(0, 10);
 const fmtD = iso => iso ? `${+iso.slice(8)} ${MON[+iso.slice(5, 7) - 1]}` : '-';
@@ -633,7 +665,8 @@ function makeData() {
     for (let k = 1; k <= target; k++) { d = Math.min(TODAY, d + int(0, 2)); history.push({day: d, by: t.id, status: FLOW[k]}); }
     if (status === 'not_interested' || status === 'no_response') history.push({day: Math.min(TODAY, d + int(1, 3)), by: t.id, status});
     const m = {id: 'm' + i, by: t.id, day, username, phone, level, industry, city, province: PROV[city][0], postal: rnd() < 0.6 ? PROV[city][1] : '', agency: OWN, partner: rnd() < 0.08 ? pick(partners).id : '',
-      gmv3, status, history, note: ''};
+      gmv3, status, history, note: '', owner: rnd() < 0.1 ? pick(workers).id : t.id, follow: OPEN_ST.includes(status) ? isoAdd(TODAY_ISO, int(-3, 6)) : '',
+      comments: Array.from({length: status === 'mined' ? 0 : int(0, 2)}, (_, k) => ({day: Math.min(TODAY, day + k + 1), by: t.id, text: pick(NOTES)}))};
     mining.push(m);
     if (status === 'joined') {
       const joinDay = history.at(-1).day, renewal = rnd() < 0.07, stat = joinDay > TODAY - 6 ? (rnd() < 0.55 ? 'pending' : 'confirmed') : rnd() < 0.05 ? 'not_confirmed' : 'confirmed';
@@ -687,12 +720,12 @@ const LOGINS = [['ca.lead@sample.id', 'ca_lead', 'CA Lead'], ['admin@sample.id',
   ['intern@sample.id', 'intern', 'Interns (shared login)'], ['head@sample.id', 'head', 'Head'], ['finance@sample.id', 'finance', 'Finance']];
 const PAGES_ALL = ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Partnership', 'Payment Cycle', 'Impact Calculator', 'Weekly Report', 'Setup'];
 const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Impact Calculator'],
-  intern: ['Mining', 'Daily Tracker', 'My Creators'], finance: ['Payment Cycle', 'Partnership', 'Bound Cash']};
+  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Payment Cycle', 'Partnership', 'Bound Cash']};
 const ui = {login: 'ca.lead@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}};
 try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim2') || '{}'), {as: null}); } catch {}
 const role = () => (LOGINS.find(l => l[0] === ui.login) || LOGINS[0])[1];
 const may = what => ({
-  mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], join: ['ca_lead', 'fte_ca', 'admin'], bound: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
+  mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], bound: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
   team: ['ca_lead', 'admin'], draftTargets: ['ca_lead', 'admin'], approveTargets: ['head', 'admin'], report: ['ca_lead', 'admin', 'head'], money: ['ca_lead', 'fte_ca', 'head', 'finance', 'admin']}[what] || []).includes(role());
 const me = () => role() === 'fte_ca' ? D.team.find(t => t.emails.includes(ui.login))?.id : role() === 'intern' ? ui.as : null;
 const nameOf = id => D.team.find(t => t.id === id)?.name || '-';
@@ -761,6 +794,15 @@ function partnerFee(p) {
 }
 
 // ================= Overview =================
+// What one person should do today: late and due follow-ups, hot leads to invite, records to fix, new creators with no post.
+function myDay() {
+  const id = me(), mine = D.mining.filter(m => m.owner === id && OPEN_ST.includes(m.status)), mo = D.onb.filter(o => o.month === 'Oct' && o.team === id);
+  const items = [['Follow-ups late', mine.filter(m => m.follow && m.follow < TODAY_ISO), '--rev', 'follow'], ['Follow-ups today', mine.filter(m => m.follow === TODAY_ISO), '--ops', 'follow'],
+    ['Hot leads to invite', mine.filter(m => m.status === 'hot'), '--ops', 'hot'], ['Records missing phone or industry', mo.filter(o => !o.complete), '--rev', null], ['Joined, no post yet', mo.filter(o => o.status === 'confirmed' && o.lastPost == null), '--base', null]];
+  const go = k2 => { ui.page = k2 === null ? 'My Creators' : 'Mining'; if (k2) Object.assign(ui.tab, {mv: k2 === 'follow' ? 'follow' : 'table', ms: k2 === 'follow' ? 'open' : k2, mw: 'me'}); render(); };
+  return card(`My day · ${nameOf(id)}`, 'Start here every morning. Click a line to open the list.', h('div', {class: 'myday'}, items.map(([l, list, c, k2]) =>
+    h('button', {class: 'myday-i', style: `--c:var(${c})`, onclick: () => go(k2)}, h('b', {}, N(list.length)), h('span', {}, l)))));
+}
 PAGES['Overview'] = () => {
   const L = ONB(), c = counted(L), M = MIN(), nl = D.notLogged.filter(inScope);
   const lines = D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && (!me() || !t.team || t.team === me()) && (!ui.f.pod || !t.pod || t.pod === ui.f.pod));
@@ -769,6 +811,7 @@ PAGES['Overview'] = () => {
       kpi('Hot leads', N(M.filter(m => m.status === 'hot').length), {sub: 'ready for an invite'}), kpi('Invites sent', N(M.filter(m => reached(m, 'invited')).length)),
       kpi('Joined', N(c.length), {sub: `complete, L1 and up · ${L.length - counted(L).length} other`, c: '--growth'}), kpi('Confirmed', N(c.filter(o => o.status === 'confirmed').length), {sub: 'in Total Creator Data'}),
       kpi('Record completeness', pct(L.filter(o => o.complete).length, L.length) + '%'), me() ? null : kpi('Linked, not logged', N(nl.length), {sub: 'no credit for now'})),
+    me() ? row(myDay()) : null,
     row(card(`Pace against targets · ${MONTH}, day ${TODAY} of ${DAYS}`, 'Every active target line from Setup → Targets. Sample targets.', table([
       {k: 'label', label: 'Target line', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, METRICS[t.metric]), h('div', {style: 'margin-top:3px'}, scopeChips(t)))},
       {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'actual', label: 'Actual', num: true, fmt: (v, t) => h('b', {}, fmtVal(v, t))},
@@ -813,7 +856,7 @@ function mineForm(m0) {
     if (problems.length) { err.style.display = 'block'; err.textContent = 'Add ' + problems.join(', ') + '.'; return; }
     const clean = {username: u, phone: f.phone, level: f.level, industry: f.industry, city: f.city, province: f.province, postal: f.postal, agency: f.agency, partner: f.partner, gmv3: f.gmv3.map(x => ({m: x.m, video: +x.video || 0, live: +x.live || 0})), note: f.note};
     if (m) { Object.assign(m, clean); log(`Edited mining record ${u}`); toast('Saved.'); }
-    else { const by = me() || 'n0'; D.mining.unshift({id: 'm' + Date.now(), by, day: TODAY, status: 'mined', history: [{day: TODAY, by, status: 'mined'}], ...clean}); log(`Mined ${u}`); toast(`${u} added to the mining list under ${nameOf(by)}.`); }
+    else { const by = me() || 'n0'; D.mining.unshift({id: 'm' + Date.now(), by, owner: by, follow: isoAdd(TODAY_ISO, 1), comments: [], day: TODAY, status: 'mined', history: [{day: TODAY, status: 'mined', ...actor()}], ...clean}); log(`Mined ${u}`); toast(`${u} added to the mining list under ${nameOf(by)}.`); }
     dlg.close(); render();
   };
   put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, m ? `Edit ${m.username}` : 'Mine a creator'), h('p', {class: 'muted small', style: 'margin:0'}, `Saved under ${m ? nameOf(m.by) : nameOrRole()}. Links fill in by themselves.`),
@@ -826,11 +869,6 @@ function mineForm(m0) {
     h('div', {class: 'field'}, 'GMV, last 3 months *', gmvGrid, h('span', {class: 'small muted'}, 'Total, 3 months: ', total)),
     m ? null : check, err, h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: save}, m ? 'Save' : 'Add to mining'))));
   refresh(); dlg.showModal();
-}
-function moveStatus(m0, st) {
-  const m = D.mining.find(x => x.id === m0.id);
-  if (st === 'joined') return joinForm(m);
-  m.status = st; m.history.push({day: TODAY, by: me() || 'n0', status: st}); log(`${MSTAT[st][0]}: ${m.username}`); toast(`${m.username}: ${MSTAT[st][0]}.`); render();
 }
 // Joining turns a mining record into an onboarding; phone and industry are required here.
 function joinForm(m) {
@@ -845,40 +883,115 @@ function joinForm(m) {
     h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
       if (!/^0?8\d{7,12}$/.test(String(f.phone).replace(/\D/g, '')) || !f.industry) { err.style.display = 'block'; err.textContent = 'Phone (starts with 08) and industry are required. A record without them does not count.'; return; }
       if (!(f.day >= 1 && f.day <= TODAY)) { err.style.display = 'block'; err.textContent = `Join date must be between 1 and ${TODAY} October.`; return; }
-      const o = {id: 'o' + Date.now(), month: 'Oct', mining: m.id, team: m.by, day: f.day, username: m.username, level: f.level, pod: podOf(f.level, f.industry), industry: f.industry, city: m.city, phone: f.phone, partner: m.partner,
+      const o = {id: 'o' + Date.now(), month: 'Oct', mining: m.id, team: m.owner, day: f.day, username: m.username, level: f.level, pod: podOf(f.level, f.industry), industry: f.industry, city: m.city, phone: f.phone, partner: m.partner,
         type: renewal ? 'renewal' : 'new', status: 'pending', linkedDay: null, complete: true, videos: 0, lives: 0, gmv: 0, lastPost: null, firstPost: null};
-      D.onb.unshift(o); Object.assign(m, {status: 'joined', onb: o.id, phone: f.phone, industry: f.industry, level: f.level}); m.history.push({day: TODAY, by: me() || 'n0', status: 'joined'});
-      log(`Joined: ${m.username}`); toast(`${m.username} joined. Credit goes to ${nameOf(m.by)}.`); dlg.close(); render(); }}, 'Save join'))));
+      D.onb.unshift(o); Object.assign(m, {status: 'joined', onb: o.id, phone: f.phone, industry: f.industry, level: f.level}); m.history.push({day: TODAY, status: 'joined', ...actor()}); m.follow = '';
+      log(`Joined: ${m.username}`); toast(`${m.username} joined. Credit goes to ${nameOf(m.owner)}.`); dlg.close(); refresh(m.id); }}, 'Save join'))));
   dlg.showModal();
 }
+// Any CA (FTE or intern) can move any creator to any status; Joined is final because it creates the onboarding.
+const actor = () => ({by: me() || 'n0', who: nameOrRole(), t: Date.now()});
+function setStatus(m0, st) {
+  const m = D.mining.find(x => x.id === m0.id);
+  if (!m || m.status === st) return;
+  if (m.status === 'joined') return toast('Joined is final. Change the onboarding record instead.');
+  if (st === 'joined') return joinForm(m);
+  m.status = st; m.history.push({day: TODAY, status: st, ...actor()});
+  if (CLOSED_ST.includes(st)) m.follow = '';
+  log(`${MSTAT[st][0]}: ${m.username}`); toast(`${m.username} is now ${MSTAT[st][0]}.`); refresh(m.id);
+}
+function setField(m0, k2, v, label) {
+  const m = D.mining.find(x => x.id === m0.id);
+  if (!m || m[k2] === v) return;
+  m[k2] = v; log(`${m.username}: ${label}`); refresh(m.id);
+}
+// Re-draw the page and, when it shows this record, the side panel too, without losing places.
+function refresh(id) { render(); const d = $('#drawer'); if (d.open && d.dataset.rec === id) openMining(id); }
+const stSelect = m => h('select', {class: 'st-sel', style: `--tc:var(${MSTAT[m.status][1]})`, 'aria-label': `Status of ${m.username}`, disabled: !may('mine') || m.status === 'joined',
+  onchange: e => { const v = e.target.value; e.target.value = m.status; setStatus(m, v); }}, Object.entries(MSTAT).map(([v, [l]]) => h('option', {value: v, selected: m.status === v}, l)));
+const ownerSelect = m => h('select', {class: 'cell-sel', 'aria-label': `Owner of ${m.username}`, disabled: !may('mine'), onchange: e => setField(m, 'owner', e.target.value, `owner ${nameOf(e.target.value)}`)},
+  D.team.filter(t => t.active || t.id === m.owner).map(t => h('option', {value: t.id, selected: m.owner === t.id}, t.name)));
+const followInput = m => !OPEN_ST.includes(m.status) && !m.follow ? h('span', {class: 'muted small', style: 'padding:0 6px'}, '-') : h('input', {type: 'date', class: 'cell-in', value: m.follow || '', 'aria-label': `Follow-up for ${m.username}`, disabled: !may('mine') || !OPEN_ST.includes(m.status),
+  onchange: e => setField(m, 'follow', e.target.value, `follow-up ${fmtD(e.target.value) || 'cleared'}`)});
+const followChip = m => !m.follow ? null : m.follow < TODAY_ISO ? chip(`Late · ${fmtD(m.follow)}`, '--rev', false) : m.follow === TODAY_ISO ? chip('Today', '--ops', false) : chip(fmtD(m.follow), '--muted', false);
+const lastNote = m => m.comments.at(-1)?.text || '';
+
 PAGES['Mining'] = () => {
-  const mine = me(), who = ui.tab.mw || (mine ? 'me' : 'all'), st = ui.tab.ms || 'open';
-  const base = D.mining.filter(m => inScope(m) && (who === 'all' ? (!ui.f.who || m.by === ui.f.who) : m.by === mine));
-  const open = ['mined', 'approaching', 'hot', 'invited'];
-  const L = base.filter(m => st === 'all' || (st === 'open' ? open.includes(m.status) : st === 'closed' ? ['not_interested', 'no_response'].includes(m.status) : m.status === st));
-  const act = r => {
-    const m = D.mining.find(x => x.id === r.id);
-    if (!may('mine') || !(m.by === mine || !mine)) return null;
-    const i = FLOW.indexOf(m.status), next = FLOW[i + 1];
-    if (!next) return null;
-    if (next === 'joined' && !may('join')) return h('span', {class: 'muted small'}, 'A CA saves the join');
-    return h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm primary', onclick: () => moveStatus(m, next)}, {approaching: 'Approaching', hot: 'Hot lead', invited: 'Invite sent', joined: 'Joined'}[next]),
-      i >= 1 ? h('button', {class: 'btn sm', title: 'Not interested', onclick: () => moveStatus(m, 'not_interested')}, 'No') : null, i >= 1 ? h('button', {class: 'btn sm', title: 'No response', onclick: () => moveStatus(m, 'no_response')}, '…') : null,
-      h('button', {class: 'btn sm', onclick: () => mineForm(m)}, 'Edit'));
-  };
-  const counts = Object.fromEntries(Object.keys(MSTAT).map(k2 => [k2, base.filter(m => m.status === k2).length]));
-  return [h('div', {class: 'grid'}, kpi(mine ? 'Mined by me' : 'Mined', N(base.length), {sub: 'this month', c: '--base'}), kpi('Approaching', N(counts.approaching)), kpi('Hot leads', N(counts.hot), {c: '--ops'}),
-      kpi('Invite sent', N(counts.invited)), kpi('Joined', N(counts.joined), {sub: pct(counts.joined, base.length) + '% of mined', c: '--growth'}), kpi('Closed', N(counts.not_interested + counts.no_response), {sub: 'not interested or no response'})),
-    row(card('Mining list', mine ? `Everything ${nameOf(mine)} entered. Move each creator along: Approaching → Hot lead → Invite sent → Joined.` : 'Everything the team entered, with who entered it.', table([
-      {k: 'username', label: 'Creator', render: m => person(m.username, `${m.city} · ${m.industry}`)}, {k: 'byName', label: 'Entered by'}, {k: 'level', label: 'Level'},
-      {k: 'g3', label: 'GMV, 3 months', num: true, render: m => h('div', {style: 'text-align:right'}, h('b', {}, Rp(m.g3)), h('div', {class: 'muted small'}, `Video ${short(sum(m.gmv3, x => x.video))} · LIVE ${short(sum(m.gmv3, x => x.live))}`))},
-      {k: 'phone', label: 'WhatsApp', render: m => m.phone ? h('a', {href: waLink(m.phone), target: '_blank', rel: 'noopener', class: 'small'}, 'Open WA') : h('span', {class: 'muted small'}, 'No number')},
-      {k: 'status', label: 'Status', render: m => stat(m.status)}, {k: 'last', label: 'Last change', num: true, fmt: dayLabel}, {k: 'act', label: '', fixed: true, render: act}],
-      L.map(m => ({...m, byName: nameOf(m.by), g3: g3(m), last: m.history.at(-1).day, _rec: m.id})), {sortKey: 'last', pageSize: 12,
-      tools: h('div', {class: 'tools', style: 'margin:0'}, seg([['open', 'Open'], ['hot', 'Hot leads'], ['invited', 'Invite sent'], ['joined', 'Joined'], ['closed', 'Closed'], ['all', 'All']], st, v => { ui.tab.ms = v; render(); }, 'Status'),
-        mine ? seg([['me', 'Mine'], ['all', 'Whole team']], who, v => { ui.tab.mw = v; render(); }, 'Whose') : null)}),
-      may('mine') ? h('button', {class: 'btn primary', onclick: () => mineForm(null)}, '+ Mine a creator') : null))];
+  const mine = me(), view = ui.tab.mv || 'table', who = ui.tab.mw || (mine ? 'me' : 'all'), st = ui.tab.ms || 'open', sel = ui.sel ||= new Set();
+  const base = D.mining.filter(m => inScope(m) && (who === 'me' && mine ? m.owner === mine : !ui.f.who || m.owner === ui.f.who));
+  const keep = m => st === 'all' || (st === 'open' ? OPEN_ST.includes(m.status) : st === 'closed' ? CLOSED_ST.includes(m.status) : m.status === st);
+  const list = base.filter(keep);
+  const pipe = h('div', {class: 'pipe'}, [['open', 'All open', '--base', base.filter(m => OPEN_ST.includes(m.status))], ...Object.entries(MSTAT).map(([k2, [l, c]]) => [k2, l, c, base.filter(m => m.status === k2)])]
+    .map(([k2, l, c, l2]) => h('button', {class: st === k2 ? 'on' : '', style: `--c:var(${c})`, 'aria-pressed': String(st === k2), onclick: () => { ui.tab.ms = st === k2 ? 'all' : k2; render(); }}, h('span', {}, l), h('b', {}, N(l2.length)),
+      h('span', {}, k2 === 'open' ? `${l2.filter(m => m.follow && m.follow <= TODAY_ISO).length} follow-ups due` : `${pct(l2.length, base.length)}% · ${short(sum(l2, g3))} GMV`))));
+  const bar = h('div', {class: 'tools'}, seg([['table', 'All creators'], ['follow', 'Follow-ups']], view, v => { ui.tab.mv = v; render(); }, 'View'),
+    mine ? seg([['me', 'My creators'], ['all', 'Whole team']], who, v => { ui.tab.mw = v; render(); }, 'Whose') : null, h('span', {class: 'spacer'}),
+    h('span', {class: 'muted small'}, 'Change status, owner and follow-up right in the list. Click a creator for notes.'),
+    may('mine') ? h('button', {class: 'btn primary', onclick: () => mineForm(null)}, '+ New creator') : null);
+  return [pipe, h('div', {class: 'mt'}, bar), (view === 'follow' ? miningFollow : miningTable)(list, sel)];
 };
+function miningTable(list, sel) {
+  const picked = list.filter(m => sel.has(m.id)), canEdit = may('mine');
+  const bulk = picked.length && canEdit ? h('div', {class: 'bulk'}, h('b', {}, `${picked.length} selected`),
+    h('select', {'aria-label': 'Set status for selected', onchange: e => { const v = e.target.value; if (!v) return; picked.filter(m => m.status !== 'joined').forEach(m => { m.status = v; m.history.push({day: TODAY, status: v, ...actor()}); });
+      log(`Set ${picked.length} creators to ${MSTAT[v][0]}`); toast(`${picked.length} creators set to ${MSTAT[v][0]}. Joined ones stay joined.`); sel.clear(); render(); }},
+      h('option', {value: ''}, 'Set status…'), Object.entries(MSTAT).filter(([v]) => v !== 'joined').map(([v, [l]]) => h('option', {value: v}, l))),
+    h('select', {'aria-label': 'Set owner for selected', onchange: e => { const v = e.target.value; if (!v) return; picked.forEach(m => { m.owner = v; }); log(`Gave ${picked.length} creators to ${nameOf(v)}`); toast(`${picked.length} creators now owned by ${nameOf(v)}.`); sel.clear(); render(); }},
+      h('option', {value: ''}, 'Give to…'), D.team.filter(t => t.active).map(t => h('option', {value: t.id}, t.name))),
+    h('label', {class: 'small'}, 'Follow-up ', h('input', {type: 'date', onchange: e => { picked.filter(m => OPEN_ST.includes(m.status)).forEach(m => { m.follow = e.target.value; }); log(`Follow-up ${fmtD(e.target.value)} for ${picked.length} creators`); sel.clear(); render(); }})),
+    h('span', {class: 'spacer'}), h('button', {class: 'btn sm', onclick: () => { sel.clear(); render(); }}, 'Clear')) : null;
+  const tick = m => h('input', {type: 'checkbox', 'aria-label': `Select ${m.username}`, checked: sel.has(m.id), onchange: e => { e.target.checked ? sel.add(m.id) : sel.delete(m.id); render(); }});
+  return card(null, null, h('div', {}, bulk, table([
+    ...(canEdit ? [{k: 'sel', label: '', fixed: true, render: tick}] : []),
+    {k: 'username', label: 'Creator', render: m => h('div', {}, person(m.username, `${m.level} · ${m.industry} · ${m.city} · entered by ${m.byName}`), lastNote(m) ? h('div', {class: 'note-line'}, lastNote(m)) : null)},
+    {k: 'status', label: 'Status', render: stSelect}, {k: 'ownerName', label: 'Owner', render: ownerSelect},
+    {k: 'g3', label: 'GMV, 3 months', num: true, render: m => h('div', {style: 'text-align:right'}, h('b', {}, Rp(m.g3)), h('div', {class: 'muted small'}, `Video ${short(sum(m.gmv3, x => x.video))} · LIVE ${short(sum(m.gmv3, x => x.live))}`))},
+    {k: 'phone', label: 'WhatsApp', render: m => m.phone ? h('a', {href: waLink(m.phone), target: '_blank', rel: 'noopener', class: 'small'}, 'Chat') : h('span', {class: 'muted small'}, 'No number')},
+    {k: 'follow', label: 'Follow-up', render: followInput}, {k: 'last', label: 'Last change', num: true, render: m => h('div', {class: 'small', style: 'text-align:right;white-space:nowrap'}, dayLabel(m.last), h('div', {class: 'muted'}, m.lastWho))}],
+    list.map(m => { const e = m.history.at(-1); return {...m, ownerName: nameOf(m.owner), byName: nameOf(m.by), g3: g3(m), last: e.day, lastWho: e.who || nameOf(e.by), _rec: m.id}; }),
+    {sortKey: 'last', pageSize: 15, state: ui.tab.mtState ||= {},
+      tools: canEdit ? h('button', {class: 'btn sm', onclick: () => { list.forEach(m => sel.add(m.id)); render(); }}, `Select all ${list.length}`) : null})));
+}
+function miningFollow(list) {
+  const open = list.filter(m => OPEN_ST.includes(m.status)), in7 = isoAdd(TODAY_ISO, 7);
+  const groups = [['Late', '--rev', open.filter(m => m.follow && m.follow < TODAY_ISO)], ['Today', '--ops', open.filter(m => m.follow === TODAY_ISO)], ['Next 7 days', '--base', open.filter(m => m.follow > TODAY_ISO && m.follow <= in7)],
+    ['No follow-up set', '--muted', open.filter(m => !m.follow)]];
+  const snooze = (m, n) => h('button', {class: 'btn sm', onclick: () => setField(m, 'follow', isoAdd(TODAY_ISO, n), `follow-up in ${n} days`)}, `+${n} d`);
+  return h('div', {class: 'stack'}, groups.map(([l, c, items]) => card(`${l} · ${items.length}`, null, items.length ? h('div', {class: 'fu-list'}, items.sort((a, b) => (a.follow || '').localeCompare(b.follow || '')).slice(0, 25).map(m =>
+    h('div', {class: 'fu', style: `--c:var(${c})`}, h('button', {class: 'link fu-name', onclick: () => openMining(m.id)}, m.username), h('span', {class: 'muted small fu-sub'}, `${nameOf(m.owner)} · ${lastNote(m) || MSTAT[m.status][0]}`),
+      stSelect(m), followInput(m), m.phone ? h('a', {class: 'btn sm', href: waLink(m.phone), target: '_blank', rel: 'noopener'}, 'WhatsApp') : h('span'), may('mine') ? h('div', {style: 'display:flex;gap:4px'}, snooze(m, 1), snooze(m, 3)) : null)),
+    items.length > 25 ? h('div', {class: 'muted small'}, `+${items.length - 25} more`) : null) : h('div', {class: 'muted small'}, 'Nothing here.'))));
+}
+// Notion-style record: every property edits in place, notes and status changes share one timeline.
+function openMining(id) {
+  const m = D.mining.find(x => x.id === id), d = $('#drawer'), keep = d.open && d.dataset.rec === id ? d.querySelector('.rec-b')?.scrollTop : 0, canEdit = may('mine');
+  const prop = (label, el) => [h('span', {}, label), el];
+  const txt = (k2, label, attrs = {}) => prop(label, h('input', {class: 'cell-in', value: m[k2] || '', disabled: !canEdit, ...attrs, onchange: e => setField(m, k2, e.target.value.trim(), label.toLowerCase())}));
+  const pick2 = (k2, label, opts) => prop(label, h('select', {class: 'cell-sel', disabled: !canEdit, onchange: e => setField(m, k2, e.target.value, label.toLowerCase())}, opts.map(([v, l]) => h('option', {value: v, selected: String(m[k2] || '') === String(v)}, l))));
+  const note = h('textarea', {placeholder: 'Add a note: what they said, the rate they asked, the next step…', 'aria-label': 'Add a note'});
+  const addNote = () => { const t = note.value.trim(); if (!t) return; m.comments.push({day: TODAY, text: t, ...actor()}); log(`Note on ${m.username}`); refresh(m.id); };
+  note.onkeydown = e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addNote(); };
+  const feed = [...m.history.map((e, i) => ({...e, kind: 'status', t: e.t ?? e.day * 1e3 + i})), ...m.comments.map((e, i) => ({...e, kind: 'note', t: e.t ?? e.day * 1e3 + 500 + i}))].sort((a, b) => b.t - a.t);
+  const o = m.onb && D.onb.find(x => x.id === m.onb), step = m.status === 'joined' ? 5 : Math.max(0, FLOW.indexOf(m.status));
+  drawer([avatar(m.username), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, m.username), h('div', {class: 'muted small'}, `Entered by ${nameOf(m.by)} on ${dayLabel(m.day)}`),
+    h('div', {class: 'chips'}, stSelect(m), followChip(m), m.partner ? chip(partnerOf(m.partner)?.name, '--base', false) : null))],
+  [h('div', {class: 'journey-mini'}, ['Mined', 'Approaching', 'Hot lead', 'Invite sent', 'Joined'].map((s, i) => h('span', {class: i < step ? 'done' : i === step ? 'now' : ''}, s))),
+    h('div', {class: 'pl'}, prop('Owner', ownerSelect(m)), prop('Follow-up', followInput(m)), txt('phone', 'Phone (WhatsApp)', {inputmode: 'tel'}),
+      pick2('level', 'Sales level', LEVELS.map(l => [l, l])), pick2('industry', 'Top industry', INDUSTRIES.map(i => [i, i])), pick2('city', 'City', CITIES.map(c => [c, c])),
+      txt('province', 'Province'), txt('postal', 'Postal code', {inputmode: 'numeric'}), prop('Agency', h('span', {}, OWN)),
+      pick2('partner', 'Partner', [['', 'No partner'], ...D.partners.map(p => [p.id, p.name])]),
+      prop('Links', h('div', {style: 'display:flex;gap:10px'}, h('a', {href: tiktokLink(m.username), target: '_blank', rel: 'noopener'}, 'TikTok profile'), m.phone ? h('a', {href: waLink(m.phone), target: '_blank', rel: 'noopener'}, 'WhatsApp chat') : null))),
+    sec('GMV, last 3 months', h('div', {class: 'gmv3 read'}, h('span', {}), h('b', {}, 'Video'), h('b', {}, 'LIVE'), m.gmv3.flatMap(x => [h('span', {class: 'muted'}, x.m), h('span', {}, Rp(x.video)), h('span', {}, Rp(x.live))]),
+      h('span', {class: 'muted'}, 'Total'), h('b', {}, Rp(sum(m.gmv3, x => x.video))), h('b', {}, Rp(sum(m.gmv3, x => x.live)))),
+      canEdit ? h('button', {class: 'btn sm', style: 'margin-top:8px', onclick: () => mineForm(m)}, 'Edit GMV and details') : null),
+    o ? sec('Onboarding', h('div', {class: 'status-row'}, badge(o.status), chip(o.type === 'new' ? 'New' : 'Renewal', o.type === 'new' ? '--growth' : '--muted', false), h('span', {class: 'grow small muted'}, `Joined ${dayLabel(o.day)} · credit ${nameOf(o.team)}`),
+      h('button', {class: 'btn sm', onclick: () => openRecord(o.id)}, 'Open'))) : null,
+    sec('Notes and activity', canEdit ? h('div', {class: 'comment-box'}, note, h('button', {class: 'btn sm primary', onclick: addNote}, 'Add')) : null,
+      h('div', {class: 'timeline', style: 'margin-top:8px'}, feed.map(e => h('div', {class: 'ev', style: `--c:var(${e.kind === 'note' ? '--muted' : MSTAT[e.status][1]})`}, h('i'),
+        h('div', {}, e.kind === 'note' ? h('span', {style: 'white-space:pre-wrap'}, e.text) : ['Status: ', h('b', {}, MSTAT[e.status][0])], h('small', {}, e.who || nameOf(e.by))), h('time', {}, dayLabel(e.day))))))],
+  [h('span', {class: 'muted small'}, 'Changes save as you make them (sample: nothing is stored).')]);
+  d.dataset.rec = id; d.querySelector('.rec-b').scrollTop = keep || 0;
+}
 
 // ================= Daily Tracker =================
 PAGES['Daily Tracker'] = () => {
@@ -1243,6 +1356,7 @@ const setupActivity = () => [card('Activity', 'Every change records the login an
 
 // ================= record drawer =================
 function openRecord(id) {
+  if (id[0] === 'm') return openMining(id);
   const o = D.onb.find(x => x.id === id), m = D.mining.find(x => x.id === id) || (o && D.mining.find(x => x.id === o.mining)), rec = o || m;
   const b = o && D.bound.find(x => x.onb === o.id), steps = ['Mined', 'Approaching', 'Hot lead', 'Invite sent', 'Joined', 'Linked'];
   const at = o ? (o.status === 'confirmed' ? 5 : 4) : Math.max(0, FLOW.indexOf(m.status));
@@ -1281,7 +1395,7 @@ function render() {
     me() ? null : fg('Person', h('select', {'aria-label': 'Person', onchange: e => { ui.f.who = e.target.value; render(); }}, [['', 'Everyone'], ...people.map(p => [p.id, p.name])].map(([v, l]) => h('option', {value: v, selected: ui.f.who === v}, l)))),
     h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `${MONTH} · day ${TODAY} of ${DAYS} · sample data`));
   if (role() === 'intern' && !ui.as) { put($('#page'), card(null, null, h('div', {class: 'empty'}, 'Pick your name to start.', h('div', {style: 'margin-top:10px'}, h('button', {class: 'btn primary', onclick: whoPicker}, 'Who is working?'))))); if (!$('#modal').open) whoPicker(); return; }
-  put($('#page'), PAGES[ui.page]());
+  const y = $('main').scrollTop; put($('#page'), PAGES[ui.page]()); $('main').scrollTop = y;
 }
 $('#login').append(...LOGINS.map(([e, , l]) => h('option', {value: e, selected: e === ui.login}, `${l} · ${e}`)));
 $('#login').onchange = e => { ui.login = e.target.value; ui.as = null; ui.f.who = ''; log('Signed in'); render(); };
