@@ -442,6 +442,9 @@ a.btn{color:inherit}
 .tgt-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:10px 12px;border-radius:10px;background:var(--panel2);font-size:13px}
 .form .form{min-width:0}
 .form input[type=date]{width:100%;min-width:0}
+.link.cnt{font-size:13px;font-weight:600}
+.check-line{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;font-size:12.5px;color:var(--text)!important}
+.check-line input{width:auto;height:auto}
 </style>
 </head>
 <body>
@@ -594,7 +597,7 @@ function table(cols, rows, {pageSize = 10, sortKey, dir = -1, search = true, too
     const pages = Math.max(1, Math.ceil(list.length / pageSize)); page = Math.min(page, pages - 1);
     const shown = list.slice(page * pageSize, page * pageSize + pageSize);
     put(box,
-      search || tools ? h('div', {class: 'tools'}, search ? h('input', {type: 'search', placeholder: 'Filter', value: q, 'aria-label': 'Filter rows', style: 'width:200px', oninput: e => { q = e.target.value.toLowerCase(); page = 0; draw(); box.querySelector('input').focus(); }}) : null,
+      search || tools ? h('div', {class: 'tools'}, search ? h('input', {type: 'search', placeholder: 'Filter', value: q, 'aria-label': 'Filter rows', style: 'width:200px', oninput: e => { q = e.target.value.toLowerCase(); page = 0; draw(); const i = box.querySelector('input'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }}) : null,
         tools || null, h('span', {class: 'count'}, `${list.length} ${list.length === 1 ? 'row' : 'rows'}`), h('button', {class: 'btn sm', onclick: () => exportCsv(cols, list)}, 'Export CSV')) : null,
       h('div', {class: 'tbl'}, h('table', {}, h('thead', {}, h('tr', {}, cols.map(c => h('th', {class: (c.num ? 'n ' : '') + (c.k && !c.fixed ? 'sort' : ''),
         onclick: c.k && !c.fixed ? () => { d = key === c.k ? -d : -1; key = c.k; draw(); } : null}, c.label, key === c.k ? (d > 0 ? ' ↑' : ' ↓') : '')))),
@@ -678,10 +681,10 @@ function planTerms(n, start) {
 function makeData() {
   const FTE = ['Dimas Pratama', 'Ayu Lestari', 'Bagas Saputra', 'Nadia Putri', 'Fajar Nugroho', 'Sekar Wulandari'];
   const INTERNS = ['Alya Rahma', 'Bima Santoso', 'Citra Dewi', 'Dafa Ramadhan', 'Elsa Maharani', 'Gilang Firmansyah', 'Hana Salsabila', 'Irfan Hakim', 'Jihan Aulia', 'Kevin Wijaya', 'Laras Anindya', 'Rafi Akbar'];
-  const team = [{id: 'n0', name: 'Rina Kartika', type: 'ca_lead', emails: ['rina.kartika@sample.id'], pod: '', cities: [], industries: [], active: true, notes: 'Runs the team'}];
+  const team = [{id: 'n0', name: 'Rina Kartika', type: 'ca_lead', emails: ['rina.kartika@sample.id'], pod: '', pods: [], cities: [], industries: [], active: true, notes: 'Runs the team'}];
   [['L2', ['Bandung', 'Jakarta'], ['Dining SV']], ['L2', ['Surabaya', 'Bali'], []], ['L3', [], []], ['L4', [], ['Accommodation', 'Dining SV']], ['LIVE', [], ['Dining LS']], ['L1', ['Bekasi', 'Tangerang', 'Bogor'], []]]
-    .forEach(([pod, cities, industries], i) => team.push({id: 'n' + (i + 1), name: FTE[i], type: 'fte_ca', emails: [`${FTE[i].split(' ')[0].toLowerCase()}@sample.id`], pod, cities, industries, active: true, notes: 'FTE'}));
-  for (let i = 1; i <= 12; i++) team.push({id: 'i' + i, name: INTERNS[i - 1], type: 'intern', emails: ['intern.ca@sample.id'], pod: i > 10 ? 'LIVE' : 'L1', cities: i % 3 ? [] : ['Bandung'], industries: i > 10 ? ['Dining LS'] : [], active: i !== 12, notes: i === 12 ? 'Internship ended 15 Oct' : 'Intern batch Sep 2026'});
+    .forEach(([pod, cities, industries], i) => team.push({id: 'n' + (i + 1), name: FTE[i], type: 'fte_ca', emails: [`${FTE[i].split(' ')[0].toLowerCase()}@sample.id`], pod, pods: i === 2 ? ['L3', 'L4'] : i === 1 ? ['L2', 'L1'] : [pod], cities, industries, active: true, notes: 'FTE'}));
+  for (let i = 1; i <= 12; i++) team.push({id: 'i' + i, name: INTERNS[i - 1], type: 'intern', emails: ['intern.ca@sample.id'], pod: i > 10 ? 'LIVE' : 'L1', pods: i > 10 ? ['LIVE'] : i === 4 ? ['L1', 'L2'] : ['L1'], cities: i % 3 ? [] : ['Bandung'], industries: i > 10 ? ['Dining LS'] : [], active: i !== 12, notes: i === 12 ? 'Internship ended 15 Oct' : 'Intern batch Sep 2026'});
   const workers = team.filter(t => t.type !== 'ca_lead' && t.active);
   // Made-up TikTok handles: a word for the niche, a first name, the city
   const HW = {'Dining SV': ['kuliner', 'jajan', 'makan', 'foodie', 'ngemil', 'santap', 'dapur'], 'Dining LS': ['live', 'jualan', 'siaran', 'livemakan'], Accommodation: ['staycation', 'nginep', 'hotelhop'], 'Things To Do': ['jalanjalan', 'explore', 'liburan', 'main']};
@@ -707,20 +710,20 @@ function makeData() {
     const city = t.cities.length && rnd() < 0.7 ? pick(t.cities) : pick(CITIES), day = int(1, TODAY), base = gmvBase(level) * int(2, 60);
     const gmvMonths = pick(GMV_MONTHS), gmv = GMV_LEVELS.includes(level) && rnd() < 0.75 ? Math.round(base * gmvMonths * (0.6 + rnd() * 0.8) / 1e5) * 1e5 : null;
     const r = rnd(), status = day > TODAY - 2 ? pick(['mined', 'mined', 'approaching']) : r < 0.5 ? 'joined' : r < 0.6 ? 'invited' : r < 0.7 ? 'hot' : r < 0.8 ? 'approaching' : r < 0.86 ? 'mined' : r < 0.94 ? 'not_interested' : 'no_response';
-    const username = handle(industry, city), phone = rnd() < 0.85 ? '08' + int(1e9, 9e9) : '';
+    const username = handle(industry, city), phone = rnd() < 0.85 ? '08' + int(1e9, 9e9) : '', dm = !phone && rnd() < 0.5;
     const history = [{day, by: t.id, status: 'mined'}]; let d = day;
     const target = status === 'not_interested' || status === 'no_response' ? FLOW.indexOf('approaching') : FLOW.indexOf(status);
     for (let k = 1; k <= target; k++) { d = Math.min(TODAY, d + int(0, 2)); history.push({day: d, by: t.id, status: FLOW[k]}); }
     if (status === 'not_interested' || status === 'no_response') history.push({day: Math.min(TODAY, d + int(1, 3)), by: t.id, status});
     const m = {id: 'm' + i, by: t.id, day, username, phone, level, industry, city, province: PROV[city][0], postal: rnd() < 0.6 ? PROV[city][1] : '', agency: OWN, partner: rnd() < 0.08 ? pick(partners).id : '',
-      gmv, gmvMonths, status, history, note: '', owner: rnd() < 0.1 ? pick(workers).id : t.id, follow: OPEN_ST.includes(status) ? isoAdd(TODAY_ISO, int(-3, 6)) : '',
+      gmv, gmvMonths, dm, status, history, note: '', owner: rnd() < 0.1 ? pick(workers).id : t.id, follow: OPEN_ST.includes(status) ? isoAdd(TODAY_ISO, int(-3, 6)) : '',
       comments: Array.from({length: status === 'mined' ? 0 : int(0, 2)}, (_, k) => ({day: Math.min(TODAY, day + k + 1), by: t.id, text: pick(NOTES)}))};
     mining.push(m);
     if (status === 'joined') {
       const joinDay = history.at(-1).day, renewal = rnd() < 0.07, stat = joinDay > TODAY - 6 ? (rnd() < 0.55 ? 'pending' : 'confirmed') : rnd() < 0.05 ? 'not_confirmed' : 'confirmed';
       const o = {id: 'o' + i, month: 'Oct', mining: m.id, team: t.id, day: joinDay, username, level, pod: podOf(level, industry), industry: rnd() < 0.03 ? '' : industry, city, phone, partner: m.partner, type: renewal ? 'renewal' : 'new',
         status: stat, linkedDay: stat === 'confirmed' ? Math.min(TODAY, joinDay + int(0, 3)) : null};
-      o.complete = !!(o.phone && o.industry); m.onb = o.id; onb.push(o);
+      o.dm = !o.phone && m.dm; o.complete = !!(o.industry && (o.phone || o.dm)); m.onb = o.id; onb.push(o);
     }
   }
   // last month's cohort, so CAs can look back at the creators they brought in September
@@ -787,7 +790,7 @@ const rangeTxt = () => ui.range.d0 === ui.range.d1 ? dayLabel(ui.range.d0) : `${
 try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim3') || '{}'), {as: null}); } catch {}
 const role = () => (logins().find(l => l[0] === ui.login) || logins()[0])[1];
 const may = what => ({
-  mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], bound: ['ca_lead'], budget: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
+  mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], owner: ['ca_lead', 'fte_ca'], bound: ['ca_lead'], budget: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
   team: ['ca_lead', 'admin'], draftTargets: ['ca_lead', 'admin'], approveTargets: ['head', 'admin'], report: ['ca_lead', 'admin', 'head'], money: ['ca_lead', 'fte_ca', 'head', 'finance', 'admin']}[what] || []).includes(role());
 const me = () => role() === 'fte_ca' ? D.team.find(t => t.emails.includes(ui.login))?.id : role() === 'intern' ? ui.as : null;
 const nameOf = id => D.team.find(t => t.id === id)?.name || '-';
@@ -860,7 +863,7 @@ const gmvTxt = m => m.gmv ? `${Rp(m.gmv)} · ${m.gmvMonths} ${m.gmvMonths === 1 
 const onbRow = o => ({...o, teamName: nameOf(o.team), partnerName: partnerOf(o.partner)?.name || '', _rec: o.id});
 const onbCols = [{k: 'username', label: 'Creator', render: o => person(o.username, `${o.city} · ${o.industry || 'industry missing'}`)}, {k: 'teamName', label: 'Brought by'}, {k: 'level', label: 'Level'},
   {k: 'day', label: 'Joined', num: true, fmt: dayLabel}, {k: 'type', label: 'Type', render: o => o.type === 'new' ? chip('New', '--growth', false) : chip('Renewal', '--muted', false)},
-  {k: 'status', label: 'Total Creator Data', render: o => badge(o.status)}, {k: 'complete', label: 'Record', render: o => o.complete ? chip('Complete', '--growth', false) : chip('Missing phone or industry', '--rev', false)}];
+  {k: 'status', label: 'Total Creator Data', render: o => badge(o.status)}, {k: 'complete', label: 'Record', render: o => o.complete ? (o.dm && !o.phone ? chip('DM only: add phone', '--ops', false) : chip('Complete', '--growth', false)) : chip('No phone or DM', '--rev', false)}];
 const BSTAGE = {draft: ['Draft', '--muted'], needs_head: ['Needs Head', '--rev'], approved: ['Approved', '--base'], part_paid: ['Part paid', '--ops'], paid: ['Paid', '--growth']};
 const bStage = b => b.stage !== 'approved' ? b.stage : b.terms.every(t => t.stage === 'paid') ? 'paid' : b.terms.some(t => t.stage === 'paid') ? 'part_paid' : 'approved';
 const bPaid = b => sum(b.terms.filter(t => t.stage === 'paid'), t => Math.round(b.amount * t.pct / 100));
@@ -884,7 +887,7 @@ function partnerFee(p) {
 // ================= Overview =================
 // CA Lead (and Admin, Head) download every Overview number in one workbook, following the filters and dates picked.
 function overviewPack() {
-  const L = ONB(), c = counted(L), M = MIN(), people = D.team.filter(t => t.type !== 'ca_lead' && personScope(t.id));
+  const L = ONB(), c = counted(L), M = MIN(), people = D.team.filter(t => t.type !== 'ca_lead' && !t.removed && personScope(t.id));
   const lines = paceRows(D.targets.filter(t => t.month === 'Oct' && t.status === 'active'));
   sheetsDownload(`CA-overview-${ui.range.d0}-${ui.range.d1}-Oct-2026.xlsx`, [
     ['Summary', [['Dates', rangeTxt()], ['Filters', [ui.f.pod, ui.f.ind, ui.f.city, ui.f.who && nameOf(ui.f.who)].filter(Boolean).join(', ') || 'none'], ['Mined', M.length], ['Hot leads now', M.filter(m => m.status === 'hot').length],
@@ -895,7 +898,7 @@ function overviewPack() {
       'Achievement %': l.ach, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
     ['By city', [...CORE, 'Other'].map(cy => { const f = o => cy === 'Other' ? !CORE.includes(o.city) : o.city === cy; return {City: cy, Mined: M.filter(f).length, Joined: c.filter(f).length, Confirmed: c.filter(o => f(o) && o.status === 'confirmed').length}; })],
     ['By industry', INDUSTRIES.map(i => ({Industry: i, Mined: M.filter(m => m.industry === i).length, Joined: c.filter(o => o.industry === i).length, Confirmed: c.filter(o => o.industry === i && o.status === 'confirmed').length}))],
-    ['By person', people.map(t => { const m = M.filter(x => x.by === t.id), o = L.filter(x => x.team === t.id); return {Name: t.name, Type: t.type === 'intern' ? 'Intern' : 'FTE CA', Pod: t.pod, Active: t.active ? 'Yes' : 'No', Mined: m.length,
+    ['By person', people.map(t => { const m = M.filter(x => x.by === t.id), o = L.filter(x => x.team === t.id); return {Name: t.name, Type: t.type === 'intern' ? 'Intern' : 'FTE CA', Levels: t.pods.join(', '), Active: t.active ? 'Yes' : 'No', Mined: m.length,
       'Hot leads': m.filter(x => reached(x, 'hot')).length, Invites: m.filter(x => reached(x, 'invited')).length, Joined: counted(o).length, Confirmed: counted(o).filter(x => x.status === 'confirmed').length, 'Complete %': pct(o.filter(x => x.complete).length, o.length)}; })],
     ['Onboardings', L.map(o => ({Creator: o.username, 'Brought by': nameOf(o.team), Joined: dayLabel(o.day), Level: o.level, Pod: lvOf(o), Industry: o.industry, City: o.city, Type: o.type, Partner: partnerOf(o.partner)?.name || '',
       'Total Creator Data': o.status, Complete: o.complete ? 'Yes' : 'No', Counted: o.complete && o.level !== 'L0' ? 'Yes' : 'No', Videos: o.videos, 'LIVE sessions': o.lives, 'GMV (Rp)': o.gmv}))],
@@ -907,7 +910,7 @@ function overviewPack() {
 function myDay() {
   const id = me(), mine = D.mining.filter(m => m.owner === id && OPEN_ST.includes(m.status)), mo = D.onb.filter(o => o.month === 'Oct' && o.team === id);
   const items = [['Follow-ups late', mine.filter(m => m.follow && m.follow < TODAY_ISO), '--rev', 'follow'], ['Follow-ups today', mine.filter(m => m.follow === TODAY_ISO), '--ops', 'follow'],
-    ['Hot leads to invite', mine.filter(m => m.status === 'hot'), '--ops', 'hot'], ['Records missing phone or industry', mo.filter(o => !o.complete), '--rev', null], ['Joined, no post yet', mo.filter(o => o.status === 'confirmed' && o.lastPost == null), '--base', null]];
+    ['Hot leads to invite', mine.filter(m => m.status === 'hot'), '--ops', 'hot'], ['Records missing phone or industry', mo.filter(o => !o.complete), '--rev', null], ['Joined by DM, add the phone', mo.filter(o => o.dm && !o.phone), '--ops', null], ['Joined, no post yet', mo.filter(o => o.status === 'confirmed' && o.lastPost == null), '--base', null]];
   const go = k2 => { ui.page = k2 === null ? 'My Creators' : 'Mining'; if (k2) Object.assign(ui.tab, {mv: k2 === 'follow' ? 'follow' : 'table', ms: k2 === 'follow' ? 'open' : k2, mw: 'me'}); render(); };
   return card(`My day · ${nameOf(id)}`, 'Start here every morning. Click a line to open the list.', h('div', {class: 'myday'}, items.map(([l, list, c, k2]) =>
     h('button', {class: 'myday-i', style: `--c:var(${c})`, onclick: () => go(k2)}, h('b', {}, N(list.length)), h('span', {}, l)))));
@@ -947,7 +950,8 @@ function mineCheck(u) {
 }
 function mineForm(m0) {
   const m = m0 && D.mining.find(x => x.id === m0.id), dlg = $('#modal');
-  const f = m ? JSON.parse(JSON.stringify(m)) : {username: '', phone: '', level: 'L1', industry: '', city: 'Bandung', province: PROV.Bandung[0], postal: '', agency: OWN, partner: '', gmv: '', gmvMonths: 3, note: ''};
+  const f = m ? JSON.parse(JSON.stringify(m)) : {username: '', phone: '', level: 'L1', industry: '', city: 'Bandung', province: PROV.Bandung[0], postal: '', agency: OWN, partner: '', gmv: '', gmvMonths: 3, note: '', dm: false};
+  let more = !!m;
   const err = h('div', {class: 'callout', style: 'display:none'}), check = h('div', {class: 'mining-res'}), tlink = h('span', {class: 'auto'}), wlink = h('span', {class: 'auto'}), gmvBox = h('div', {class: 'gmv-box'});
   const refresh = () => { put(tlink, f.username ? tiktokLink(f.username.trim().replace(/^@?/, '@')) : 'fills in from the Creator ID'); put(wlink, f.phone ? waLink(f.phone) : 'fills in from the phone number');
     put(gmvBox, GMV_LEVELS.includes(f.level) ? [h('label', {}, 'GMV (Rp, optional)', h('input', {type: 'number', min: 0, step: 100000, value: f.gmv ?? '', placeholder: 'e.g. 25000000', oninput: e => { f.gmv = e.target.value; }})),
@@ -961,23 +965,26 @@ function mineForm(m0) {
     if (!/^@[a-z0-9._]{2,30}$/.test(u)) problems.push('a valid Creator ID (letters, numbers, dot, underscore)');
     if (r && !['new', 'renewal'].includes(r[0])) problems.push(r[1].toLowerCase());
     if (f.phone && !/^0?8\d{7,12}$/.test(String(f.phone).replace(/\D/g, ''))) problems.push('a WhatsApp number that starts with 08');
-    if (!f.industry) problems.push('the top industry');
+    if (!f.industry) problems.push('the industry');
+    if (!f.city) problems.push('the location');
     if (f.gmv !== '' && f.gmv != null && !(+f.gmv >= 0)) problems.push('a GMV of 0 or more');
     if (problems.length) { err.style.display = 'block'; err.textContent = 'Add ' + problems.join(', ') + '.'; return; }
-    const clean = {username: u, phone: f.phone, level: f.level, industry: f.industry, city: f.city, province: f.province, postal: f.postal, agency: f.agency, partner: f.partner, gmv: GMV_LEVELS.includes(f.level) && f.gmv !== '' && f.gmv != null ? +f.gmv : null, gmvMonths: +f.gmvMonths || 3, note: f.note};
+    const clean = {username: u, phone: f.phone, dm: !!f.dm, level: f.level, industry: f.industry, city: f.city, province: f.province || PROV[f.city][0], postal: f.postal, agency: f.agency, partner: f.partner, gmv: GMV_LEVELS.includes(f.level) && f.gmv !== '' && f.gmv != null ? +f.gmv : null, gmvMonths: +f.gmvMonths || 3, note: f.note};
     if (m) { Object.assign(m, clean); log(`Edited mining record ${u}`); toast('Saved.'); }
     else { const by = me() || 'n0'; D.mining.unshift({id: 'm' + Date.now(), by, owner: by, follow: D.settings.newFollow ? isoAdd(TODAY_ISO, D.settings.newFollow) : '', comments: [], day: TODAY, status: 'mined', history: [{day: TODAY, status: 'mined', ...actor()}], ...clean}); log(`Mined ${u}`); toast(`${u} added to the mining list under ${nameOf(by)}.`); }
     dlg.close(); render();
   };
-  put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, m ? `Edit ${m.username}` : 'Mine a creator'), h('p', {class: 'muted small', style: 'margin:0'}, `Saved under ${m ? nameOf(m.by) : nameOrRole()}. Links fill in by themselves.`),
-    h('div', {class: 'form'}, inp('username', 'Creator ID *', {placeholder: '@username', disabled: !!m}), h('label', {}, 'TikTok link (auto)', tlink),
-      inp('phone', 'Phone (WhatsApp)', {type: 'tel', placeholder: '08…', inputmode: 'tel'}), h('label', {}, 'WA link (auto)', wlink),
-      sel('level', 'Sales level', LEVELS.map(l => [l, l])), sel('industry', 'Top industry *', [['', 'Choose…'], ...INDUSTRIES.map(i => [i, i])]),
-      sel('city', 'City', CITIES.map(c => [c, c]), () => { provIn.value = f.province = PROV[f.city][0]; postIn.value = f.postal = PROV[f.city][1]; }),
-      h('label', {}, 'Province', provIn), h('label', {}, 'Postal code', postIn), sel('agency', 'Agency', [[OWN, OWN]]),
-      sel('partner', 'Brought by a partner', [['', 'No partner'], ...D.partners.filter(p => p.active).map(p => [p.id, p.name])]), inp('note', 'Note', {placeholder: 'Anything the team should know'})),
-    gmvBox,
-    m ? null : check, err, h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: save}, m ? 'Save' : 'Add to mining'))));
+  const moreBox = h('div', {class: 'stack'}), moreBtn = h('button', {class: 'link', type: 'button', onclick: () => { more = !more; drawMore(); }});
+  const drawMore = () => { moreBtn.textContent = more ? 'Hide more details' : '+ More details (optional: phone, level, GMV, partner)'; moreBox.hidden = !more; };
+  put(moreBox, h('div', {class: 'form'}, inp('phone', 'Phone (WhatsApp)', {type: 'tel', placeholder: '08…', inputmode: 'tel'}), h('label', {}, 'WA link (auto)', wlink),
+      h('label', {class: 'wide check-line'}, h('input', {type: 'checkbox', checked: !!f.dm, onchange: e => { f.dm = e.target.checked; }}), 'Reached by TikTok DM (no phone yet). Counts once joined, with a reminder to add the phone.'),
+      sel('level', 'Sales level', LEVELS.map(l => [l, l])), h('label', {}, 'TikTok link (auto)', tlink), h('label', {}, 'Province', provIn), h('label', {}, 'Postal code', postIn),
+      sel('partner', 'Brought by a partner', [['', 'No partner'], ...D.partners.filter(p => p.active).map(p => [p.id, p.name])]), inp('note', 'Note', {placeholder: 'Anything the team should know'})), gmvBox);
+  put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, m ? `Edit ${m.username}` : 'Mine a creator'), h('p', {class: 'muted small', style: 'margin:0'}, m ? `Entered by ${nameOf(m.by)}.` : `Three things to start. Saved under ${nameOrRole()}; add the rest later.`),
+    h('div', {class: 'form f3'}, inp('username', 'TikTok username *', {placeholder: '@username', disabled: !!m, autofocus: true}), sel('industry', 'Industry *', [['', 'Choose…'], ...INDUSTRIES.map(i => [i, i])]),
+      sel('city', 'Location *', CITIES.map(c => [c, c]), () => { provIn.value = f.province = PROV[f.city][0]; postIn.value = f.postal = PROV[f.city][1]; })),
+    m ? null : check, moreBtn, moreBox, err, h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: save}, m ? 'Save' : 'Add to mining'))));
+  drawMore();
   refresh(); dlg.showModal();
 }
 // Any CA (FTE or intern) can move any creator to any status; Joined is final because it creates the onboarding.
@@ -1001,8 +1008,8 @@ function setField(m0, k2, v, label) {
 function refresh(id) { render(); const d = $('#drawer'); if (d.open && d.dataset.rec === id) openMining(id); }
 const stSelect = m => h('select', {class: 'st-sel', style: `--tc:var(${MSTAT[m.status][1]})`, 'aria-label': `Status of ${m.username}`, disabled: !may('mine') || m.status === 'joined',
   onchange: e => { const v = e.target.value; e.target.value = m.status; setStatus(m, v); }}, Object.entries(MSTAT).filter(([v]) => v !== 'joined' || m.status === 'joined').map(([v, [l]]) => h('option', {value: v, selected: m.status === v}, l)));
-const ownerSelect = m => h('select', {class: 'cell-sel', 'aria-label': `Owner of ${m.username}`, disabled: !may('mine'), onchange: e => setField(m, 'owner', e.target.value, `owner ${nameOf(e.target.value)}`)},
-  D.team.filter(t => t.active || t.id === m.owner).map(t => h('option', {value: t.id, selected: m.owner === t.id}, t.name)));
+const ownerSelect = m => h('select', {class: 'cell-sel', 'aria-label': `Owner of ${m.username}`, disabled: !may('owner'), onchange: e => setField(m, 'owner', e.target.value, `owner ${nameOf(e.target.value)}`)},
+  D.team.filter(t => (t.active && !t.removed) || t.id === m.owner).map(t => h('option', {value: t.id, selected: m.owner === t.id}, t.name)));
 const followInput = m => !OPEN_ST.includes(m.status) && !m.follow ? h('span', {class: 'muted small', style: 'padding:0 6px'}, '-') : h('input', {type: 'date', class: 'cell-in', value: m.follow || '', 'aria-label': `Follow-up for ${m.username}`, disabled: !may('mine') || !OPEN_ST.includes(m.status),
   onchange: e => setField(m, 'follow', e.target.value, `follow-up ${fmtD(e.target.value) || 'cleared'}`)});
 const followChip = m => !m.follow ? null : m.follow < TODAY_ISO ? chip(`Late · ${fmtD(m.follow)}`, '--rev', false) : m.follow === TODAY_ISO ? chip('Today', '--ops', false) : chip(fmtD(m.follow), '--muted', false);
@@ -1010,17 +1017,27 @@ const lastNote = m => m.comments.at(-1)?.text || '';
 
 PAGES['Mining'] = () => {
   const mine = me(), view = ui.tab.mv || 'table', who = ui.tab.mw || (mine ? 'me' : 'all'), st = ui.tab.ms || 'open', sel = ui.sel ||= new Set();
-  const base = D.mining.filter(m => inRange(m.day) && inScope(m) && (who === 'me' && mine ? m.owner === mine : !ui.f.who || m.owner === ui.f.who));
+  const pers = who === 'me' && mine ? mine : ui.tab.mp || ui.f.who || '';
+  const scoped = D.mining.filter(m => inRange(m.day) && inScope(m)), base = scoped.filter(m => !pers || m.owner === pers);
   const keep = m => st === 'all' || (st === 'open' ? OPEN_ST.includes(m.status) : st === 'closed' ? CLOSED_ST.includes(m.status) : m.status === st);
   const list = base.filter(keep);
   const pipe = h('div', {class: 'pipe'}, [['open', 'All open', '--base', base.filter(m => OPEN_ST.includes(m.status))], ...Object.entries(MSTAT).map(([k2, [l, c]]) => [k2, l, c, base.filter(m => m.status === k2)])]
     .map(([k2, l, c, l2]) => h('button', {class: st === k2 ? 'on' : '', style: `--c:var(${c})`, 'aria-pressed': String(st === k2), onclick: () => { ui.tab.ms = st === k2 ? 'all' : k2; render(); }}, h('span', {}, l), h('b', {}, N(l2.length)),
       h('span', {}, k2 === 'open' ? `${l2.filter(m => m.follow && m.follow <= TODAY_ISO).length} follow-ups due` : `${pct(l2.length, base.length)}% · ${short(sum(l2, g3))} GMV`))));
-  const bar = h('div', {class: 'tools'}, seg([['table', 'All creators'], ['follow', 'Follow-ups']], view, v => { ui.tab.mv = v; render(); }, 'View'),
-    mine ? seg([['me', 'My creators'], ['all', 'Whole team']], who, v => { ui.tab.mw = v; render(); }, 'Whose') : null, h('span', {class: 'spacer'}),
-    h('span', {class: 'muted small'}, 'Change status, owner and follow-up in the list. Joined comes by itself from the daily BI upload.'),
+  const team = D.team.filter(t => t.active && !t.removed);
+  const personSel = h('select', {'aria-label': 'Owner', onchange: e => { ui.tab.mp = e.target.value; ui.tab.mw = 'all'; render(); }}, h('option', {value: ''}, 'Everyone'), team.map(t => h('option', {value: t.id, selected: pers === t.id}, t.name)));
+  const bar = h('div', {class: 'tools'}, seg([['table', 'All creators'], ['follow', 'Follow-ups'], ['people', 'By person']], view, v => { ui.tab.mv = v; render(); }, 'View'),
+    mine ? seg([['me', 'Mine'], ['all', 'Team']], who, v => { ui.tab.mw = v; if (v === 'me') ui.tab.mp = ''; render(); }, 'Whose') : null, view === 'people' ? null : personSel,
+    view === 'people' ? null : h('select', {'aria-label': 'Status', onchange: e => { ui.tab.ms = e.target.value; render(); }}, [['open', 'All open'], ['all', 'Every status'], ...Object.entries(MSTAT).map(([k2, [l]]) => [k2, l]), ['closed', 'Closed']].map(([v, l]) => h('option', {value: v, selected: st === v}, l))),
+    h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, 'Joined comes by itself from the daily BI upload.'),
     may('mine') ? h('button', {class: 'btn primary', onclick: () => mineForm(null)}, '+ New creator') : null);
-  return [pipe, h('div', {class: 'mt'}, bar), (view === 'follow' ? miningFollow : miningTable)(list, sel)];
+  // Status by person: one row per teammate, one column per status; a click opens that slice of the list.
+  const byPerson = () => card('Status by person', 'Click a number to open those creators.', table([{k: 'name', label: 'Owner', render: r => person(r.name, r.type)},
+    ...Object.entries(MSTAT).map(([k2, [l, c]]) => ({k: k2, label: l, num: true, render: r => r[k2] ? h('button', {class: 'link cnt', style: `color:var(${c})`, onclick: () => { Object.assign(ui.tab, {mp: r.id, ms: k2, mv: 'table', mw: 'all'}); render(); }}, N(r[k2])) : h('span', {class: 'muted'}, '0')})),
+    {k: 'total', label: 'Total', num: true, fmt: v => h('b', {}, N(v))}, {k: 'conv', label: 'Joined %', num: true, fmt: v => v + '%'}],
+    team.filter(t => t.type !== 'ca_lead').map(t => { const l = scoped.filter(m => m.owner === t.id); return {id: t.id, name: t.name, type: t.type === 'intern' ? 'Intern' : 'FTE CA', total: l.length, conv: pct(l.filter(m => m.status === 'joined').length, l.length),
+      ...Object.fromEntries(Object.keys(MSTAT).map(k2 => [k2, l.filter(m => m.status === k2).length]))}; }), {sortKey: 'total', pageSize: 25}));
+  return [pipe, h('div', {class: 'mt'}, bar), view === 'people' ? byPerson() : (view === 'follow' ? miningFollow : miningTable)(list, sel)];
 };
 function miningTable(list, sel) {
   const picked = list.filter(m => sel.has(m.id)), canEdit = may('mine');
@@ -1028,7 +1045,7 @@ function miningTable(list, sel) {
     h('select', {'aria-label': 'Set status for selected', onchange: e => { const v = e.target.value; if (!v) return; picked.filter(m => m.status !== 'joined').forEach(m => { m.status = v; m.history.push({day: TODAY, status: v, ...actor()}); });
       log(`Set ${picked.length} creators to ${MSTAT[v][0]}`); toast(`${picked.length} creators set to ${MSTAT[v][0]}. Joined ones stay joined.`); sel.clear(); render(); }},
       h('option', {value: ''}, 'Set status…'), Object.entries(MSTAT).filter(([v]) => v !== 'joined').map(([v, [l]]) => h('option', {value: v}, l))),
-    h('select', {'aria-label': 'Set owner for selected', onchange: e => { const v = e.target.value; if (!v) return; picked.forEach(m => { m.owner = v; }); log(`Gave ${picked.length} creators to ${nameOf(v)}`); toast(`${picked.length} creators now owned by ${nameOf(v)}.`); sel.clear(); render(); }},
+    !may('owner') ? null : h('select', {'aria-label': 'Set owner for selected', onchange: e => { const v = e.target.value; if (!v) return; picked.forEach(m => { m.owner = v; }); log(`Gave ${picked.length} creators to ${nameOf(v)}`); toast(`${picked.length} creators now owned by ${nameOf(v)}.`); sel.clear(); render(); }},
       h('option', {value: ''}, 'Give to…'), D.team.filter(t => t.active).map(t => h('option', {value: t.id}, t.name))),
     h('label', {class: 'small'}, 'Follow-up ', h('input', {type: 'date', onchange: e => { picked.filter(m => OPEN_ST.includes(m.status)).forEach(m => { m.follow = e.target.value; }); log(`Follow-up ${fmtD(e.target.value)} for ${picked.length} creators`); sel.clear(); render(); }})),
     h('span', {class: 'spacer'}), h('button', {class: 'btn sm', onclick: () => { sel.clear(); render(); }}, 'Clear')) : null;
@@ -1038,7 +1055,7 @@ function miningTable(list, sel) {
     {k: 'username', label: 'Creator', render: m => h('div', {}, person(m.username, `${m.level} · ${m.industry} · ${m.city} · entered by ${m.byName}`), lastNote(m) ? h('div', {class: 'note-line'}, lastNote(m)) : null)},
     {k: 'status', label: 'Status', render: stSelect}, {k: 'ownerName', label: 'Owner', render: ownerSelect},
     {k: 'g3', label: 'GMV (L3, L4)', num: true, render: m => m.gmv ? h('div', {style: 'text-align:right'}, h('b', {}, Rp(m.gmv)), h('div', {class: 'muted small'}, `${m.gmvMonths} ${m.gmvMonths === 1 ? 'month' : 'months'}`)) : h('span', {class: 'muted small'}, gmvTxt(m))},
-    {k: 'phone', label: 'WhatsApp', render: m => m.phone ? h('a', {href: waLink(m.phone), target: '_blank', rel: 'noopener', class: 'small'}, 'Chat') : h('span', {class: 'muted small'}, 'No number')},
+    {k: 'phone', label: 'Contact', render: m => m.phone ? h('a', {href: waLink(m.phone), target: '_blank', rel: 'noopener', class: 'small'}, 'WhatsApp') : m.dm ? chip('DM', '--ops', false) : chip('No phone or DM', '--rev', false)},
     {k: 'follow', label: 'Follow-up', render: followInput}, {k: 'last', label: 'Last change', num: true, render: m => h('div', {class: 'small', style: 'text-align:right;white-space:nowrap'}, dayLabel(m.last), h('div', {class: 'muted'}, m.lastWho))}],
     list.map(m => { const e = m.history.at(-1); return {...m, ownerName: nameOf(m.owner), byName: nameOf(m.by), g3: g3(m), last: e.day, lastWho: e.who || nameOf(e.by), _rec: m.id}; }),
     {sortKey: 'last', pageSize: 15, state: ui.tab.mtState ||= {},
@@ -1068,7 +1085,8 @@ function openMining(id) {
   drawer([avatar(m.username), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, m.username), h('div', {class: 'muted small'}, `Entered by ${nameOf(m.by)} on ${dayLabel(m.day)}`),
     h('div', {class: 'chips'}, stSelect(m), followChip(m), m.partner ? chip(partnerOf(m.partner)?.name, '--base', false) : null))],
   [h('div', {class: 'journey-mini'}, ['Mined', 'Approaching', 'Hot lead', 'Invite sent', 'Joined'].map((s, i) => h('span', {class: i < step ? 'done' : i === step ? 'now' : ''}, s))),
-    h('div', {class: 'pl'}, prop('Owner', ownerSelect(m)), prop('Follow-up', followInput(m)), txt('phone', 'Phone (WhatsApp)', {inputmode: 'tel'}),
+    h('div', {class: 'pl'}, prop('Owner', ownerSelect(m)), prop('Follow-up', followInput(m)), txt('phone', 'Phone (WhatsApp)', {type: 'tel', inputmode: 'tel'}),
+      prop('TikTok DM', h('label', {class: 'check-line'}, h('input', {type: 'checkbox', checked: !!m.dm, disabled: !canEdit, onchange: e => setField(m, 'dm', e.target.checked, e.target.checked ? 'reached by DM' : 'DM cleared')}), m.phone ? 'Also reached by DM' : 'Reached by DM, phone still missing')),
       pick2('level', 'Sales level', LEVELS.map(l => [l, l])), pick2('industry', 'Top industry', INDUSTRIES.map(i => [i, i])), pick2('city', 'City', CITIES.map(c => [c, c])),
       txt('province', 'Province'), txt('postal', 'Postal code', {inputmode: 'numeric'}), prop('Agency', h('span', {}, OWN)),
       pick2('partner', 'Partner', [['', 'No partner'], ...D.partners.map(p => [p.id, p.name])]),
@@ -1087,14 +1105,14 @@ function openMining(id) {
 
 // ================= Daily Tracker =================
 PAGES['Daily Tracker'] = () => {
-  const people = D.team.filter(t => t.type !== 'ca_lead' && t.active && personScope(t.id) && (!ui.f.pod || t.pod === ui.f.pod));
+  const people = D.team.filter(t => t.type !== 'ca_lead' && t.active && !t.removed && personScope(t.id) && (!ui.f.pod || t.pods.includes(ui.f.pod)));
   const m = ui.tab.dt || 'joined', days = Array.from({length: Math.max(0, Math.min(ui.range.d1, TODAY) - ui.range.d0 + 1)}, (_, i) => ui.range.d0 + i), M = D.mining.filter(inScope), L = ONB();
   const val = (p, d) => m === 'joined' ? counted(L.filter(o => o.team === p.id && o.day === d)).length : M.filter(x => x.by === p.id && reached(x, m)?.day === d).length;
   const max = Math.max(1, ...people.flatMap(p => days.map(d => val(p, d))));
   const grid = h('div', {class: 'tbl'}, h('table', {class: 'days'}, h('thead', {}, h('tr', {}, h('th', {}, 'Name'), days.map(d => h('th', {}, String(d))), h('th', {class: 'n'}, 'Total'))),
-    h('tbody', {}, people.map(p => h('tr', {}, h('td', {}, p.name, h('small', {class: 'muted', style: 'margin-left:6px'}, p.pod)), days.map(d => { const v = val(p, d); return h('td', {}, h('span', {class: 'heat', style: v ? `background:color-mix(in srgb,var(--growth) ${15 + v / max * 70}%,transparent)` : '', title: `${p.name}, ${dayLabel(d)}: ${v}`}, v || '')); }),
+    h('tbody', {}, people.map(p => h('tr', {}, h('td', {}, p.name, h('small', {class: 'muted', style: 'margin-left:6px'}, p.pods.join('/'))), days.map(d => { const v = val(p, d); return h('td', {}, h('span', {class: 'heat', style: v ? `background:color-mix(in srgb,var(--growth) ${15 + v / max * 70}%,transparent)` : '', title: `${p.name}, ${dayLabel(d)}: ${v}`}, v || '')); }),
       h('td', {class: 'n'}, h('b', {}, N(sum(days, d => val(p, d))))))))));
-  const lists = {inc: ['Incomplete records', L.filter(o => !o.complete)], pend: ['Not confirmed yet', L.filter(o => o.status !== 'confirmed')], nl: ['Linked, not logged', me() ? [] : D.notLogged.filter(inScope)]};
+  const lists = {inc: ['Incomplete records', L.filter(o => !o.complete)], dm: ['DM only, add phone', L.filter(o => o.dm && !o.phone)], pend: ['Not confirmed yet', L.filter(o => o.status !== 'confirmed')], nl: ['Linked, not logged', me() ? [] : D.notLogged.filter(inScope)]};
   const lt = ui.tab.dl || 'inc', lrows = lists[lt][1];
   const listTbl = lt === 'nl' ? table([{k: 'username', label: 'Creator', render: o => person(o.username, `${o.city} · ${o.industry}`)}, {k: 'level', label: 'Level'}, {k: 'day', label: 'Linked', num: true, fmt: dayLabel}, {k: 'c', label: 'Credit', fixed: true, render: () => h('span', {class: 'muted'}, 'Empty for now')}], lrows, {sortKey: 'day', pageSize: 13})
     : table(onbCols, lrows.map(onbRow), {sortKey: 'day', pageSize: 13});
@@ -1108,7 +1126,7 @@ PAGES['Daily Tracker'] = () => {
 PAGES['My Creators'] = () => {
   const month = ui.tab.mc || 'Oct', L = ONB(month).filter(o => o.status === 'confirmed');
   const state = o => o.lastPost == null ? ['No post yet', '--rev'] : isActive(o) ? ['Active', '--growth'] : ['Quiet', '--ops'];
-  const people = D.team.filter(t => t.type !== 'ca_lead' && personScope(t.id)).map(t => { const l = L.filter(o => o.team === t.id);
+  const people = D.team.filter(t => t.type !== 'ca_lead' && !t.removed && personScope(t.id)).map(t => { const l = L.filter(o => o.team === t.id);
     return {name: t.name, n: l.length, posted: l.filter(o => o.videos).length, live: l.filter(o => o.lives).length, active: l.filter(isActive).length, none: l.filter(o => o.lastPost == null).length, gmv: sum(l, o => o.gmv)}; }).filter(r => r.n);
   return [h('div', {class: 'tools'}, seg([['Sep', 'Joined in September'], ['Oct', 'Joined in October']], month, v => { ui.tab.mc = v; render(); }, 'Month'), h('span', {class: 'muted small'}, 'Linked creators only. Activity runs from the link date to today.')),
     h('div', {class: 'grid'}, kpi(me() ? 'Creators I brought' : 'Creators brought', N(L.length), {c: '--growth'}), kpi('Posted a video', N(L.filter(o => o.videos).length), {sub: `${N(sum(L, o => o.videos))} videos`}),
@@ -1340,7 +1358,7 @@ function weekData(wi) {
   const onbW = counted(D.onb.filter(o => o.month === 'Oct' && inW(o.day))), onbP = prev ? counted(D.onb.filter(o => o.month === 'Oct' && o.day >= prev[2] && o.day <= prev[3])) : [];
   const reach = (st, f) => D.mining.filter(m => (x => x && f(x.day))(reached(m, st))).length;
   const lines = paceRows(D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && !t.teams.length));
-  const people = D.team.filter(t => t.type !== 'ca_lead').map(t => ({name: t.name, type: t.type === 'intern' ? 'Intern' : 'FTE CA', pod: t.pod, mined: D.mining.filter(m => m.by === t.id && inW(m.day)).length,
+  const people = D.team.filter(t => t.type !== 'ca_lead' && !t.removed).map(t => ({name: t.name, type: t.type === 'intern' ? 'Intern' : 'FTE CA', pod: t.pods.join('/'), mined: D.mining.filter(m => m.by === t.id && inW(m.day)).length,
     joined: onbW.filter(o => o.team === t.id).length})).sort((x, y) => y.joined - x.joined);
   const bc = D.bound.filter(x => inW(x.day));
   return {label, a, b, onbW, onbP, mined: reach('mined', inW), minedP: prev ? reach('mined', d => d >= prev[2] && d <= prev[3]) : 0, hot: reach('hot', inW), inv: reach('invited', inW),
@@ -1451,15 +1469,16 @@ function setupRules() {
 }
 // The daily Total Creator Data upload confirms onboardings and turns invited creators that show as Linked into Joined.
 function biUpload() {
-  const linked = D.mining.filter(m => m.status === 'invited').filter((_, i) => i % 2 === 0), pend = D.onb.filter(o => o.month === 'Oct' && o.status === 'pending');
+  // Only creators we can reach count: a phone, or a ticked TikTok DM. The rest stay invited until fixed.
+  const shown = D.mining.filter(m => m.status === 'invited').filter((_, i) => i % 2 === 0), linked = shown.filter(m => m.phone || m.dm), invalid = shown.length - linked.length, pend = D.onb.filter(o => o.month === 'Oct' && o.status === 'pending');
   for (const m of linked) {
     const o = {id: 'o' + m.id.slice(1) + 'b', month: 'Oct', mining: m.id, team: m.owner, day: TODAY, username: m.username, level: m.level, pod: podOf(m.level, m.industry), industry: m.industry, city: m.city, phone: m.phone, partner: m.partner,
-      type: D.pastLinked.has(m.username) ? 'renewal' : 'new', status: 'confirmed', linkedDay: TODAY, complete: !!(m.phone && m.industry), videos: 0, lives: 0, gmv: 0, lastPost: null, firstPost: null};
+      type: D.pastLinked.has(m.username) ? 'renewal' : 'new', status: 'confirmed', linkedDay: TODAY, dm: !m.phone && m.dm, complete: !!(m.industry && (m.phone || m.dm)), videos: 0, lives: 0, gmv: 0, lastPost: null, firstPost: null};
     D.onb.unshift(o); Object.assign(m, {status: 'joined', onb: o.id, follow: ''}); m.history.push({day: TODAY, status: 'joined', by: 'n0', who: 'BI upload', t: Date.now()});
   }
   pend.forEach(o => { o.status = 'confirmed'; o.linkedDay = TODAY; });
   D.uploads.unshift({day: TODAY, at: `Today ${new Date().toTimeString().slice(0, 5)}`, rows: 4400 + linked.length, linked: linked.length + pend.length, matched: linked.length + pend.length, joined: linked.length, by: `${nameOrRole()} (simulated)`});
-  log(`BI upload: ${linked.length} joined, ${pend.length} confirmed`); toast(`${linked.length} invited creators joined by themselves, ${pend.length} pending onboardings confirmed.`); render();
+  log(`BI upload: ${linked.length} joined, ${pend.length} confirmed`); toast(`${linked.length} invited creators joined by themselves, ${pend.length} pending confirmed${invalid ? `. ${invalid} skipped: no phone and no DM ticked` : ''}.`); render();
 }
 function setupUploads() {
   const U = D.uploads ||= Array.from({length: 7}, (_, i) => { const d = TODAY - i; return {day: d, at: `${dayLabel(d)} 07:${String(10 + i * 3).padStart(2, '0')}`, rows: 4250 + d * 7, linked: 18 + (d * 7) % 23, matched: 14 + (d * 5) % 17, joined: 6 + d % 7, by: 'BI (daily upload)'}; });
@@ -1473,29 +1492,31 @@ function setupUploads() {
 // ================= Settings: team names, targets, rules, uploads, activity =================
 Object.assign(PAGES, {Team: () => setupTeam(), Targets: () => setupTargets(), 'Rules and defaults': () => setupRules(), 'Data uploads': () => setupUploads(), Activity: () => setupActivity()});
 function nameForm(t) {
-  const m = $('#modal'), f = t ? {...t, emails: t.emails.join(', '), cities: [...t.cities], industries: [...t.industries]} : {name: '', type: 'intern', emails: D.settings.internEmail, pod: 'L1', cities: [], industries: [], notes: ''};
-  const multi = (k2, opts) => h('div', {class: 'checks'}, opts.map(o => h('label', {class: 'radio'}, h('input', {type: 'checkbox', checked: f[k2].includes(o), onchange: e => { f[k2] = e.target.checked ? [...f[k2], o] : f[k2].filter(x => x !== o); }}), o)));
-  const err = h('div', {class: 'muted small', style: 'color:var(--rev)'});
-  put(m, h('div', {class: 'dlg'}, h('h2', {}, t ? `Edit ${t.name}` : 'Add a name'), h('p', {class: 'muted small', style: 'margin:0'}, 'A name is a person, not a login. All interns share one login email; each intern gets their own name here.'),
-    h('div', {class: 'form'}, h('label', {}, 'Name', h('input', {value: f.name, oninput: e => { f.name = e.target.value; }})),
-      h('label', {}, 'Type', h('select', {onchange: e => { f.type = e.target.value; }}, [['fte_ca', 'FTE CA'], ['intern', 'Intern']].map(([v, l]) => h('option', {value: v, selected: f.type === v}, l)))),
-      h('label', {class: 'wide'}, 'Login emails (comma separated)', h('input', {value: f.emails, oninput: e => { f.emails = e.target.value; }})),
-      h('label', {}, 'Pod this month', h('select', {onchange: e => { f.pod = e.target.value; }}, PODS.map(p => h('option', {selected: f.pod === p}, p)))), h('label', {}, 'Notes', h('input', {value: f.notes, oninput: e => { f.notes = e.target.value; }})),
-      h('div', {class: 'wide field'}, 'Cities (none ticked = all)', multi('cities', CITIES)), h('div', {class: 'wide field'}, 'Industries (none ticked = all)', multi('industries', INDUSTRIES))), err,
+  const m = $('#modal'), f = t ? {...t, emails: t.emails.join(', '), pods: [...t.pods], cities: [...t.cities], industries: [...t.industries]} : {name: '', type: 'intern', emails: D.settings.internEmail, pods: ['L1'], cities: [], industries: [], notes: ''};
+  const err = h('div', {class: 'callout', style: 'display:none'}), emailIn = h('input', {value: f.emails, oninput: e => { f.emails = e.target.value; }});
+  const typeSeg = () => seg([['fte_ca', 'FTE CA'], ['intern', 'Intern']], f.type, v => { f.type = v; if (v === 'intern') emailIn.value = f.emails = D.settings.internEmail; put(typeBox, typeSeg()); }, 'Type'), typeBox = h('div', {});
+  put(typeBox, typeSeg());
+  put(m, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, t ? `Edit ${t.name}` : 'Add a team member'), h('p', {class: 'muted small', style: 'margin:0'}, 'A name is a person, not a login. Interns share one login email and pick their own name after signing in.'),
+    h('div', {class: 'form f3'}, h('label', {}, 'Full name *', h('input', {value: f.name, placeholder: 'e.g. Putri Ananda', oninput: e => { f.name = e.target.value; }})), h('div', {class: 'field'}, 'Type', typeBox),
+      h('label', {}, 'Login email *', emailIn, h('span', {class: 'small muted'}, 'Interns: the shared email. Several emails: separate with commas.'))),
+    pickChips('Levels they work (one or more) *', LV.map(l => [l, l]), f.pods, () => {}), pickChips('Cities (none picked = all cities)', CITIES.map(c => [c, c]), f.cities, () => {}),
+    pickChips('Industries (none picked = all industries)', INDUSTRIES.map(i => [i, i]), f.industries, () => {}),
+    h('label', {class: 'field'}, 'Notes', h('input', {value: f.notes, placeholder: 'e.g. Intern batch Nov 2026', oninput: e => { f.notes = e.target.value; }})), err,
     h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
-      const emails = f.emails.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
-      if (!f.name.trim()) return void (err.textContent = 'Give the name.');
-      if (D.team.some(x => x !== t && x.name.toLowerCase() === f.name.trim().toLowerCase())) return void (err.textContent = 'That name is already used.');
-      if (!emails.length || emails.some(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))) return void (err.textContent = 'Add at least one valid login email.');
-      const rec = {name: f.name.trim(), type: f.type, emails, pod: f.pod, cities: f.cities, industries: f.industries, notes: f.notes};
-      if (t) { log(t.name !== rec.name ? `Renamed ${t.name} to ${rec.name}` : `Edited ${rec.name}`); Object.assign(t, rec); } else { D.team.push({id: 'x' + Date.now(), active: true, ...rec}); log(`Added name ${rec.name}`); }
+      const emails = f.emails.split(',').map(x => x.trim().toLowerCase()).filter(Boolean), bad = msg => { err.style.display = 'block'; err.textContent = msg; };
+      if (!f.name.trim()) return bad('Give the full name.');
+      if (D.team.some(x => x !== t && !x.removed && x.name.toLowerCase() === f.name.trim().toLowerCase())) return bad('That name is already used.');
+      if (!emails.length || emails.some(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))) return bad('Add at least one valid login email.');
+      if (!f.pods.length) return bad('Pick at least one level.');
+      const rec = {name: f.name.trim(), type: f.type, emails, pods: f.pods, pod: f.pods.find(p => p !== 'L0') || f.pods[0], cities: f.cities, industries: f.industries, notes: f.notes};
+      if (t) { log(t.name !== rec.name ? `Renamed ${t.name} to ${rec.name}` : `Edited ${rec.name}`); Object.assign(t, rec); } else { D.team.push({id: 'x' + Date.now(), active: true, ...rec}); log(`Added ${rec.name}`); }
       m.close(); render(); }}, 'Save'))));
   m.showModal();
 }
 function removeName(t) {
   const dlg = $('#modal'), nm = D.mining.filter(m => m.by === t.id || m.owner === t.id).length, no = D.onb.filter(o => o.team === t.id).length, open = D.mining.filter(m => m.owner === t.id && OPEN_ST.includes(m.status));
-  put(dlg, h('div', {class: 'dlg'}, h('h2', {}, `Remove ${t.name}?`), h('p', {class: 'muted small', style: 'margin:0'}, nm + no ? `${nm} mining records and ${no} onboardings keep the name ${t.name}, so history and credit stay true.` : 'This name has no records yet.'),
-    open.length ? h('div', {class: 'callout'}, `${open.length} open creators they own move to ${nameOf('n0')}.`) : null, h('p', {class: 'muted small', style: 'margin:0'}, 'The name disappears from lists, sign-in and targets. Use Switch off instead if they may come back.'),
+  put(dlg, h('div', {class: 'dlg'}, h('h2', {}, `${t.name} resigned?`), h('p', {class: 'muted small', style: 'margin:0'}, nm + no ? `${nm} mining records and ${no} onboardings keep the name ${t.name}, so history and credit stay true.` : 'This name has no records yet.'),
+    open.length ? h('div', {class: 'callout'}, `${open.length} open creators they own move to ${nameOf('n0')}.`) : null, h('p', {class: 'muted small', style: 'margin:0'}, 'Their name leaves the team lists, sign-in, owner choices and targets. Creators they brought keep their name. Use Switch off instead if they may come back.'),
     h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
       Object.assign(t, {removed: true, active: false}); open.forEach(m => { m.owner = 'n0'; }); if (ui.as === t.id) ui.as = null;
       log(`Removed ${t.name}`); toast(`${t.name} removed.`); dlg.close(); render(); }}, 'Remove'))));
@@ -1503,7 +1524,7 @@ function removeName(t) {
 }
 function setupTeam() {
   const can = may('team'), cur = D.settings.internEmail, list = D.team.filter(t => !t.removed), interns = list.filter(t => t.type === 'intern');
-  const rows = list.map(t => ({...t, emailsTxt: t.emails.join(', '), coverage: [t.cities.join(', ') || 'All cities', t.industries.join(', ') || 'All industries'].join(' · '),
+  const rows = list.map(t => ({...t, podsTxt: t.pods.join(' '), emailsTxt: t.emails.join(', '), coverage: [t.cities.join(', ') || 'All cities', t.industries.join(', ') || 'All industries'].join(' · '),
     mined: D.mining.filter(m => m.by === t.id).length, open: D.mining.filter(m => m.owner === t.id && OPEN_ST.includes(m.status)).length, joined: counted(D.onb.filter(o => o.month === 'Oct' && o.team === t.id)).length, shared: t.emails.includes(cur)}));
   const toggle = t => { t.active = !t.active; log(`${t.active ? 'Switched on' : 'Switched off'} ${t.name}`); toast(t.active ? `${t.name} is active.` : `${t.name} switched off. Their mining and credit stay.`); render(); };
   const emailIn = h('input', {type: 'email', value: cur, disabled: !can, 'aria-label': 'Shared intern login email', style: 'min-width:240px'});
@@ -1522,10 +1543,10 @@ function setupTeam() {
       h('div', {class: 'chips', style: 'margin:0'}, interns.map(t => h('button', {class: 'chip intern-chip', style: `--tc:var(${t.active ? '--ops' : '--muted'})`, disabled: !can, title: can ? 'Edit' : '', onclick: () => nameForm(D.team.find(x => x.id === t.id))}, t.name, t.active ? '' : ' (off)')))))),
     row(card('Team names', 'A name is a person, not a login. Mining, joins, follow-ups and targets are saved under names.', table([{k: 'name', label: 'Name', render: t => person(t.name, t.notes)},
       {k: 'type', label: 'Type', render: t => chip(t.type === 'intern' ? 'Intern' : t.type === 'fte_ca' ? 'FTE CA' : 'CA Lead', t.type === 'intern' ? '--ops' : '--base', false)}, {k: 'emailsTxt', label: 'Login', render: t => h('span', {class: 'small'}, t.emailsTxt, t.shared ? h('span', {class: 'muted'}, ' (shared)') : null)},
-      {k: 'pod', label: 'Pod'}, {k: 'coverage', label: 'Coverage', render: t => h('span', {class: 'small muted', style: 'white-space:normal'}, t.coverage)}, {k: 'mined', label: 'Mined', num: true}, {k: 'open', label: 'Open owned', num: true}, {k: 'joined', label: 'Joined', num: true},
+      {k: 'podsTxt', label: 'Levels', render: t => h('span', {class: 'chips', style: 'margin:0'}, t.pods.map(p => chip(p, '--base', false)))}, {k: 'coverage', label: 'Coverage', render: t => h('span', {class: 'small muted', style: 'white-space:normal'}, t.coverage)}, {k: 'mined', label: 'Mined', num: true}, {k: 'open', label: 'Open owned', num: true}, {k: 'joined', label: 'Joined', num: true},
       {k: 'active', label: 'Active', render: t => chip(t.active ? 'Active' : 'Off', t.active ? '--growth' : '--muted', false)},
       {k: 'e', label: '', fixed: true, render: r => r.type === 'ca_lead' || !can ? null : h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm', onclick: () => nameForm(D.team.find(x => x.id === r.id))}, 'Edit'),
-        h('button', {class: 'btn sm', onclick: () => toggle(D.team.find(x => x.id === r.id))}, r.active ? 'Switch off' : 'Switch on'), h('button', {class: 'btn sm', onclick: () => removeName(D.team.find(x => x.id === r.id))}, 'Remove'))}],
+        h('button', {class: 'btn sm', onclick: () => toggle(D.team.find(x => x.id === r.id))}, r.active ? 'Switch off' : 'Switch on'), h('button', {class: 'btn sm', onclick: () => removeName(D.team.find(x => x.id === r.id))}, 'Resigned'))}],
       rows, {sortKey: 'type', pageSize: 20}), can ? h('button', {class: 'btn sm primary', onclick: () => nameForm(null)}, '+ Add a name') : null))];
 }
 // Multi-pick chips: nothing picked means "all".
@@ -1621,7 +1642,7 @@ const LEVEL_CARDS = {
       ['Needed / day', l => l === 'L0' || !lvTarget(l) ? null : levelPace(jm(l), lvTarget(l)).req, v => v.toFixed(1)],
       ['Confirmed', l => atL(L, l).filter(o => o.status === 'confirmed').length], ['Mined', l => atL(M, l).length], ['Hot leads now', l => atL(M, l).filter(m => m.status === 'hot').length],
       ['Invites sent', l => atL(M, l).filter(m => reached(m, 'invited')).length], ['Mined → joined', l => pct(atL(M, l).filter(m => m.status === 'joined').length, atL(M, l).length), pctFmt]])]; },
-  Mining: () => { const M = D.mining.filter(m => inRange(m.day) && inScope(m) && (ui.tab.mw === 'me' && me() ? m.owner === me() : !ui.f.who || m.owner === ui.f.who));
+  Mining: () => { if (ui.tab.mv === 'people') return null; const pers = ui.tab.mw === 'me' && me() ? me() : ui.tab.mp || ui.f.who || '', M = D.mining.filter(m => inRange(m.day) && inScope(m) && (!pers || m.owner === pers));
     return [1, byLevel('Pipeline by level', 'How many creators sit in each status, per level.', [...Object.entries(MSTAT).map(([k2, [l]]) => [l, lv => atL(M, lv).filter(m => m.status === k2).length]),
       ['GMV entered (L3, L4)', l => l && !GMV_LEVELS.includes(l) ? null : sum(atL(M, l), g3), short], ['Mined → joined', l => pct(atL(M, l).filter(m => m.status === 'joined').length, atL(M, l).length), pctFmt]])]; },
   'Daily Tracker': () => { const L = ONB();
@@ -1647,9 +1668,9 @@ const LEVEL_CARDS = {
       ['Salaries a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['Average deal', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
       ['Cost per new creator', l => { const n = counted(atL(D.onb.filter(o => o.month === 'Oct' && o.type === 'new'), l)).length; return n ? sum(bl(l), b => b.amount + b.salary) / n : null; }, short]])]; },
   'Weekly Report': () => [2, byLevel('This week by level', 'Joined counts complete records only.', weekLevelRows(ui.tab.wk ?? WEEKS.length - 1).map(([label, f, fmt]) => [label, f, fmt]))],
-  Team: () => [2, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pod === l).length],
-    ['Interns', l => D.team.filter(t => t.active && t.type === 'intern' && t.pod === l).length], ['Joined target', l => l === 'L0' ? null : lvTarget(l) || null],
-    ['Target per person per day', l => { const n = D.team.filter(t => t.active && t.type !== 'ca_lead' && (!l || t.pod === l)).length, tg = lvTarget(l); return l === 'L0' || !n || !tg ? null : Math.ceil(tg / DAYS / n); }]])]
+  Team: () => [2, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pods.includes(l)).length],
+    ['Interns', l => D.team.filter(t => t.active && t.type === 'intern' && t.pods.includes(l)).length], ['Joined target', l => l === 'L0' ? null : lvTarget(l) || null],
+    ['Target per person per day', l => { const n = D.team.filter(t => t.active && t.type !== 'ca_lead' && (!l || t.pods.includes(l))).length, tg = lvTarget(l); return l === 'L0' || !n || !tg ? null : Math.ceil(tg / DAYS / n); }]])]
 };
 const payLevels = () => { const lc = LEVEL_CARDS._pay(); return [lc[0] + 1, lc[1]]; }, budgetLevels = () => { const lc = LEVEL_CARDS._budget(); return [lc[0], lc[1]]; };
 function weekLevelRows(wi) {
@@ -1682,7 +1703,7 @@ function openRecord(id) {
 function whoPicker() {
   const dlg = $('#modal'), names = D.team.filter(t => t.emails.includes(ui.login) && t.active);
   put(dlg, h('div', {class: 'dlg'}, h('h2', {}, 'Who is working?'), h('p', {class: 'muted small', style: 'margin:0'}, `${ui.login} is shared by ${names.length} interns. Pick your own name; everything you do is saved under it.`),
-    h('div', {class: 'who-list'}, names.map(t => h('button', {class: 'who-btn', onclick: () => { ui.as = t.id; log('Started working'); dlg.close(); render(); }}, avatar(t.name), h('span', {}, t.name, h('small', {class: 'muted', style: 'display:block'}, `${t.pod} pod`)))))));
+    h('div', {class: 'who-list'}, names.map(t => h('button', {class: 'who-btn', onclick: () => { ui.as = t.id; log('Started working'); dlg.close(); render(); }}, avatar(t.name), h('span', {}, t.name, h('small', {class: 'muted', style: 'display:block'}, `${t.pods.join(', ')}`)))))));
   dlg.showModal();
 }
 function rangeBox(fg) {
