@@ -435,6 +435,13 @@ a.btn{color:inherit}
 .partner-tabs button.add{justify-content:center;color:var(--base);font-weight:600;border-style:dashed}
 .status-row.total{border-top:1px solid var(--line);padding-top:6px}
 @media (max-width:760px){.flow{grid-template-columns:1fr 1fr}}
+.pick-h{display:flex;align-items:center;gap:8px}
+.pick-chips{display:flex;flex-wrap:wrap;gap:5px}
+.pick-chips button{padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);font-size:12px;color:var(--muted)}
+.pick-chips button.on{border-color:var(--base);background:color-mix(in srgb,var(--base) 14%,transparent);color:var(--text);font-weight:600}
+.tgt-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:10px 12px;border-radius:10px;background:var(--panel2);font-size:13px}
+.form .form{min-width:0}
+.form input[type=date]{width:100%;min-width:0}
 </style>
 </head>
 <body>
@@ -744,13 +751,17 @@ function makeData() {
       requirement: 'Post inside the campaign period, tag the merchant', rules: 'Paid after the scope of work is delivered. No payment for deleted posts.', spk: rnd() < 0.7 ? `https://docs.sample.id/spk/${o.username.slice(1)}` : '', notes: '',
       terms, stage, day});
   });
-  const T = (id, metric, value, scope = {}, note = '', status = 'active', unit = 'count', month = 'Oct') => ({id, metric, value, unit, note, status, month, pod: '', industry: '', city: '', team: '', d0: 1, d1: DAYS, ...scope});
+  // Target line: one metric, any mix of levels / industries / cities / people (empty = all), a period and a value
+  const T = (id, metric, value, scope = {}, note = '', status = 'active', month = 'Oct') => ({id, metric, value, note, status, month, pods: [], industries: [], cities: [], teams: [], d0: 1, d1: DAYS, ...scope});
   const targets = [
-    T('t1', 'joined', 260, {pod: 'L1'}, 'Volume pod, interns do most of it'), T('t2', 'joined', 120, {pod: 'L2'}, 'L2 is the hardest level to find'),
-    T('t3', 'joined', 20, {pod: 'L3'}, 'Monthly level target'), T('t4', 'joined', 12, {pod: 'L4'}, 'Monthly level target'), T('t5', 'joined', 60, {pod: 'LIVE'}, 'Gas Live creators'),
-    T('t6', 'joined', 40, {pod: 'L2', industry: 'Dining SV', city: 'Bandung', d0: 10, d1: 23}, 'Two-week city push in Bandung'),
-    T('t7', 'mined', 1200, {}, 'Keep the mining list full'), T('t8', 'hot', 250, {}, 'Creators ready to invite'), T('t9', 'complete', 98, {}, 'Phone and industry on every record', 'active', 'percent'),
-    ...Array.from({length: 10}, (_, i) => T('ti' + i, 'joined', 20, {pod: 'L1', team: 'i' + (i + 1)}, 'Per intern'))];
+    T('t1', 'joined', 260, {pods: ['L1']}, 'Volume pod, interns do most of it'), T('t2', 'joined', 120, {pods: ['L2']}, 'L2 is the hardest level to find'),
+    T('t3', 'joined', 20, {pods: ['L3']}, 'Monthly level target'), T('t4', 'joined', 12, {pods: ['L4']}, 'Monthly level target'), T('t5', 'joined', 60, {pods: ['LIVE']}, 'Gas Live creators'),
+    T('t6', 'joined', 40, {pods: ['L2'], industries: ['Dining SV'], cities: ['Bandung'], d0: 10, d1: 23}, 'Two-week city push in Bandung'),
+    T('t6b', 'joined', 15, {pods: ['L3', 'L4'], cities: ['Jakarta', 'Bali']}, 'High levels in Jakarta and Bali'),
+    T('t7', 'mined', 1200, {}, 'Keep the mining list full'), T('t8', 'hot', 250, {}, 'Creators ready to invite'), T('t9', 'complete', 98, {}, 'Phone and industry on every record'),
+    T('t10', 'active', 60, {}, 'New creators posting in the last 7 days'), T('t11', 'gmv', 2e9, {}, 'Redemption GMV from creators we brought'), T('t12', 'bound', 45e6, {}, 'Stay under the bound cash and salary budget'),
+    T('t13', 'videos', 3000, {industries: ['Dining SV', 'Accommodation']}, 'Videos from new creators'),
+    ...Array.from({length: 10}, (_, i) => T('ti' + i, 'joined', 20, {pods: ['L1'], teams: ['i' + (i + 1)]}, 'Per intern'))];
   return {team, roster, pastLinked, partners, programs, mining, onb, notLogged, bound, ppay: {p3: 'pending'}, settings: {internEmail: 'intern.ca@sample.id', financeEmail: 'teguh.prasetyo@sample.id', salaryDay: 25, plan: 1, partnerPayDay: 10, partnerFees: {L0: 0, L1: 10000, L2: 20000, L3: 50000, L4: 100000, LIVE: 20000}, partnerShare: 0, newFollow: 1, follow: {approaching: 2, hot: 1, invited: 3}},
     budget: {other: {budget: 3e6}, salary: {budget: 6e6}, partner: {budget: 2.5e6}}, targets, checks: [], history: [], log: []};
 }
@@ -795,27 +806,50 @@ const reached = (m, st) => m.history.find(x => x.status === st); // when a minin
 const isActive = o => o.lastPost != null && o.lastPost <= 7;
 
 // ---------- target lines ----------
-const METRICS = {joined: 'Joined', joined_l0: 'Joined with L0', confirmed: 'Confirmed', mined: 'Mined', hot: 'Hot leads', invited: 'Invites sent', complete: 'Record completeness'};
+// Every metric a target line can use: [label, group, unit, lower is better]
+const METRICS = {joined: ['Joined (complete, counted)', 'Onboarding', 'count'], joined_l0: ['Joined incl. L0', 'Onboarding', 'count'], confirmed: ['Confirmed in Total Creator Data', 'Onboarding', 'count'],
+  complete: ['Record completeness', 'Onboarding', 'percent'], mined: ['Mined', 'Mining', 'count'], approaching: ['Approached', 'Mining', 'count'], hot: ['Hot leads', 'Mining', 'count'], invited: ['Invites sent', 'Mining', 'count'],
+  conv: ['Mined → joined', 'Mining', 'percent'], posted: ['Creators who posted', 'Creator activity', 'count'], live: ['Creators who went LIVE', 'Creator activity', 'count'], active: ['Active in the last 7 days', 'Creator activity', 'percent'],
+  videos: ['Videos posted', 'Creator activity', 'count'], lives: ['LIVE sessions', 'Creator activity', 'count'], gmv: ['Redemption GMV', 'Money', 'rp'],
+  bound: ['Bound cash + salary committed (max)', 'Money', 'rp', true], cost: ['Cost per new creator (max)', 'Money', 'rp_avg', true]};
+const mLabel = k => (METRICS[k] || [k])[0], mUnit = k => (METRICS[k] || [])[2] || 'count', mLower = k => !!(METRICS[k] || [])[3];
+const inArr = (arr, v) => !arr || !arr.length || arr.includes(v);
 function lineActual(t) {
-  const inT = o => (!t.pod || (o.pod || podOf(o.level, o.industry)) === t.pod) && (!t.industry || o.industry === t.industry) && (!t.city || o.city === t.city);
-  const rows = D.onb.filter(o => o.month === t.month && o.day >= t.d0 && o.day <= Math.min(t.d1, TODAY) && inT(o) && (!t.team || o.team === t.team));
-  if (t.metric === 'joined') return (t.pod === 'L0' ? rows.filter(o => o.complete) : counted(rows)).length;
-  if (t.metric === 'joined_l0') return rows.filter(o => o.complete).length;
-  if (t.metric === 'confirmed') return counted(rows).filter(o => o.status === 'confirmed').length;
-  if (t.metric === 'complete') return pct(rows.filter(o => o.complete).length, rows.length);
-  const st = {mined: 'mined', hot: 'hot', invited: 'invited'}[t.metric];
-  return D.mining.filter(m => inT(m) && (!t.team || m.by === t.team) && (h0 => h0 && h0.day >= t.d0 && h0.day <= t.d1)(reached(m, st))).length;
+  const inT = o => inArr(t.pods, lvOf(o)) && inArr(t.industries, o.industry) && inArr(t.cities, o.city);
+  const rows = D.onb.filter(o => o.month === t.month && o.day >= t.d0 && o.day <= Math.min(t.d1, TODAY) && inT(o) && inArr(t.teams, o.team)), conf = rows.filter(o => o.status === 'confirmed');
+  const M = D.mining.filter(m => inT(m) && inArr(t.teams, m.by)), reachedIn = st => M.filter(m => (x => x && x.day >= t.d0 && x.day <= t.d1)(reached(m, st))).length;
+  const money = () => sum(D.bound.filter(b => b.stage !== 'draft' && rows.some(o => o.id === b.onb)), b => b.amount + b.salary);
+  switch (t.metric) {
+    case 'joined': return counted(rows).length + (inArr(t.pods, 'L0') && t.pods?.length ? rows.filter(o => o.complete && o.level === 'L0').length : 0);
+    case 'joined_l0': return rows.filter(o => o.complete).length;
+    case 'confirmed': return counted(conf).length;
+    case 'complete': return pct(rows.filter(o => o.complete).length, rows.length);
+    case 'conv': return pct(M.filter(m => m.status === 'joined' && m.day >= t.d0 && m.day <= t.d1).length, M.filter(m => m.day >= t.d0 && m.day <= t.d1).length);
+    case 'posted': return conf.filter(o => o.videos).length;
+    case 'live': return conf.filter(o => o.lives).length;
+    case 'active': return pct(conf.filter(isActive).length, conf.length);
+    case 'videos': return sum(conf, o => o.videos);
+    case 'lives': return sum(conf, o => o.lives);
+    case 'gmv': return sum(conf, o => o.gmv);
+    case 'bound': return money();
+    case 'cost': { const n = counted(rows.filter(o => o.type === 'new')).length; return n ? Math.round(money() / n) : 0; }
+    default: return reachedIn(t.metric);
+  }
 }
+// Counts and money add up over the period, so they project to the end; percentages and averages are read as they are.
 function pace(actual, t) {
-  const len = t.d1 - t.d0 + 1, past = Math.max(0, Math.min(TODAY, t.d1) - t.d0 + 1), left = Math.max(0, t.d1 - Math.max(TODAY, t.d0 - 1));
-  if (t.unit !== 'count') return {proj: actual, run: t.value ? actual / t.value : 0, req: null};
-  const proj = past ? actual / past * len : 0;
-  return {proj, run: t.value ? proj / t.value : 0, req: left ? Math.max(0, (t.value - actual) / left) : 0};
+  const len = t.d1 - t.d0 + 1, past = Math.max(0, Math.min(TODAY, t.d1) - t.d0 + 1), left = Math.max(0, t.d1 - Math.max(TODAY, t.d0 - 1)), u = mUnit(t.metric), low = mLower(t.metric);
+  const proj = ['count', 'rp'].includes(u) ? (past ? actual / past * len : 0) : actual;
+  const run = !t.value ? 0 : low ? (proj ? Math.min(2, t.value / proj) : 1) : proj / t.value;
+  return {proj, run, req: ['count', 'rp'].includes(u) && !low && left ? Math.max(0, (t.value - actual) / left) : null};
 }
-const scopeChips = t => h('span', {class: 'chips', style: 'margin:0'}, [t.pod && chip(t.pod, '--base', false), t.industry && chip(t.industry, '--ops', false), t.city && chip(t.city, '--growth', false),
-  t.team && chip(nameOf(t.team), '--rev', false), (t.d0 !== 1 || t.d1 !== DAYS) && chip(`${t.d0} to ${t.d1} Oct`, '--muted', false), !t.pod && !t.industry && !t.city && !t.team && chip('Whole team', '--muted', false)].filter(Boolean));
-const fmtVal = (v, t) => t.unit === 'percent' ? v + '%' : t.unit === 'per_day' ? N(v) + ' / day' : N(v);
-const paceRows = lines => lines.map(t => { const actual = lineActual(t), p = pace(actual, t); return {...t, label: METRICS[t.metric], actual, ach: pct(actual, t.value), ...p}; }).sort((a, b) => !!a.team - !!b.team || a.run - b.run);
+const scopeTxt = t => [t.pods?.join(', '), t.industries?.join(', '), t.cities?.join(', '), t.teams?.map(nameOf).join(', ')].filter(Boolean).join(' · ') || 'Whole team';
+const scopeChips = t => h('span', {class: 'chips', style: 'margin:0'}, [...(t.pods || []).map(x => chip(x, '--base', false)), ...(t.industries || []).map(x => chip(x, '--ops', false)), ...(t.cities || []).map(x => chip(x, '--growth', false)),
+  ...(t.teams || []).slice(0, 3).map(x => chip(nameOf(x), '--rev', false)), (t.teams || []).length > 3 ? chip(`+${t.teams.length - 3} people`, '--rev', false) : null,
+  (t.d0 !== 1 || t.d1 !== (t.month === 'Nov' ? 30 : DAYS)) ? chip(`${t.d0} to ${t.d1} ${t.month}`, '--muted', false) : null, scopeTxt(t) === 'Whole team' ? chip('Whole team', '--muted', false) : null].filter(Boolean));
+const fmtVal = (v, t) => { const u = mUnit(t.metric); return u === 'percent' ? Math.round(v) + '%' : u.startsWith('rp') ? Rp(v) : N(v); };
+const paceRows = lines => lines.map(t => { const actual = lineActual(t), p = pace(actual, t); return {...t, label: mLabel(t.metric), actual, ach: mLower(t.metric) ? pct(t.value, actual || t.value) : pct(actual, t.value), ...p}; })
+  .sort((a, b) => !!a.teams?.length - !!b.teams?.length || a.run - b.run);
 
 // ---------- shared bits ----------
 const PAGES = {};
@@ -857,7 +891,7 @@ function overviewPack() {
       ['Invites sent', M.filter(m => reached(m, 'invited')).length], ['Joined (complete, L1 and up)', c.length], ['Joined, other (L0 or incomplete)', L.length - c.length], ['Confirmed', c.filter(o => o.status === 'confirmed').length],
       ['Record completeness %', pct(L.filter(o => o.complete).length, L.length)], ['Linked, not logged', D.notLogged.filter(o => inScope(o) && inRange(o.day)).length]].map(([Metric, Value]) => ({Metric, Value}))],
     ['By level', lvlRows(LEVEL_CARDS.Overview()[1].metrics)],
-    ['Pace', lines.map(l => ({Metric: METRICS[l.metric], Pod: l.pod || 'All', Industry: l.industry || 'All', City: l.city || 'All', Person: l.team ? nameOf(l.team) : 'Team', From: l.d0, To: l.d1, Target: l.value, Actual: l.actual,
+    ['Pace', lines.map(l => ({Metric: mLabel(l.metric), Levels: l.pods.join(', ') || 'All', Industries: l.industries.join(', ') || 'All', Cities: l.cities.join(', ') || 'All', People: l.teams.map(nameOf).join(', ') || 'Team', From: l.d0, To: l.d1, Target: l.value, Actual: l.actual,
       'Achievement %': l.ach, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
     ['By city', [...CORE, 'Other'].map(cy => { const f = o => cy === 'Other' ? !CORE.includes(o.city) : o.city === cy; return {City: cy, Mined: M.filter(f).length, Joined: c.filter(f).length, Confirmed: c.filter(o => f(o) && o.status === 'confirmed').length}; })],
     ['By industry', INDUSTRIES.map(i => ({Industry: i, Mined: M.filter(m => m.industry === i).length, Joined: c.filter(o => o.industry === i).length, Confirmed: c.filter(o => o.industry === i && o.status === 'confirmed').length}))],
@@ -880,7 +914,7 @@ function myDay() {
 }
 PAGES['Overview'] = () => {
   const L = ONB(), c = counted(L), M = MIN(), nl = D.notLogged.filter(inScope);
-  const lines = D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && (!me() || !t.team || t.team === me()) && (!ui.f.pod || !t.pod || t.pod === ui.f.pod));
+  const lines = D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && (!me() || !t.teams.length || t.teams.includes(me())) && (!ui.f.pod || !t.pods.length || t.pods.includes(ui.f.pod)));
   const fun = FLOW.map(st => [MSTAT[st][0], M.filter(m => reached(m, st)).length]);
   return [h('div', {class: 'tools'}, h('b', {}, `Overview · ${rangeTxt()}`), h('span', {class: 'muted small'}, 'Every number follows the filters and dates at the top.'), h('span', {class: 'spacer'}),
       may('report') ? h('button', {class: 'btn sm primary', onclick: overviewPack}, 'Download all metrics (.xlsx)') : null),
@@ -890,7 +924,7 @@ PAGES['Overview'] = () => {
       kpi('Record completeness', pct(L.filter(o => o.complete).length, L.length) + '%'), me() ? null : kpi('Linked, not logged', N(nl.length), {sub: 'no credit for now'})),
     me() ? row(myDay()) : null,
     row(card(`Pace against targets · ${MONTH}, day ${TODAY} of ${DAYS}`, 'Every active target line from Setup → Targets. Sample targets.', table([
-      {k: 'label', label: 'Target line', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, METRICS[t.metric]), h('div', {style: 'margin-top:3px'}, scopeChips(t)))},
+      {k: 'label', label: 'Target line', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, mLabel(t.metric)), h('div', {style: 'margin-top:3px'}, scopeChips(t)))},
       {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'actual', label: 'Actual', num: true, fmt: (v, t) => h('b', {}, fmtVal(v, t))},
       {k: 'ach', label: 'Achievement', render: t => meterRow(t.ach, t.run >= 1 ? '--growth' : t.run >= 0.8 ? '--base' : '--ops', null, 70)}, {k: 'proj', label: 'Projected end', num: true, fmt: (v, t) => t.unit === 'count' ? N(v) : '-'},
       {k: 'run', label: 'Run rate', num: true, render: t => chip(Math.round(t.run * 100) + '%', t.run >= 1 ? '--growth' : t.run >= 0.8 ? '--ops' : '--rev', false)}, {k: 'req', label: 'Needed / day', num: true, fmt: v => v == null ? '-' : v.toFixed(1)},
@@ -1305,7 +1339,7 @@ function weekData(wi) {
   const [, label, a, b] = WEEKS[wi], inW = d => d >= a && d <= b, prev = WEEKS[wi - 1];
   const onbW = counted(D.onb.filter(o => o.month === 'Oct' && inW(o.day))), onbP = prev ? counted(D.onb.filter(o => o.month === 'Oct' && o.day >= prev[2] && o.day <= prev[3])) : [];
   const reach = (st, f) => D.mining.filter(m => (x => x && f(x.day))(reached(m, st))).length;
-  const lines = paceRows(D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && !t.team));
+  const lines = paceRows(D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && !t.teams.length));
   const people = D.team.filter(t => t.type !== 'ca_lead').map(t => ({name: t.name, type: t.type === 'intern' ? 'Intern' : 'FTE CA', pod: t.pod, mined: D.mining.filter(m => m.by === t.id && inW(m.day)).length,
     joined: onbW.filter(o => o.team === t.id).length})).sort((x, y) => y.joined - x.joined);
   const bc = D.bound.filter(x => inW(x.day));
@@ -1323,7 +1357,7 @@ PAGES['Weekly Report'] = () => {
       ['Summary', [{Item: 'Week', Value: `${WEEKS[wi][0]} · ${w.label}`}, {Item: 'Mined', Value: w.mined}, {Item: 'Hot leads', Value: w.hot}, {Item: 'Invites sent', Value: w.inv}, {Item: 'Joined (complete, L1+)', Value: w.onbW.length},
         {Item: 'Joined last week', Value: w.onbP.length}, {Item: 'Bound cash added (Rp)', Value: sum(w.bc, x => x.amount)}, {Item: 'Payments due in 7 days or overdue (Rp)', Value: sum(pays, r => r.amount)},
         {Item: 'Incomplete records', Value: w.issues.incomplete}, {Item: 'Not confirmed', Value: w.issues.notConf}, {Item: 'Bound cash without SPK', Value: w.issues.noSpk}]],
-      ['Pace', w.lines.map(l => ({Metric: METRICS[l.metric], Pod: l.pod || 'All', Industry: l.industry || 'All', City: l.city || 'All', Target: l.value, Actual: l.actual, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
+      ['Pace', w.lines.map(l => ({Metric: mLabel(l.metric), Levels: l.pods.join(', ') || 'All', Industries: l.industries.join(', ') || 'All', Cities: l.cities.join(', ') || 'All', Target: l.value, Actual: l.actual, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
       ['By level', lvlRows(weekLevelRows(wi))],
       ['People', w.people.map(p => ({Name: p.name, Type: p.type, Pod: p.pod, Mined: p.mined, Joined: p.joined}))],
       ['Joined this week', w.onbW.map(o => ({Creator: o.username, 'Brought by': nameOf(o.team), Level: o.level, Industry: o.industry, City: o.city, Joined: dayLabel(o.day), Type: o.type, 'Total Creator Data': o.status}))],
@@ -1333,7 +1367,7 @@ PAGES['Weekly Report'] = () => {
     log(`Downloaded weekly review ${WEEKS[wi][0]}`); toast('Meeting pack downloaded.');
   };
   const text = [`CA weekly review · ${WEEKS[wi][0]} (${w.label})`, `Joined ${w.onbW.length} (last week ${w.onbP.length}) · mined ${w.mined} · hot leads ${w.hot} · invites ${w.inv}`,
-    `Behind pace: ${w.behind.map(l => `${METRICS[l.metric]} ${l.pod || ''} ${Math.round(l.run * 100)}%`.replace('  ', ' ')).join(', ') || 'none'}`,
+    `Behind pace: ${w.behind.map(l => `${mLabel(l.metric)} ${l.pods.join('/')} ${Math.round(l.run * 100)}%`.replace('  ', ' ')).join(', ') || 'none'}`,
     `To fix: ${w.issues.incomplete} incomplete records, ${w.issues.notConf} not confirmed, ${w.issues.noSpk} bound cash without SPK`, `Payments due in 7 days: ${Rp(sum(pays, r => r.amount))} (${pays.filter(overdue).length} overdue)`].join('\n');
   return [h('div', {class: 'tools'}, seg(WEEKS.map((x, i) => [i, `${x[0]} · ${x[1]}`]), wi, v => { ui.tab.wk = v; render(); }, 'Week'), h('span', {class: 'spacer'}),
       h('button', {class: 'btn sm', onclick: () => { navigator.clipboard?.writeText(text).then(() => toast('Summary copied.'), () => toast('Copy did not work here; select the text below.')); }}, 'Copy summary'),
@@ -1343,13 +1377,13 @@ PAGES['Weekly Report'] = () => {
     h('div', {class: 'grid g2 mt'}, card('Headlines', 'What management should hear first.', h('ul', {class: 'report'},
         h('li', {}, h('b', {}, `${w.onbW.length} creators joined`), ` this week, ${w.onbP.length ? (w.onbW.length >= w.onbP.length ? 'up' : 'down') + ` from ${w.onbP.length} last week` : 'first week of the month'}.`),
         h('li', {}, h('b', {}, `${w.mined} mined, ${w.hot} hot leads, ${w.inv} invites`), ' in the same week.'),
-        h('li', {}, w.behind.length ? [h('b', {}, `Behind pace: `), w.behind.map(l => `${METRICS[l.metric]}${l.pod ? ' ' + l.pod : ''} (${Math.round(l.run * 100)}%)`).join(', '), '.'] : h('b', {}, 'Every team target is on pace.')),
+        h('li', {}, w.behind.length ? [h('b', {}, `Behind pace: `), w.behind.map(l => `${mLabel(l.metric)}${l.pods.length ? ' ' + l.pods.join('/') : ''} (${Math.round(l.run * 100)}%)`).join(', '), '.'] : h('b', {}, 'Every team target is on pace.')),
         h('li', {}, h('b', {}, 'Top performer: '), `${w.people[0].name} with ${w.people[0].joined} joined.`),
         h('li', {}, h('b', {}, `${Rp(sum(pays, r => r.amount))} to pay in the next 7 days`), `, ${pays.filter(overdue).length} payments overdue.`),
         w.idle.length ? h('li', {}, h('b', {}, `${w.idle.length} people mined nothing: `), w.idle.map(p => p.name).join(', '), '.') : null)),
       card('To fix before next week', null, h('div', {}, [['Records missing phone or industry', w.issues.incomplete], ['Joined but not confirmed by Total Creator Data', w.issues.notConf], ['Bound cash without an SPK link', w.issues.noSpk], ['Payments overdue', pays.filter(overdue).length], ['Linked in Total Creator Data, not logged', w.issues.notLogged]]
         .map(([l, n]) => h('div', {class: 'status-row'}, h('span', {class: 'grow'}, l), chip(N(n), n ? '--rev' : '--growth', false)))))),
-    row(card('Pace against team targets', 'Month to date.', table([{k: 'label', label: 'Target', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, METRICS[t.metric]), h('div', {style: 'margin-top:3px'}, scopeChips(t)))},
+    row(card('Pace against team targets', 'Month to date.', table([{k: 'label', label: 'Target', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, mLabel(t.metric)), h('div', {style: 'margin-top:3px'}, scopeChips(t)))},
       {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'actual', label: 'Actual', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'run', label: 'Run rate', num: true, render: t => chip(Math.round(t.run * 100) + '%', t.run >= 1 ? '--growth' : t.run >= 0.8 ? '--ops' : '--rev', false)},
       {k: 'req', label: 'Needed / day', num: true, fmt: v => v == null ? '-' : v.toFixed(1)}], w.lines, {search: false, pageSize: 10}))),
     row(card('People this week', null, table([{k: 'name', label: 'Name'}, {k: 'type', label: 'Type'}, {k: 'pod', label: 'Pod'}, {k: 'mined', label: 'Mined', num: true}, {k: 'joined', label: 'Joined', num: true}], w.people, {search: false, sortKey: 'joined', pageSize: 10}))),
@@ -1494,46 +1528,76 @@ function setupTeam() {
         h('button', {class: 'btn sm', onclick: () => toggle(D.team.find(x => x.id === r.id))}, r.active ? 'Switch off' : 'Switch on'), h('button', {class: 'btn sm', onclick: () => removeName(D.team.find(x => x.id === r.id))}, 'Remove'))}],
       rows, {sortKey: 'type', pageSize: 20}), can ? h('button', {class: 'btn sm primary', onclick: () => nameForm(null)}, '+ Add a name') : null))];
 }
+// Multi-pick chips: nothing picked means "all".
+function pickChips(label, opts, arr, onchange) {
+  const wrap = h('div', {class: 'field'}), draw = () => put(wrap, h('div', {class: 'pick-h'}, label, h('span', {class: 'muted small'}, arr.length ? `${arr.length} picked` : 'All'), arr.length ? h('button', {class: 'link', type: 'button', onclick: () => { arr.length = 0; draw(); onchange(); }}, 'Clear') : null),
+    h('div', {class: 'pick-chips'}, opts.map(([v, l]) => h('button', {type: 'button', class: arr.includes(v) ? 'on' : '', 'aria-pressed': String(arr.includes(v)), onclick: () => { const i = arr.indexOf(v); i < 0 ? arr.push(v) : arr.splice(i, 1); draw(); onchange(); }}, l))));
+  draw(); return wrap;
+}
 function targetForm(t, month) {
-  const m = $('#modal'), f = t ? {...t} : {metric: 'joined', value: 10, unit: 'count', note: '', pod: '', industry: '', city: '', team: '', d0: 1, d1: month === 'Nov' ? 30 : DAYS, month, status: 'draft'};
-  const sel = (k2, label, opts) => h('label', {}, label, h('select', {onchange: e => { f[k2] = e.target.value; }}, opts.map(([v, l]) => h('option', {value: v, selected: String(f[k2]) === String(v)}, l))));
-  put(m, h('div', {class: 'dlg'}, h('h2', {}, t ? 'Edit target line' : 'New target line'), h('p', {class: 'muted small', style: 'margin:0'}, 'Metric + scope + period + value + note. Empty scope means the whole team.'),
-    h('div', {class: 'form'}, sel('metric', 'Metric', Object.entries(METRICS)), sel('unit', 'Unit', [['count', 'Count'], ['percent', 'Percent']]),
-      sel('pod', 'Level / pod', [['', 'All'], ...['L0', ...PODS].map(p => [p, p])]), sel('industry', 'Industry', [['', 'All'], ...INDUSTRIES.map(i => [i, i])]), sel('city', 'City', [['', 'All'], ...CITIES.map(c => [c, c])]),
-      sel('team', 'Person', [['', 'Whole team'], ...D.team.filter(x => x.type !== 'ca_lead' && x.active).map(x => [x.id, x.name])]),
-      ...[['d0', 'From'], ['d1', 'To']].map(([k2, l]) => { const mm = month === 'Nov' ? '11' : '10', last = month === 'Nov' ? 30 : DAYS;
-        return h('label', {}, l, h('input', {type: 'date', min: `2026-${mm}-01`, max: `2026-${mm}-${last}`, value: `2026-${mm}-${String(f[k2]).padStart(2, '0')}`, oninput: e => { if (e.target.value.slice(5, 7) === mm) f[k2] = +e.target.value.slice(8); }})); }),
-      h('label', {}, 'Value', h('input', {type: 'number', min: 0, value: f.value, oninput: e => { f.value = +e.target.value; }})), h('label', {class: 'wide'}, 'Note (why this target, what to focus on)', h('input', {value: f.note, oninput: e => { f.note = e.target.value; }}))),
+  const m = $('#modal'), last = month === 'Nov' ? 30 : DAYS, mm = month === 'Nov' ? '11' : '10';
+  const f = t ? JSON.parse(JSON.stringify(t)) : {metric: 'joined', value: 10, note: '', pods: [], industries: [], cities: [], teams: [], d0: 1, d1: last, month, status: 'draft'};
+  const preview = h('div', {class: 'tgt-preview'}), unitTag = h('span', {class: 'muted small'}), err = h('div', {class: 'callout', style: 'display:none'});
+  const upd = () => { const u = mUnit(f.metric); put(unitTag, u === 'percent' ? '%' : u.startsWith('rp') ? 'Rp' : 'creators / items');
+    if (month !== 'Oct') return put(preview, h('span', {class: 'muted small'}, 'Actuals show once November starts.'));
+    const a = lineActual(f), p = pace(a, f);
+    put(preview, h('div', {}, h('span', {class: 'muted small'}, 'So far '), h('b', {}, fmtVal(a, f))), h('div', {}, h('span', {class: 'muted small'}, mLower(f.metric) ? 'Limit ' : 'Target '), h('b', {}, fmtVal(f.value || 0, f))),
+      ['count', 'rp'].includes(mUnit(f.metric)) ? h('div', {}, h('span', {class: 'muted small'}, 'Projected end '), h('b', {}, fmtVal(p.proj, f))) : null, f.value ? runChip(p.run, f.value) : null,
+      h('span', {class: 'muted small'}, scopeTxt(f))); };
+  const groups = [...new Set(Object.values(METRICS).map(x => x[1]))];
+  const metricSel = h('select', {'aria-label': 'Metric', onchange: e => { f.metric = e.target.value; upd(); }}, groups.map(g => h('optgroup', {label: g}, Object.entries(METRICS).filter(([, x]) => x[1] === g).map(([k2, x]) => h('option', {value: k2, selected: f.metric === k2}, x[0])))));
+  const people = D.team.filter(x => x.type !== 'ca_lead' && x.active && !x.removed);
+  const day = (k2, l) => h('label', {}, l, h('input', {type: 'date', min: `2026-${mm}-01`, max: `2026-${mm}-${last}`, value: `2026-${mm}-${String(f[k2]).padStart(2, '0')}`, oninput: e => { if (e.target.value.slice(5, 7) === mm) { f[k2] = +e.target.value.slice(8); upd(); } }}));
+  put(m, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, t ? 'Edit target line' : 'New target line'), h('p', {class: 'muted small', style: 'margin:0'}, 'Pick one metric, then any levels, industries, cities or people. Nothing picked means all.'),
+    h('div', {class: 'form f3'}, h('label', {}, 'Metric', metricSel), h('label', {}, 'Target value', h('input', {type: 'number', min: 0, value: f.value, oninput: e => { f.value = +e.target.value; upd(); }}), unitTag), h('div', {class: 'form', style: 'gap:8px'}, day('d0', 'From'), day('d1', 'To'))),
+    pickChips('Levels', LV.map(l => [l, l]), f.pods, upd), pickChips('Industries', INDUSTRIES.map(i => [i, i]), f.industries, upd), pickChips('Cities', CITIES.map(c => [c, c]), f.cities, upd),
+    pickChips('People', people.map(x => [x.id, x.name]), f.teams, upd),
+    h('label', {class: 'field'}, 'Note (why this target, what to focus on)', h('input', {value: f.note, oninput: e => { f.note = e.target.value; }})), preview, err,
     h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => m.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
-      if (!(f.value > 0) || f.d0 < 1 || f.d1 < f.d0) return toast('Check the value and the period.');
-      if (t) { D.history.unshift({at: 'Today', by: nameOrRole(), what: `${METRICS[t.metric]}: ${t.value} → ${f.value}${t.note !== f.note ? ', note changed' : ''}`}); Object.assign(t, f, {status: t.status === 'active' ? 'draft' : t.status}); }
-      else { D.targets.push({id: 't' + Date.now(), ...f}); D.history.unshift({at: 'Today', by: nameOrRole(), what: `New line: ${METRICS[f.metric]} ${f.value}`}); }
+      if (!(f.value > 0)) { err.style.display = 'block'; err.textContent = 'Give a target value above 0.'; return; }
+      if (f.d1 < f.d0) { err.style.display = 'block'; err.textContent = 'The To date must be on or after the From date.'; return; }
+      if (t) { D.history.unshift({at: 'Today', by: nameOrRole(), what: `${mLabel(t.metric)}: ${fmtVal(t.value, t)} → ${fmtVal(f.value, f)} · ${scopeTxt(f)}`}); Object.assign(t, f, {status: t.status === 'active' ? 'draft' : t.status}); }
+      else { D.targets.push({...f, id: 't' + Date.now()}); D.history.unshift({at: 'Today', by: nameOrRole(), what: `New line: ${mLabel(f.metric)} ${fmtVal(f.value, f)} · ${scopeTxt(f)}`}); }
       log('Changed targets'); m.close(); render(); }}, 'Save as draft'))));
-  m.showModal();
+  upd(); m.showModal();
 }
 function setupTargets() {
-  const month = ui.tab.tm || 'Oct', lines = D.targets.filter(t => t.month === month), canDraft = may('draftTargets'), canApprove = may('approveTargets');
+  const month = ui.tab.tm || 'Oct', all = D.targets.filter(t => t.month === month), canDraft = may('draftTargets'), canApprove = may('approveTargets'), grp = ui.tab.tg || '';
+  const lines = all.filter(t => !grp || METRICS[t.metric]?.[1] === grp), rows = month === 'Oct' ? paceRows(lines) : lines.map(t => ({...t, label: mLabel(t.metric), actual: null, ach: null, run: null, proj: null}));
   const ST = {draft: ['Draft', '--muted'], active: ['Active', '--growth']};
-  const cover = lines.filter(t => !t.team && t.metric === 'joined' && t.pod && !t.city && !t.industry).map(t => ({t, people: sum(lines.filter(x => x.team && x.metric === t.metric && x.pod === t.pod), x => x.value)})).filter(x => x.people);
-  const copy = () => { const src = D.targets.filter(t => t.month === 'Oct'); src.forEach((t, i) => D.targets.push({...t, id: 'tn' + Date.now() + i, month: 'Nov', status: 'draft', d1: Math.min(t.d1, 30), note: t.note.replace(/^Sample: ?/, '') || 'Copied from October'}));
+  const lvlLines = all.filter(t => !t.teams.length && t.metric === 'joined' && t.pods.length === 1 && !t.cities.length && !t.industries.length);
+  const cover = lvlLines.map(t => ({t, people: sum(all.filter(x => x.teams.length && x.metric === 'joined' && x.pods.length === 1 && x.pods[0] === t.pods[0]), x => x.value)})).filter(x => x.people);
+  const copy = () => { const src = D.targets.filter(t => t.month === 'Oct'); src.forEach((t, i) => D.targets.push({...JSON.parse(JSON.stringify(t)), id: 'tn' + Date.now() + i, month: 'Nov', status: 'draft', d1: Math.min(t.d1, 30), note: t.note || 'Copied from October'}));
     D.history.unshift({at: 'Today', by: nameOrRole(), what: `Copied ${src.length} October lines to November as drafts`}); log('Copied October targets to November'); render(); };
+  const dupe = t => { D.targets.push({...JSON.parse(JSON.stringify(t)), id: 't' + Date.now(), status: 'draft', note: (t.note ? t.note + ' ' : '') + '(copy)'}); log('Duplicated a target line'); render(); };
+  const del = t => { D.targets = D.targets.filter(x => x.id !== t.id); D.history.unshift({at: 'Today', by: nameOrRole(), what: `Deleted draft ${mLabel(t.metric)} ${fmtVal(t.value, t)}`}); log('Deleted a target line'); render(); };
+  const act = r => { const t = D.targets.find(x => x.id === r.id); return h('div', {style: 'display:flex;gap:4px'}, canDraft ? h('button', {class: 'btn sm', onclick: () => targetForm(t, month)}, 'Edit') : null, canDraft ? h('button', {class: 'btn sm', onclick: () => dupe(t)}, 'Copy') : null,
+    canDraft && t.status === 'draft' ? h('button', {class: 'btn sm', onclick: () => del(t)}, 'Delete') : null,
+    t.status === 'draft' && canApprove ? h('button', {class: 'btn sm primary', onclick: () => { t.status = 'active'; D.history.unshift({at: 'Today', by: nameOrRole(), what: `Approved ${mLabel(t.metric)} ${fmtVal(t.value, t)}`}); log('Approved a target line'); render(); }}, 'Approve') : null); };
+  const groups = [...new Set(Object.values(METRICS).map(x => x[1]))], drafts = all.filter(t => t.status === 'draft');
   return [h('div', {class: 'tools'}, seg([['Oct', 'October 2026'], ['Nov', 'November 2026']], month, v => { ui.tab.tm = v; render(); }, 'Month'),
-      month === 'Nov' && canDraft && !lines.length ? h('button', {class: 'btn sm', onclick: copy}, 'Copy October as drafts') : null, canDraft ? h('button', {class: 'btn sm primary', onclick: () => targetForm(null, month)}, '+ New target line') : null,
-      h('span', {class: 'muted small'}, month === 'Nov' ? 'November targets are set here later.' : 'October target lines.')),
-    lines.length ? card('Target lines', canApprove ? 'Approve drafts to make them count.' : 'CA Lead drafts, the Head approves.', table([{k: 'metric', label: 'Metric', render: t => h('b', {style: 'font-weight:600'}, METRICS[t.metric])}, {k: 'scope', label: 'Scope', render: scopeChips},
-      {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'note', label: 'Note', render: t => h('span', {class: 'small muted', style: 'white-space:normal;display:block;min-width:200px'}, t.note)}, {k: 'status', label: 'Status', render: t => chip(...(ST[t.status] || ST.draft))},
-      {k: 'a', label: '', fixed: true, render: r => { const t = D.targets.find(x => x.id === r.id); return h('div', {style: 'display:flex;gap:4px'}, canDraft ? h('button', {class: 'btn sm', onclick: () => targetForm(t, month)}, 'Edit') : null,
-        t.status === 'draft' && canApprove ? h('button', {class: 'btn sm primary', onclick: () => { t.status = 'active'; D.history.unshift({at: 'Today', by: nameOrRole(), what: `Approved ${METRICS[t.metric]} ${t.value}`}); log('Approved a target line'); render(); }}, 'Approve') : null); }}],
-      lines.map(t => ({...t, scope: [t.pod, t.industry, t.city, t.team].join(' ')})), {pageSize: 12})) : card(null, null, h('div', {class: 'empty'}, 'No target lines for November yet. Copy October as drafts, or add lines one by one. The Head approves them before they count.')),
-    cover.length ? row(card('Coverage check', 'Person targets are a slice of the team target, never added on top.', h('div', {}, cover.map(({t, people}) => h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${METRICS[t.metric]} · ${t.pod}`), h('span', {}, `people add up to ${N(people)} of ${N(t.value)}`),
-      chip(people >= t.value ? 'Covered' : `${N(t.value - people)} not given to anyone`, people >= t.value ? '--growth' : '--ops', false)))))) : null,
-    row(card('History', 'Every change to a target line.', D.history.length ? h('div', {class: 'timeline'}, D.history.slice(0, 12).map(e => h('div', {class: 'ev', style: '--c:var(--base)'}, h('i'), h('div', {}, e.what, h('small', {}, e.by)), h('time', {}, e.at)))) : h('div', {class: 'muted small'}, 'No changes yet.')))];
+      seg([['', 'All metrics'], ...groups.map(g => [g, g])], grp, v => { ui.tab.tg = v; render(); }, 'Metric group'), h('span', {class: 'spacer'}),
+      month === 'Nov' && canDraft && !all.length ? h('button', {class: 'btn sm', onclick: copy}, 'Copy October as drafts') : null,
+      canApprove && drafts.length ? h('button', {class: 'btn sm', onclick: () => { drafts.forEach(t => { t.status = 'active'; }); D.history.unshift({at: 'Today', by: nameOrRole(), what: `Approved ${drafts.length} drafts`}); log('Approved all draft targets'); render(); }}, `Approve all drafts (${drafts.length})`) : null,
+      canDraft ? h('button', {class: 'btn sm primary', onclick: () => targetForm(null, month)}, '+ New target line') : null),
+    month === 'Oct' ? h('div', {class: 'grid'}, kpi('Target lines', N(all.length), {sub: `${drafts.length} drafts`, c: '--base'}), kpi('On pace', N(rows.filter(r => r.status === 'active' && r.run >= 1).length), {c: '--growth'}),
+      kpi('Close', N(rows.filter(r => r.status === 'active' && r.run >= 0.8 && r.run < 1).length), {c: '--ops'}), kpi('Behind', N(rows.filter(r => r.status === 'active' && r.run < 0.8).length), {c: '--rev'}), kpi('Day of month', `${TODAY} of ${DAYS}`)) : null,
+    lines.length ? row(card('Target lines', canApprove ? 'Drafts count once approved.' : 'CA Lead drafts, the Head approves.', table([
+      {k: 'label', label: 'Metric', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, t.label), h('div', {style: 'margin-top:3px'}, scopeChips(t)), t.note ? h('div', {class: 'muted small', style: 'margin-top:2px;white-space:normal;max-width:340px'}, t.note) : null)},
+      {k: 'value', label: 'Target', num: true, fmt: (v, t) => h('b', {}, (mLower(t.metric) ? '≤ ' : '') + fmtVal(v, t))}, {k: 'actual', label: 'So far', num: true, fmt: (v, t) => v == null ? '-' : fmtVal(v, t)},
+      {k: 'proj', label: 'Projected', num: true, fmt: (v, t) => v == null || !['count', 'rp'].includes(mUnit(t.metric)) ? '-' : fmtVal(v, t)},
+      {k: 'run', label: 'Run rate', num: true, render: t => t.run == null ? h('span', {class: 'muted'}, '-') : runChip(t.run, t.value)}, {k: 'req', label: 'Needed / day', num: true, fmt: (v, t) => v == null ? '-' : mUnit(t.metric) === 'rp' ? Rp(v) : v.toFixed(1)},
+      {k: 'status', label: 'Status', render: t => chip(...(ST[t.status] || ST.draft))}, {k: 'a', label: '', fixed: true, render: act}],
+      rows.map(t => ({...t, scope: scopeTxt(t)})), {pageSize: 15, sortKey: 'run', dir: 1}))) : row(card(null, null, h('div', {class: 'empty'}, month === 'Nov' ? 'No target lines for November yet. Copy October as drafts, or add lines one by one. The Head approves them before they count.' : 'No lines in this metric group.'))),
+    h('div', {class: 'grid g2 mt'}, card('Coverage check', 'Person targets are a slice of the level target, never added on top.', cover.length ? h('div', {}, cover.map(({t, people}) => h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `Joined · ${t.pods[0]}`), h('span', {class: 'small'}, `people ${N(people)} of ${N(t.value)}`),
+        chip(people >= t.value ? 'Covered' : `${N(t.value - people)} not given to anyone`, people >= t.value ? '--growth' : '--ops', false)))) : h('div', {class: 'muted small'}, 'No person targets yet.')),
+      card('History', 'Every change to a target line.', D.history.length ? h('div', {class: 'timeline'}, D.history.slice(0, 8).map(e => h('div', {class: 'ev', style: '--c:var(--base)'}, h('i'), h('div', {}, e.what, h('small', {}, e.by)), h('time', {}, e.at)))) : h('div', {class: 'muted small'}, 'No changes yet.')))];
 }
 const setupActivity = () => [card('Activity', 'Every change records the login and the name. Interns share one login, so the name shows who did it.', table([{k: 'at', label: 'When'}, {k: 'login', label: 'Login'}, {k: 'as', label: 'Working as'}, {k: 'text', label: 'What'}], D.log, {pageSize: 15}))];
 
 // ================= By level: every page shows its numbers split per level (L0 is shown, never counted) =================
 const LV = ['L0', ...PODS], lvOf = x => x.pod || podOf(x.level, x.industry), atL = (list, l) => l ? list.filter(x => lvOf(x) === l) : list;
-const lvTarget = l => sum(D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && t.metric === 'joined' && t.pod && !t.team && !t.city && !t.industry && (!l || t.pod === l)), t => t.value);
+const lvTarget = l => sum(D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && t.metric === 'joined' && t.pods.length === 1 && !t.teams.length && !t.cities.length && !t.industries.length && t.d0 === 1 && t.d1 === DAYS && (!l || t.pods[0] === l)), t => t.value);
 function levelPace(joined, target) { const p = pace(joined, {value: target, unit: 'count', d0: 1, d1: DAYS}); return {run: target ? p.proj / target : 0, req: p.req}; }
 const runChip = (run, target) => !target ? h('span', {class: 'muted'}, '-') : chip(Math.round(run * 100) + '%', run >= 1 ? '--growth' : run >= 0.8 ? '--ops' : '--rev', false);
 // metrics: [label, l => value, fmt]; l is a level, or null for the total column
