@@ -411,6 +411,9 @@ dialog:has(.wide-dlg){width:min(820px,96vw)}
 .num-in{width:110px;text-align:right}
 .form.f3{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:760px){.form.f3{grid-template-columns:1fr}}
+.intern-chip{border:none;cursor:pointer}
+.intern-chip:hover{filter:brightness(1.1)}
+.intern-chip:disabled{cursor:default}
 </style>
 </head>
 <body>
@@ -619,7 +622,6 @@ const PROV = {Jakarta: ['DKI Jakarta', '10110'], Bandung: ['West Java', '40111']
   Bogor: ['West Java', '16111'], Depok: ['West Java', '16411'], Semarang: ['Central Java', '50111'], Medan: ['North Sumatra', '20111'], Makassar: ['South Sulawesi', '90111']};
 const CITIES = Object.keys(PROV);
 const INDUSTRIES = ['Dining SV', 'Dining LS', 'Accommodation', 'Things To Do'];
-const IC = {'Dining SV': 'food', 'Dining LS': 'live', Accommodation: 'stay', 'Things To Do': 'trip'};
 const CC = {Jakarta: 'jkt', Bandung: 'bdg', Surabaya: 'sby', Bali: 'bli', Yogyakarta: 'yog', Bekasi: 'bks', Tangerang: 'tgr', Bogor: 'bgr', Depok: 'dpk', Semarang: 'smg', Medan: 'mdn', Makassar: 'mks'};
 const LEVELS = ['L0', 'L1', 'L2', 'L3', 'L4'], PODS = ['L1', 'L2', 'L3', 'L4', 'LIVE'], M3 = ['Jul', 'Aug', 'Sep'];
 const MSTAT = {mined: ['Mined', '--muted'], approaching: ['Approaching', '--base'], hot: ['Hot lead', '--ops'], invited: ['Invite sent', '--ops'], joined: ['Joined', '--growth'], not_interested: ['Not interested', '--rev'], no_response: ['No response', '--rev']};
@@ -643,18 +645,24 @@ function planTerms(n, start) {
 }
 
 function makeData() {
-  const team = [{id: 'n0', name: 'CA Lead', type: 'ca_lead', emails: ['ca.lead@sample.id'], pod: '', cities: [], industries: [], active: true, notes: 'Runs the team'}];
+  const FTE = ['Dimas Pratama', 'Ayu Lestari', 'Bagas Saputra', 'Nadia Putri', 'Fajar Nugroho', 'Sekar Wulandari'];
+  const INTERNS = ['Alya Rahma', 'Bima Santoso', 'Citra Dewi', 'Dafa Ramadhan', 'Elsa Maharani', 'Gilang Firmansyah', 'Hana Salsabila', 'Irfan Hakim', 'Jihan Aulia', 'Kevin Wijaya', 'Laras Anindya', 'Rafi Akbar'];
+  const team = [{id: 'n0', name: 'Rina Kartika', type: 'ca_lead', emails: ['rina.kartika@sample.id'], pod: '', cities: [], industries: [], active: true, notes: 'Runs the team'}];
   [['L2', ['Bandung', 'Jakarta'], ['Dining SV']], ['L2', ['Surabaya', 'Bali'], []], ['L3', [], []], ['L4', [], ['Accommodation', 'Dining SV']], ['LIVE', [], ['Dining LS']], ['L1', ['Bekasi', 'Tangerang', 'Bogor'], []]]
-    .forEach(([pod, cities, industries], i) => team.push({id: 'n' + (i + 1), name: `CA ${i + 1}`, type: 'fte_ca', emails: [`ca${i + 1}@sample.id`], pod, cities, industries, active: true, notes: 'FTE'}));
-  for (let i = 1; i <= 12; i++) team.push({id: 'i' + i, name: `Intern ${String(i).padStart(2, '0')}`, type: 'intern', emails: ['intern@sample.id'], pod: i > 10 ? 'LIVE' : 'L1', cities: i % 3 ? [] : ['Bandung'], industries: i > 10 ? ['Dining LS'] : [], active: i !== 12, notes: i === 12 ? 'Internship ended 15 Oct' : 'Intern batch Sep 2026'});
+    .forEach(([pod, cities, industries], i) => team.push({id: 'n' + (i + 1), name: FTE[i], type: 'fte_ca', emails: [`${FTE[i].split(' ')[0].toLowerCase()}@sample.id`], pod, cities, industries, active: true, notes: 'FTE'}));
+  for (let i = 1; i <= 12; i++) team.push({id: 'i' + i, name: INTERNS[i - 1], type: 'intern', emails: ['intern.ca@sample.id'], pod: i > 10 ? 'LIVE' : 'L1', cities: i % 3 ? [] : ['Bandung'], industries: i > 10 ? ['Dining LS'] : [], active: i !== 12, notes: i === 12 ? 'Internship ended 15 Oct' : 'Intern batch Sep 2026'});
   const workers = team.filter(t => t.type !== 'ca_lead' && t.active);
+  // Made-up TikTok handles: a word for the niche, a first name, the city
+  const HW = {'Dining SV': ['kuliner', 'jajan', 'makan', 'foodie', 'ngemil', 'santap', 'dapur'], 'Dining LS': ['live', 'jualan', 'siaran', 'livemakan'], Accommodation: ['staycation', 'nginep', 'hotelhop'], 'Things To Do': ['jalanjalan', 'explore', 'liburan', 'main']};
+  const HN = ['rara', 'dinda', 'bayu', 'tiara', 'andre', 'mita', 'yoga', 'sasa', 'kiki', 'novi', 'rizky', 'putri', 'gita', 'reza', 'nana', 'oki', 'wulan', 'tegar', 'lia', 'arya', 'sinta', 'bobby', 'mega', 'fikri'];
+  const used = new Set(), handle = (industry, city) => { let u; do { u = `@${pick(HW[industry])}${pick(HN)}.${CC[city]}`; if (used.has(u)) u += int(2, 99); } while (used.has(u)); used.add(u); return u; };
   const roster = new Set(), pastLinked = new Set();
-  for (let i = 1; i <= 120; i++) roster.add(`@${IC[pick(INDUSTRIES)]}.${CC[pick(CITIES)]}.${String(500 + i)}`);
-  for (let i = 1; i <= 25; i++) pastLinked.add(`@back.${CC[pick(CITIES)]}.${950 + i}`);
+  for (let i = 1; i <= 120; i++) roster.add(handle(pick(INDUSTRIES), pick(CITIES)));
+  for (let i = 1; i <= 25; i++) pastLinked.add(handle(pick(INDUSTRIES), pick(CITIES)));
   const partners = [
-    {id: 'p1', name: 'Partner A', contact: 'PIC Partner A', phone: '0811000001', email: 'partner.a@sample.id', bank: 'BCA', account: '000-111-2223', holder: 'PT Partner A (sample)', taxId: '00.000.000.0-000.001', start: '1 Jan 2026', end: '31 Dec 2026', fee: 10000, share: 2, payDay: 10, active: true},
-    {id: 'p2', name: 'Partner B', contact: 'PIC Partner B', phone: '0811000002', email: 'partner.b@sample.id', bank: 'Mandiri', account: '111-222-3334', holder: 'CV Partner B (sample)', taxId: '00.000.000.0-000.002', start: '1 Apr 2026', end: '31 Mar 2027', fee: 15000, share: 1.5, payDay: 10, active: true},
-    {id: 'p3', name: 'Partner C', contact: 'PIC Partner C', phone: '0811000003', email: 'partner.c@sample.id', bank: 'BNI', account: '222-333-4445', holder: 'Partner C (sample)', taxId: '', start: '1 Jul 2026', end: '30 Jun 2027', fee: 10000, share: 0, payDay: 10, active: true}];
+    {id: 'p1', name: 'Kreasi Nusantara', contact: 'Wahyu Setiawan', phone: '0811000001', email: 'wahyu@kreasinusantara.sample.id', bank: 'BCA', account: '000-111-2223', holder: 'PT Kreasi Nusantara Media', taxId: '00.000.000.0-000.001', start: '1 Jan 2026', end: '31 Dec 2026', fee: 10000, share: 2, payDay: 10, active: true},
+    {id: 'p2', name: 'Ruang Konten Bali', contact: 'Komang Ayu', phone: '0811000002', email: 'komang@ruangkonten.sample.id', bank: 'Mandiri', account: '111-222-3334', holder: 'CV Ruang Konten Bali', taxId: '00.000.000.0-000.002', start: '1 Apr 2026', end: '31 Mar 2027', fee: 15000, share: 1.5, payDay: 10, active: true},
+    {id: 'p3', name: 'Jaya Talent Hub', contact: 'Hendra Gunawan', phone: '0811000003', email: 'hendra@jayatalent.sample.id', bank: 'BNI', account: '222-333-4445', holder: 'Hendra Gunawan', taxId: '', start: '1 Jul 2026', end: '30 Jun 2027', fee: 10000, share: 0, payDay: 10, active: true}];
   const programs = [
     {id: 'g1', name: 'Paid per Post', industry: 'Dining SV', level: 'L2', price: 150000, scope: '30 videos a month', budget: 9000000, slots: 60}, {id: 'g2', name: 'Paid per Post', industry: 'Dining SV', level: 'L3', price: 1e6, scope: '10 videos a month', budget: 10000000, slots: 10},
     {id: 'g3', name: 'Paid per Post', industry: 'Dining SV', level: 'L4', price: 2.5e6, scope: '10 videos a month', budget: 10000000, slots: 4}, {id: 'g4', name: 'Paid per Post', industry: 'Accommodation', level: 'L3', price: 1e6, scope: '10 videos a month', budget: 5000000, slots: 5},
@@ -668,7 +676,7 @@ function makeData() {
     const city = t.cities.length && rnd() < 0.7 ? pick(t.cities) : pick(CITIES), day = int(1, TODAY), base = gmvBase(level) * int(2, 60);
     const gmv3 = M3.map(m => ({m, video: Math.round(base * (0.6 + rnd() * 0.8) / 1000) * 1000, live: industry === 'Dining LS' ? Math.round(base * (0.8 + rnd()) / 1000) * 1000 : rnd() < 0.15 ? Math.round(base * 0.3 / 1000) * 1000 : 0}));
     const r = rnd(), status = day > TODAY - 2 ? pick(['mined', 'mined', 'approaching']) : r < 0.5 ? 'joined' : r < 0.6 ? 'invited' : r < 0.7 ? 'hot' : r < 0.8 ? 'approaching' : r < 0.86 ? 'mined' : r < 0.94 ? 'not_interested' : 'no_response';
-    const username = `@${IC[industry]}.${CC[city]}.${String(i).padStart(3, '0')}`, phone = rnd() < 0.85 ? '08' + int(1e9, 9e9) : '';
+    const username = handle(industry, city), phone = rnd() < 0.85 ? '08' + int(1e9, 9e9) : '';
     const history = [{day, by: t.id, status: 'mined'}]; let d = day;
     const target = status === 'not_interested' || status === 'no_response' ? FLOW.indexOf('approaching') : FLOW.indexOf(status);
     for (let k = 1; k <= target; k++) { d = Math.min(TODAY, d + int(0, 2)); history.push({day: d, by: t.id, status: FLOW[k]}); }
@@ -687,7 +695,7 @@ function makeData() {
   // last month's cohort, so CAs can look back at the creators they brought in September
   for (let i = 1; i <= 300; i++) {
     const t = pick(workers), level = lvlPick(t.pod), industry = t.pod === 'LIVE' ? 'Dining LS' : pick(['Dining SV', 'Dining SV', 'Accommodation', 'Things To Do']), city = pick(CITIES);
-    onb.push({id: 's' + i, month: 'Sep', team: t.id, day: int(1, 30), username: `@${IC[industry]}.${CC[city]}.${String(1000 + i)}`, level, pod: podOf(level, industry), industry, city, phone: '08' + int(1e9, 9e9), partner: rnd() < 0.07 ? pick(partners).id : '',
+    onb.push({id: 's' + i, month: 'Sep', team: t.id, day: int(1, 30), username: handle(industry, city), level, pod: podOf(level, industry), industry, city, phone: '08' + int(1e9, 9e9), partner: rnd() < 0.07 ? pick(partners).id : '',
       type: rnd() < 0.07 ? 'renewal' : 'new', status: 'confirmed', linkedDay: 0, complete: true});
   }
   // activity since joining: posts, LIVE sessions, redemption GMV this month
@@ -699,7 +707,7 @@ function makeData() {
   }
   // creators Total Creator Data shows as Linked that nobody logged: credit stays empty
   const notLogged = [];
-  for (let i = 1; i <= 140; i++) { const industry = pick(INDUSTRIES), city = pick(CITIES), level = pick(['L0', 'L0', 'L1', 'L1', 'L1', 'L2']); notLogged.push({id: 'u' + i, day: int(1, TODAY), username: `@${IC[industry]}.${CC[city]}.${String(600 + i)}`, level, pod: podOf(level, industry), industry, city}); }
+  for (let i = 1; i <= 140; i++) { const industry = pick(INDUSTRIES), city = pick(CITIES), level = pick(['L0', 'L0', 'L1', 'L1', 'L1', 'L2']); notLogged.push({id: 'u' + i, day: int(1, TODAY), username: handle(industry, city), level, pod: podOf(level, industry), industry, city}); }
   // bound cash: entered by the CA Lead, only for creators who joined new this month
   const bound = [];
   onb.filter(o => o.month === 'Oct' && o.type === 'new' && o.complete && LEVELS.indexOf(o.level) >= 2 && rnd() < 0.5).forEach((o, i) => {
@@ -714,38 +722,42 @@ function makeData() {
   });
   const T = (id, metric, value, scope = {}, note = '', status = 'active', unit = 'count', month = 'Oct') => ({id, metric, value, unit, note, status, month, pod: '', industry: '', city: '', team: '', d0: 1, d1: DAYS, ...scope});
   const targets = [
-    T('t1', 'joined', 260, {pod: 'L1'}, 'Sample: volume pod, interns do most of it'), T('t2', 'joined', 120, {pod: 'L2'}, 'Sample: L2 is the hardest level to find'),
-    T('t3', 'joined', 20, {pod: 'L3'}, 'Sample'), T('t4', 'joined', 12, {pod: 'L4'}, 'Sample'), T('t5', 'joined', 60, {pod: 'LIVE'}, 'Sample: Gas Live creators'),
-    T('t6', 'joined', 40, {pod: 'L2', industry: 'Dining SV', city: 'Bandung', d0: 10, d1: 23}, 'Sample: two-week city push in Bandung'),
-    T('t7', 'mined', 1200, {}, 'Sample: keep the mining list full'), T('t8', 'hot', 250, {}, 'Sample: creators ready to invite'), T('t9', 'complete', 98, {}, 'Sample: phone and industry on every record', 'active', 'percent'),
-    ...Array.from({length: 10}, (_, i) => T('ti' + i, 'joined', 20, {pod: 'L1', team: 'i' + (i + 1)}, 'Sample: per intern'))];
-  return {team, roster, pastLinked, partners, programs, mining, onb, notLogged, bound, ppay: {p3: 'pending'}, settings: {salaryDay: 25, plan: 1, partnerPayDay: 10, partnerFee: 10000, partnerShare: 0, newFollow: 1, follow: {approaching: 2, hot: 1, invited: 3}},
+    T('t1', 'joined', 260, {pod: 'L1'}, 'Volume pod, interns do most of it'), T('t2', 'joined', 120, {pod: 'L2'}, 'L2 is the hardest level to find'),
+    T('t3', 'joined', 20, {pod: 'L3'}, 'Monthly level target'), T('t4', 'joined', 12, {pod: 'L4'}, 'Monthly level target'), T('t5', 'joined', 60, {pod: 'LIVE'}, 'Gas Live creators'),
+    T('t6', 'joined', 40, {pod: 'L2', industry: 'Dining SV', city: 'Bandung', d0: 10, d1: 23}, 'Two-week city push in Bandung'),
+    T('t7', 'mined', 1200, {}, 'Keep the mining list full'), T('t8', 'hot', 250, {}, 'Creators ready to invite'), T('t9', 'complete', 98, {}, 'Phone and industry on every record', 'active', 'percent'),
+    ...Array.from({length: 10}, (_, i) => T('ti' + i, 'joined', 20, {pod: 'L1', team: 'i' + (i + 1)}, 'Per intern'))];
+  return {team, roster, pastLinked, partners, programs, mining, onb, notLogged, bound, ppay: {p3: 'pending'}, settings: {internEmail: 'intern.ca@sample.id', salaryDay: 25, plan: 1, partnerPayDay: 10, partnerFee: 10000, partnerShare: 0, newFollow: 1, follow: {approaching: 2, hot: 1, invited: 3}},
     budget: {other: {budget: 3e6}, salary: {budget: 6e6}, partner: {budget: 2.5e6}}, targets, checks: [], history: [], log: []};
 }
 const D = makeData();
-D.log.push({at: '19 Oct 17:40', login: 'ca.lead@sample.id', as: 'CA Lead', text: 'Set October targets (sample)'}, {at: '20 Oct 08:55', login: 'intern@sample.id', as: 'Intern 03', text: 'Mined 6 creators'});
+D.log.push({at: '20 Oct 08:55', login: 'intern.ca@sample.id', as: D.team.find(t => t.id === 'i3').name, text: 'Mined 6 creators'}, {at: '19 Oct 17:40', login: 'rina.kartika@sample.id', as: D.team[0].name, text: 'Set October targets'});
 
 // ---------- who is signed in ----------
-const LOGINS = [['ca.lead@sample.id', 'ca_lead', 'CA Lead'], ['admin@sample.id', 'admin', 'Admin (Data Team)'], ...[1, 2, 3, 4, 5, 6].map(i => [`ca${i}@sample.id`, 'fte_ca', `CA ${i} (FTE)`]),
-  ['intern@sample.id', 'intern', 'Interns (shared login)'], ['head@sample.id', 'head', 'Head'], ['finance@sample.id', 'finance', 'Finance']];
-const PAGES_ALL = ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Partnership', 'Payment Cycle', 'Finance', 'Impact Calculator', 'Weekly Report', 'Settings'];
+// Sign-in list for the simulation; follows the team names and the shared intern email set in Team.
+const logins = () => [[D.team[0].emails[0], 'ca_lead', `${D.team[0].name} · CA Lead`], ['yusuf.hidayat@sample.id', 'admin', 'Yusuf Hidayat · Admin, Data Team'],
+  ...D.team.filter(t => t.type === 'fte_ca' && t.active).map(t => [t.emails[0], 'fte_ca', `${t.name} · FTE CA`]), [D.settings.internEmail, 'intern', 'Interns · shared login'],
+  ['maya.anggraini@sample.id', 'head', 'Maya Anggraini · Head'], ['teguh.prasetyo@sample.id', 'finance', 'Teguh Prasetyo · Finance']];
+const GROUPS = [['Daily work', '--growth', ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Impact Calculator', 'Weekly Report']], ['Payments', '--rev', ['Bound Cash', 'Partnership', 'Payment Cycle', 'Finance']],
+  ['Settings', '--base', ['Team', 'Targets', 'Rules and defaults', 'Data uploads', 'Activity']]];
+const PAGES_ALL = GROUPS.flatMap(g => g[2]);
 const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Impact Calculator'],
-  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Payment Cycle', 'Finance', 'Partnership', 'Bound Cash']};
-const ui = {login: 'ca.lead@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}, range: {k: 'mtd', d0: 1, d1: TODAY}};
+  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Bound Cash', 'Partnership', 'Payment Cycle', 'Finance']};
+const ui = {login: 'rina.kartika@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}, range: {k: 'mtd', d0: 1, d1: TODAY}};
 // Date range always sits inside the current month; pages that are monthly by nature ignore it.
 const RANGES = [['today', 'Today', TODAY, TODAY], ['yday', 'Yesterday', TODAY - 1, TODAY - 1], ['week', 'This week', TODAY - 1, TODAY], ['7d', 'Last 7 days', TODAY - 6, TODAY], ['mtd', 'Month to date', 1, TODAY], ['month', 'Whole month', 1, DAYS]];
-const MONTHLY = ['Partnership', 'Payment Cycle', 'Impact Calculator', 'Weekly Report', 'Settings'];
+const MONTHLY = ['Partnership', 'Payment Cycle', 'Impact Calculator', 'Weekly Report', 'Team', 'Targets', 'Rules and defaults', 'Data uploads', 'Activity'];
 const inRange = d => d >= ui.range.d0 && d <= ui.range.d1;
 const rangeTxt = () => ui.range.d0 === ui.range.d1 ? dayLabel(ui.range.d0) : `${ui.range.d0} to ${ui.range.d1} Oct`;
-try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim2') || '{}'), {as: null}); } catch {}
-const role = () => (LOGINS.find(l => l[0] === ui.login) || LOGINS[0])[1];
+try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim3') || '{}'), {as: null}); } catch {}
+const role = () => (logins().find(l => l[0] === ui.login) || logins()[0])[1];
 const may = what => ({
   mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], bound: ['ca_lead'], budget: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
   team: ['ca_lead', 'admin'], draftTargets: ['ca_lead', 'admin'], approveTargets: ['head', 'admin'], report: ['ca_lead', 'admin', 'head'], money: ['ca_lead', 'fte_ca', 'head', 'finance', 'admin']}[what] || []).includes(role());
 const me = () => role() === 'fte_ca' ? D.team.find(t => t.emails.includes(ui.login))?.id : role() === 'intern' ? ui.as : null;
 const nameOf = id => D.team.find(t => t.id === id)?.name || '-';
 const partnerOf = id => D.partners.find(p => p.id === id);
-const nameOrRole = () => me() ? nameOf(me()) : (LOGINS.find(l => l[0] === ui.login) || [])[2];
+const nameOrRole = () => me() ? nameOf(me()) : (logins().find(l => l[0] === ui.login) || logins()[0])[2];
 const log = text => { D.log.unshift({at: 'Today ' + new Date().toTimeString().slice(0, 5), login: ui.login, as: nameOrRole(), text}); };
 
 // ---------- filters ----------
@@ -1048,8 +1060,8 @@ PAGES['Daily Tracker'] = () => {
     : table(onbCols, lrows.map(onbRow), {sortKey: 'day', pageSize: 13});
   const fun = people.map(p => { const x = M.filter(y => y.by === p.id); return {name: p.name, mined: x.length, hot: x.filter(y => reached(y, 'hot')).length, inv: x.filter(y => reached(y, 'invited')).length, joined: counted(L.filter(o => o.team === p.id)).length, conv: pct(counted(L.filter(o => o.team === p.id)).length, x.length)}; });
   return [row(card(`Day by day · ${rangeTxt()}`, 'Joined counts complete records only. Change the dates at the top.', grid, seg([['joined', 'Joined'], ['mined', 'Mined'], ['hot', 'Hot leads'], ['invited', 'Invites']], m, v => { ui.tab.dt = v; render(); }, 'Metric'))),
-    h('div', {class: 'grid g21 mt'}, card('Records to look at', 'Fix these the same day so the numbers stay true.', listTbl, seg(Object.entries(lists).map(([k2, [l, r]]) => [k2, `${l} (${r.length})`]), lt, v => { ui.tab.dl = v; render(); }, 'List')),
-      card('Funnel per person', 'Mined to joined this month.', table([{k: 'name', label: 'Name'}, {k: 'mined', label: 'Mined', num: true}, {k: 'hot', label: 'Hot', num: true}, {k: 'inv', label: 'Invited', num: true}, {k: 'joined', label: 'Joined', num: true}, {k: 'conv', label: 'Mined → joined', num: true, fmt: v => v + '%'}], fun, {search: false, sortKey: 'joined', pageSize: 20})))];
+    row(card('Records to look at', 'Fix these the same day so the numbers stay true.', listTbl, seg(Object.entries(lists).map(([k2, [l, r]]) => [k2, `${l} (${r.length})`]), lt, v => { ui.tab.dl = v; render(); }, 'List'))),
+      row(card('Funnel per person', 'Mined to joined this month.', table([{k: 'name', label: 'Name'}, {k: 'mined', label: 'Mined', num: true}, {k: 'hot', label: 'Hot', num: true}, {k: 'inv', label: 'Invited', num: true}, {k: 'joined', label: 'Joined', num: true}, {k: 'conv', label: 'Mined → joined', num: true, fmt: v => v + '%'}], fun, {search: false, sortKey: 'joined', pageSize: 20})))];
 };
 
 // ================= My Creators: what the creators each person brought have done =================
@@ -1383,13 +1395,9 @@ function setupUploads() {
 }
 
 // ================= Settings: team names, targets, rules, uploads, activity =================
-PAGES['Settings'] = () => {
-  const tabs = [...(may('team') ? [['team', 'Team']] : []), ['targets', 'Targets'], ['rules', 'Rules and defaults'], ['uploads', 'Data uploads'], ['activity', 'Activity']];
-  const tab = tabs.some(t => t[0] === ui.tab.setup) ? ui.tab.setup : tabs[0][0];
-  return [h('div', {class: 'tools'}, seg(tabs, tab, v => { ui.tab.setup = v; render(); }, 'Settings section')), ...({team: setupTeam, targets: setupTargets, rules: setupRules, uploads: setupUploads, activity: setupActivity}[tab])()];
-};
+Object.assign(PAGES, {Team: () => setupTeam(), Targets: () => setupTargets(), 'Rules and defaults': () => setupRules(), 'Data uploads': () => setupUploads(), Activity: () => setupActivity()});
 function nameForm(t) {
-  const m = $('#modal'), f = t ? {...t, emails: t.emails.join(', '), cities: [...t.cities], industries: [...t.industries]} : {name: '', type: 'intern', emails: 'intern@sample.id', pod: 'L1', cities: [], industries: [], notes: ''};
+  const m = $('#modal'), f = t ? {...t, emails: t.emails.join(', '), cities: [...t.cities], industries: [...t.industries]} : {name: '', type: 'intern', emails: D.settings.internEmail, pod: 'L1', cities: [], industries: [], notes: ''};
   const multi = (k2, opts) => h('div', {class: 'checks'}, opts.map(o => h('label', {class: 'radio'}, h('input', {type: 'checkbox', checked: f[k2].includes(o), onchange: e => { f[k2] = e.target.checked ? [...f[k2], o] : f[k2].filter(x => x !== o); }}), o)));
   const err = h('div', {class: 'muted small', style: 'color:var(--rev)'});
   put(m, h('div', {class: 'dlg'}, h('h2', {}, t ? `Edit ${t.name}` : 'Add a name'), h('p', {class: 'muted small', style: 'margin:0'}, 'A name is a person, not a login. All interns share one login email; each intern gets their own name here.'),
@@ -1408,17 +1416,41 @@ function nameForm(t) {
       m.close(); render(); }}, 'Save'))));
   m.showModal();
 }
+function removeName(t) {
+  const dlg = $('#modal'), nm = D.mining.filter(m => m.by === t.id || m.owner === t.id).length, no = D.onb.filter(o => o.team === t.id).length, open = D.mining.filter(m => m.owner === t.id && OPEN_ST.includes(m.status));
+  put(dlg, h('div', {class: 'dlg'}, h('h2', {}, `Remove ${t.name}?`), h('p', {class: 'muted small', style: 'margin:0'}, nm + no ? `${nm} mining records and ${no} onboardings keep the name ${t.name}, so history and credit stay true.` : 'This name has no records yet.'),
+    open.length ? h('div', {class: 'callout'}, `${open.length} open creators they own move to ${nameOf('n0')}.`) : null, h('p', {class: 'muted small', style: 'margin:0'}, 'The name disappears from lists, sign-in and targets. Use Switch off instead if they may come back.'),
+    h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
+      Object.assign(t, {removed: true, active: false}); open.forEach(m => { m.owner = 'n0'; }); if (ui.as === t.id) ui.as = null;
+      log(`Removed ${t.name}`); toast(`${t.name} removed.`); dlg.close(); render(); }}, 'Remove'))));
+  dlg.showModal();
+}
 function setupTeam() {
-  const rows = D.team.map(t => ({...t, emailsTxt: t.emails.join(', '), coverage: [t.cities.join(', ') || 'All cities', t.industries.join(', ') || 'All industries'].join(' · '),
-    mined: D.mining.filter(m => m.by === t.id).length, joined: counted(D.onb.filter(o => o.month === 'Oct' && o.team === t.id)).length, shared: t.emails.some(e => D.team.filter(x => x.emails.includes(e)).length > 1)}));
+  const can = may('team'), cur = D.settings.internEmail, list = D.team.filter(t => !t.removed), interns = list.filter(t => t.type === 'intern');
+  const rows = list.map(t => ({...t, emailsTxt: t.emails.join(', '), coverage: [t.cities.join(', ') || 'All cities', t.industries.join(', ') || 'All industries'].join(' · '),
+    mined: D.mining.filter(m => m.by === t.id).length, open: D.mining.filter(m => m.owner === t.id && OPEN_ST.includes(m.status)).length, joined: counted(D.onb.filter(o => o.month === 'Oct' && o.team === t.id)).length, shared: t.emails.includes(cur)}));
   const toggle = t => { t.active = !t.active; log(`${t.active ? 'Switched on' : 'Switched off'} ${t.name}`); toast(t.active ? `${t.name} is active.` : `${t.name} switched off. Their mining and credit stay.`); render(); };
-  return [h('div', {class: 'grid'}, kpi('FTE CAs', N(D.team.filter(t => t.type === 'fte_ca' && t.active).length), {c: '--base'}), kpi('Interns', N(D.team.filter(t => t.type === 'intern' && t.active).length), {sub: 'one shared login'}), kpi('Switched off', N(D.team.filter(t => !t.active).length))),
-    row(card('Team names', 'Created by the CA Lead and Admin. Mining, joins and targets are saved under names.', table([{k: 'name', label: 'Name', render: t => h('div', {}, h('b', {style: 'font-weight:600'}, t.name), h('div', {class: 'muted small'}, t.notes))},
+  const emailIn = h('input', {type: 'email', value: cur, disabled: !can, 'aria-label': 'Shared intern login email', style: 'min-width:240px'});
+  const changeEmail = () => {
+    const v = emailIn.value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return toast('Enter a valid email.');
+    if (v === cur) return;
+    if (D.team.some(t => t.type !== 'intern' && t.emails.includes(v))) return toast('That email already belongs to an FTE or the CA Lead.');
+    D.team.forEach(t => { t.emails = t.emails.map(e => e === cur ? v : e); }); if (ui.login === cur) ui.login = v; D.settings.internEmail = v;
+    log(`Shared intern login changed from ${cur} to ${v}`); toast('Shared intern login changed. Interns sign in with the new email from now on.'); render();
+  };
+  return [h('div', {class: 'grid'}, kpi('FTE CAs', N(list.filter(t => t.type === 'fte_ca' && t.active).length), {c: '--base'}), kpi('Interns', N(interns.filter(t => t.active).length), {sub: 'on one shared login'}),
+      kpi('Switched off', N(list.filter(t => !t.active).length)), kpi('Removed', N(D.team.filter(t => t.removed).length), {sub: 'history keeps their name'}), kpi('Open creators owned', N(sum(rows, r => r.open)))),
+    row(card('Shared intern login', `All interns sign in with one email, then pick their own name. ${can ? 'Change the email here; every intern name moves with it.' : 'Only the CA Lead and Admin change it.'}`, h('div', {class: 'stack'},
+      h('div', {class: 'tools', style: 'margin:0'}, emailIn, can ? h('button', {class: 'btn sm primary', onclick: changeEmail}, 'Change email') : null, can ? h('button', {class: 'btn sm', onclick: () => nameForm(null)}, '+ Add an intern') : null),
+      h('div', {class: 'chips', style: 'margin:0'}, interns.map(t => h('button', {class: 'chip intern-chip', style: `--tc:var(${t.active ? '--ops' : '--muted'})`, disabled: !can, title: can ? 'Edit' : '', onclick: () => nameForm(D.team.find(x => x.id === t.id))}, t.name, t.active ? '' : ' (off)')))))),
+    row(card('Team names', 'A name is a person, not a login. Mining, joins, follow-ups and targets are saved under names.', table([{k: 'name', label: 'Name', render: t => person(t.name, t.notes)},
       {k: 'type', label: 'Type', render: t => chip(t.type === 'intern' ? 'Intern' : t.type === 'fte_ca' ? 'FTE CA' : 'CA Lead', t.type === 'intern' ? '--ops' : '--base', false)}, {k: 'emailsTxt', label: 'Login', render: t => h('span', {class: 'small'}, t.emailsTxt, t.shared ? h('span', {class: 'muted'}, ' (shared)') : null)},
-      {k: 'pod', label: 'Pod'}, {k: 'coverage', label: 'Coverage', render: t => h('span', {class: 'small muted', style: 'white-space:normal'}, t.coverage)}, {k: 'mined', label: 'Mined', num: true}, {k: 'joined', label: 'Joined', num: true},
+      {k: 'pod', label: 'Pod'}, {k: 'coverage', label: 'Coverage', render: t => h('span', {class: 'small muted', style: 'white-space:normal'}, t.coverage)}, {k: 'mined', label: 'Mined', num: true}, {k: 'open', label: 'Open owned', num: true}, {k: 'joined', label: 'Joined', num: true},
       {k: 'active', label: 'Active', render: t => chip(t.active ? 'Active' : 'Off', t.active ? '--growth' : '--muted', false)},
-      {k: 'e', label: '', fixed: true, render: r => r.type === 'ca_lead' ? null : h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm', onclick: () => nameForm(D.team.find(x => x.id === r.id))}, 'Edit'), h('button', {class: 'btn sm', onclick: () => toggle(D.team.find(x => x.id === r.id))}, r.active ? 'Switch off' : 'Switch on'))}],
-      rows, {sortKey: 'type', pageSize: 12}), h('button', {class: 'btn sm primary', onclick: () => nameForm(null)}, '+ Add a name')))];
+      {k: 'e', label: '', fixed: true, render: r => r.type === 'ca_lead' || !can ? null : h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm', onclick: () => nameForm(D.team.find(x => x.id === r.id))}, 'Edit'),
+        h('button', {class: 'btn sm', onclick: () => toggle(D.team.find(x => x.id === r.id))}, r.active ? 'Switch off' : 'Switch on'), h('button', {class: 'btn sm', onclick: () => removeName(D.team.find(x => x.id === r.id))}, 'Remove'))}],
+      rows, {sortKey: 'type', pageSize: 20}), can ? h('button', {class: 'btn sm primary', onclick: () => nameForm(null)}, '+ Add a name') : null))];
 }
 function targetForm(t, month) {
   const m = $('#modal'), f = t ? {...t} : {metric: 'joined', value: 10, unit: 'count', note: '', pod: '', industry: '', city: '', team: '', d0: 1, d1: month === 'Nov' ? 30 : DAYS, month, status: 'draft'};
@@ -1444,7 +1476,7 @@ function setupTargets() {
     D.history.unshift({at: 'Today', by: nameOrRole(), what: `Copied ${src.length} October lines to November as drafts`}); log('Copied October targets to November'); render(); };
   return [h('div', {class: 'tools'}, seg([['Oct', 'October 2026'], ['Nov', 'November 2026']], month, v => { ui.tab.tm = v; render(); }, 'Month'),
       month === 'Nov' && canDraft && !lines.length ? h('button', {class: 'btn sm', onclick: copy}, 'Copy October as drafts') : null, canDraft ? h('button', {class: 'btn sm primary', onclick: () => targetForm(null, month)}, '+ New target line') : null,
-      h('span', {class: 'muted small'}, month === 'Nov' ? 'November targets are set here later.' : 'Sample October lines.')),
+      h('span', {class: 'muted small'}, month === 'Nov' ? 'November targets are set here later.' : 'October target lines.')),
     lines.length ? card('Target lines', canApprove ? 'Approve drafts to make them count.' : 'CA Lead drafts, the Head approves.', table([{k: 'metric', label: 'Metric', render: t => h('b', {style: 'font-weight:600'}, METRICS[t.metric])}, {k: 'scope', label: 'Scope', render: scopeChips},
       {k: 'value', label: 'Target', num: true, fmt: (v, t) => fmtVal(v, t)}, {k: 'note', label: 'Note', render: t => h('span', {class: 'small muted', style: 'white-space:normal;display:block;min-width:200px'}, t.note)}, {k: 'status', label: 'Status', render: t => chip(...(ST[t.status] || ST.draft))},
       {k: 'a', label: '', fixed: true, render: r => { const t = D.targets.find(x => x.id === r.id); return h('div', {style: 'display:flex;gap:4px'}, canDraft ? h('button', {class: 'btn sm', onclick: () => targetForm(t, month)}, 'Edit') : null,
@@ -1511,7 +1543,7 @@ const LEVEL_CARDS = {
       ['Salaries a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['Average deal', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
       ['Cost per new creator', l => { const n = counted(atL(D.onb.filter(o => o.month === 'Oct' && o.type === 'new'), l)).length; return n ? sum(bl(l), b => b.amount + b.salary) / n : null; }, short]])]; },
   'Weekly Report': () => [2, byLevel('This week by level', 'Joined counts complete records only.', weekLevelRows(ui.tab.wk ?? WEEKS.length - 1).map(([label, f, fmt]) => [label, f, fmt]))],
-  Settings: () => ui.tab.setup && ui.tab.setup !== 'team' ? null : [1, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pod === l).length],
+  Team: () => [2, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pod === l).length],
     ['Interns', l => D.team.filter(t => t.active && t.type === 'intern' && t.pod === l).length], ['Joined target', l => l === 'L0' ? null : lvTarget(l) || null],
     ['Target per person per day', l => { const n = D.team.filter(t => t.active && t.type !== 'ca_lead' && (!l || t.pod === l)).length, tg = lvTarget(l); return l === 'L0' || !n || !tg ? null : Math.ceil(tg / DAYS / n); }]])]
 };
@@ -1538,7 +1570,7 @@ function openRecord(id) {
     m ? sec('Status history', h('div', {class: 'timeline'}, [...m.history].reverse().map(e => h('div', {class: 'ev', style: `--c:var(${MSTAT[e.status][1]})`}, h('i'), h('div', {}, MSTAT[e.status][0], h('small', {}, nameOf(e.by))), h('time', {}, dayLabel(e.day)))))) : null,
     o && o.status === 'confirmed' ? sec('Since joining', props([['Videos', N(o.videos)], ['LIVE sessions', N(o.lives)], ['Redemption GMV', Rp(o.gmv)], ['Last post', o.lastPost == null ? 'No post yet' : `${o.lastPost} days ago`]])) : null,
     b && may('money') ? sec('Bound cash', props([['Amount', Rp(b.amount)], ['Salary', b.salary ? Rp(b.salary) : '-'], ['SOW', sowTxt(b.sow)], ['Payment', termsTxt(b)], ['Stage', BSTAGE[bStage(b)][0]], ['SPK', b.spk ? h('a', {href: b.spk, target: '_blank', rel: 'noopener'}, 'Open SPK') : 'Missing'], ['Rules', b.rules || '-']])) : null],
-  [h('span', {class: 'muted small'}, 'Sample record')]);
+  [h('span', {class: 'muted small'}, 'Simulation record')]);
 }
 
 // ================= shell =================
@@ -1558,13 +1590,16 @@ function rangeBox(fg) {
     [...RANGES.map(([k2, l]) => [k2, l]), ['custom', 'Custom']].map(([k2, l]) => h('option', {value: k2, selected: r.k === k2, disabled: k2 === 'custom'}, l))), day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To'));
 }
 function render() {
-  try { localStorage.setItem('acq-hub-sim2', JSON.stringify({login: ui.login, page: ui.page, theme: ui.theme})); } catch {}
+  try { localStorage.setItem('acq-hub-sim3', JSON.stringify({login: ui.login, page: ui.page, theme: ui.theme})); } catch {}
   document.documentElement.dataset.theme = ui.theme;
   $('#theme').textContent = ui.theme === 'dark' ? 'Light mode' : 'Dark mode';
   const pages = ROLE_PAGES[role()];
   if (!pages.includes(ui.page)) ui.page = pages[0];
-  put($('#nav'), h('div', {class: 'navgroup'}, h('div', {class: 'navgroup-title'}, 'Acquisition Hub'), pages.map(p => h('button', {class: 'navitem' + (ui.page === p ? ' on' : ''), style: '--c:var(--growth)', onclick: () => { ui.page = p; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p))));
-  put($('#crumbs'), h('span', {}, 'TTLS Ops'), '/', h('span', {}, 'Acquisition Hub'), '/', h('b', {}, ui.page));
+  const group = GROUPS.find(g => g[2].includes(ui.page));
+  put($('#nav'), GROUPS.map(([g, c, list]) => { const mine = list.filter(p => pages.includes(p)); return mine.length ? h('div', {class: 'navgroup'}, h('div', {class: 'navgroup-title'}, h('i', {style: `background:var(${c})`}), g),
+    mine.map(p => h('button', {class: 'navitem' + (ui.page === p ? ' on' : ''), style: `--c:var(${c})`, onclick: () => { ui.page = p; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p))) : null; }));
+  put($('#login'), logins().map(([e, , l]) => h('option', {value: e, selected: e === ui.login}, `${l} · ${e}`)));
+  put($('#crumbs'), h('span', {}, 'Acquisition Hub'), '/', h('span', {}, group[0]), '/', h('b', {}, ui.page));
   put($('#as'), me() ? h('span', {class: 'as-chip'}, 'Working as ', h('b', {}, nameOf(me())), role() === 'intern' ? h('button', {class: 'btn sm', onclick: whoPicker}, 'Switch') : null) : h('span', {class: 'as-chip'}, 'Signed in as ', h('b', {}, nameOrRole())));
   const fg = (label, ...kids) => h('div', {class: 'fgroup'}, h('span', {class: 'flabel'}, label), ...kids), people = D.team.filter(t => t.type !== 'ca_lead' && t.active);
   put($('#filters'), fg('Pod', seg([['', 'All'], ...PODS.map(p => [p, p])], ui.f.pod, v => { ui.f.pod = v; render(); }, 'Pod')),
@@ -1577,7 +1612,6 @@ function render() {
   if (lc) parts.splice(lc[0], 0, h('div', {class: lc[0] ? 'mt' : ''}, lc[1]));
   const y = $('main').scrollTop; put($('#page'), parts); $('main').scrollTop = y;
 }
-$('#login').append(...LOGINS.map(([e, , l]) => h('option', {value: e, selected: e === ui.login}, `${l} · ${e}`)));
 $('#login').onchange = e => { ui.login = e.target.value; ui.as = null; ui.f.who = ''; log('Signed in'); render(); };
 $('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
 $('#menu').onclick = () => document.body.classList.toggle('nav-open');
