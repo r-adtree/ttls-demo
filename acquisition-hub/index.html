@@ -122,7 +122,7 @@ h1{font-size:19px;line-height:1.2;letter-spacing:-.02em;margin:0;font-weight:650
 .mt{margin-top:12px}
 /* KPI strip: any grid of KPIs becomes one bordered bar with hairline dividers */
 .grid:has(> .kpi){display:flex;flex-wrap:wrap;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
-.grid:has(> .kpi) > .kpi{flex:1 1 150px;min-width:0}
+.grid:has(> .kpi) > .kpi{flex:1 1 128px;min-width:0}
 .grid:has(> .kpi:nth-child(8)) > .kpi{flex-basis:22%}
 .grid:has(> .kpi:nth-child(9)) > .kpi{flex-basis:18%}
 .kpi{display:flex;flex-direction:column;gap:2px;border:none;border-radius:0;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);padding:12px 14px;position:relative;container-type:inline-size}
@@ -407,6 +407,10 @@ dialog:has(.wide-dlg){width:min(820px,96vw)}
 .lvl td:first-child{color:var(--muted);white-space:nowrap}
 .lvl .l0{color:var(--faint)}
 .lvl td.tot{font-weight:650;background:var(--panel2)}
+.date-in{height:28px;font-size:12px;padding:0 6px;width:128px}
+.num-in{width:110px;text-align:right}
+.form.f3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.form.f3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -652,9 +656,9 @@ function makeData() {
     {id: 'p2', name: 'Partner B', contact: 'PIC Partner B', phone: '0811000002', email: 'partner.b@sample.id', bank: 'Mandiri', account: '111-222-3334', holder: 'CV Partner B (sample)', taxId: '00.000.000.0-000.002', start: '1 Apr 2026', end: '31 Mar 2027', fee: 15000, share: 1.5, payDay: 10, active: true},
     {id: 'p3', name: 'Partner C', contact: 'PIC Partner C', phone: '0811000003', email: 'partner.c@sample.id', bank: 'BNI', account: '222-333-4445', holder: 'Partner C (sample)', taxId: '', start: '1 Jul 2026', end: '30 Jun 2027', fee: 10000, share: 0, payDay: 10, active: true}];
   const programs = [
-    {id: 'g1', name: 'Paid per Post', industry: 'Dining SV', level: 'L2', price: 150000, scope: '30 videos a month'}, {id: 'g2', name: 'Paid per Post', industry: 'Dining SV', level: 'L3', price: 1e6, scope: '10 videos a month'},
-    {id: 'g3', name: 'Paid per Post', industry: 'Dining SV', level: 'L4', price: 2.5e6, scope: '10 videos a month'}, {id: 'g4', name: 'Paid per Post', industry: 'Accommodation', level: 'L3', price: 1e6, scope: '10 videos a month'},
-    {id: 'g5', name: 'Gas Live!', industry: 'Dining LS', level: 'L2+', price: 350000, scope: '10 valid sessions a month'}, {id: 'g6', name: 'City push', industry: 'Dining SV', level: 'L2+', price: 200000, scope: '5 videos'}];
+    {id: 'g1', name: 'Paid per Post', industry: 'Dining SV', level: 'L2', price: 150000, scope: '30 videos a month', budget: 9000000, slots: 60}, {id: 'g2', name: 'Paid per Post', industry: 'Dining SV', level: 'L3', price: 1e6, scope: '10 videos a month', budget: 10000000, slots: 10},
+    {id: 'g3', name: 'Paid per Post', industry: 'Dining SV', level: 'L4', price: 2.5e6, scope: '10 videos a month', budget: 10000000, slots: 4}, {id: 'g4', name: 'Paid per Post', industry: 'Accommodation', level: 'L3', price: 1e6, scope: '10 videos a month', budget: 5000000, slots: 5},
+    {id: 'g5', name: 'Gas Live!', industry: 'Dining LS', level: 'L2+', price: 350000, scope: '10 valid sessions a month', budget: 8750000, slots: 25}, {id: 'g6', name: 'City push', industry: 'Dining SV', level: 'L2+', price: 200000, scope: '5 videos', budget: 4000000, slots: 20}];
   const lvlPick = pod => pod === 'L1' ? (rnd() < 0.1 ? 'L0' : 'L1') : pod === 'LIVE' ? pick(['L1', 'L2', 'L2', 'L3']) : rnd() < 0.7 ? pod : pick(['L1', 'L1', 'L2']);
   const gmvBase = lvl => [15e3, 60e3, 400e3, 1.5e6, 4e6][LEVELS.indexOf(lvl)];
   // mining: anyone in CA enters a creator; status then moves along the flow
@@ -715,7 +719,8 @@ function makeData() {
     T('t6', 'joined', 40, {pod: 'L2', industry: 'Dining SV', city: 'Bandung', d0: 10, d1: 23}, 'Sample: two-week city push in Bandung'),
     T('t7', 'mined', 1200, {}, 'Sample: keep the mining list full'), T('t8', 'hot', 250, {}, 'Sample: creators ready to invite'), T('t9', 'complete', 98, {}, 'Sample: phone and industry on every record', 'active', 'percent'),
     ...Array.from({length: 10}, (_, i) => T('ti' + i, 'joined', 20, {pod: 'L1', team: 'i' + (i + 1)}, 'Sample: per intern'))];
-  return {team, roster, pastLinked, partners, programs, mining, onb, notLogged, bound, ppay: {p3: 'pending'}, salaryDay: 25, targets, checks: [], history: [], log: []};
+  return {team, roster, pastLinked, partners, programs, mining, onb, notLogged, bound, ppay: {p3: 'pending'}, settings: {salaryDay: 25, plan: 1, partnerPayDay: 10, partnerFee: 10000, partnerShare: 0, newFollow: 1, follow: {approaching: 2, hot: 1, invited: 3}},
+    budget: {other: {budget: 3e6}, salary: {budget: 6e6}, partner: {budget: 2.5e6}}, targets, checks: [], history: [], log: []};
 }
 const D = makeData();
 D.log.push({at: '19 Oct 17:40', login: 'ca.lead@sample.id', as: 'CA Lead', text: 'Set October targets (sample)'}, {at: '20 Oct 08:55', login: 'intern@sample.id', as: 'Intern 03', text: 'Mined 6 creators'});
@@ -723,14 +728,19 @@ D.log.push({at: '19 Oct 17:40', login: 'ca.lead@sample.id', as: 'CA Lead', text:
 // ---------- who is signed in ----------
 const LOGINS = [['ca.lead@sample.id', 'ca_lead', 'CA Lead'], ['admin@sample.id', 'admin', 'Admin (Data Team)'], ...[1, 2, 3, 4, 5, 6].map(i => [`ca${i}@sample.id`, 'fte_ca', `CA ${i} (FTE)`]),
   ['intern@sample.id', 'intern', 'Interns (shared login)'], ['head@sample.id', 'head', 'Head'], ['finance@sample.id', 'finance', 'Finance']];
-const PAGES_ALL = ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Partnership', 'Payment Cycle', 'Impact Calculator', 'Weekly Report', 'Setup'];
+const PAGES_ALL = ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Partnership', 'Payment Cycle', 'Finance', 'Impact Calculator', 'Weekly Report', 'Settings'];
 const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Impact Calculator'],
-  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Payment Cycle', 'Partnership', 'Bound Cash']};
-const ui = {login: 'ca.lead@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}};
+  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Payment Cycle', 'Finance', 'Partnership', 'Bound Cash']};
+const ui = {login: 'ca.lead@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}, range: {k: 'mtd', d0: 1, d1: TODAY}};
+// Date range always sits inside the current month; pages that are monthly by nature ignore it.
+const RANGES = [['today', 'Today', TODAY, TODAY], ['yday', 'Yesterday', TODAY - 1, TODAY - 1], ['week', 'This week', TODAY - 1, TODAY], ['7d', 'Last 7 days', TODAY - 6, TODAY], ['mtd', 'Month to date', 1, TODAY], ['month', 'Whole month', 1, DAYS]];
+const MONTHLY = ['Partnership', 'Payment Cycle', 'Impact Calculator', 'Weekly Report', 'Settings'];
+const inRange = d => d >= ui.range.d0 && d <= ui.range.d1;
+const rangeTxt = () => ui.range.d0 === ui.range.d1 ? dayLabel(ui.range.d0) : `${ui.range.d0} to ${ui.range.d1} Oct`;
 try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim2') || '{}'), {as: null}); } catch {}
 const role = () => (LOGINS.find(l => l[0] === ui.login) || LOGINS[0])[1];
 const may = what => ({
-  mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], bound: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
+  mine: ['ca_lead', 'fte_ca', 'intern', 'admin'], bound: ['ca_lead'], budget: ['ca_lead'], partners: ['ca_lead', 'admin'], approvePay: ['ca_lead'], approveHead: ['head'], pay: ['finance'],
   team: ['ca_lead', 'admin'], draftTargets: ['ca_lead', 'admin'], approveTargets: ['head', 'admin'], report: ['ca_lead', 'admin', 'head'], money: ['ca_lead', 'fte_ca', 'head', 'finance', 'admin']}[what] || []).includes(role());
 const me = () => role() === 'fte_ca' ? D.team.find(t => t.emails.includes(ui.login))?.id : role() === 'intern' ? ui.as : null;
 const nameOf = id => D.team.find(t => t.id === id)?.name || '-';
@@ -741,8 +751,9 @@ const log = text => { D.log.unshift({at: 'Today ' + new Date().toTimeString().sl
 // ---------- filters ----------
 const inScope = o => (!ui.f.pod || (o.pod || podOf(o.level, o.industry)) === ui.f.pod) && (!ui.f.ind || o.industry === ui.f.ind) && (!ui.f.city || (ui.f.city === 'Other' ? !CORE.includes(o.city) : o.city === ui.f.city));
 const personScope = id => me() ? id === me() : !ui.f.who || id === ui.f.who;
-const ONB = (month = 'Oct') => D.onb.filter(o => o.month === month && inScope(o) && personScope(o.team));
-const MIN = () => D.mining.filter(m => inScope(m) && personScope(m.by));
+const ONB = (month = 'Oct') => D.onb.filter(o => o.month === month && (month !== 'Oct' || inRange(o.day)) && inScope(o) && personScope(o.team));
+const ONB_MTD = () => D.onb.filter(o => o.month === 'Oct' && inScope(o) && personScope(o.team));
+const MIN = () => D.mining.filter(m => inRange(m.day) && inScope(m) && personScope(m.by));
 const counted = l => l.filter(o => o.complete && o.level !== 'L0');
 const reached = (m, st) => m.history.find(x => x.status === st); // when a mining record first reached a status
 const isActive = o => o.lastPost != null && o.lastPost <= 7;
@@ -799,6 +810,27 @@ function partnerFee(p) {
 }
 
 // ================= Overview =================
+// CA Lead (and Admin, Head) download every Overview number in one workbook, following the filters and dates picked.
+function overviewPack() {
+  const L = ONB(), c = counted(L), M = MIN(), people = D.team.filter(t => t.type !== 'ca_lead' && personScope(t.id));
+  const lines = paceRows(D.targets.filter(t => t.month === 'Oct' && t.status === 'active'));
+  sheetsDownload(`CA-overview-${ui.range.d0}-${ui.range.d1}-Oct-2026.xlsx`, [
+    ['Summary', [['Dates', rangeTxt()], ['Filters', [ui.f.pod, ui.f.ind, ui.f.city, ui.f.who && nameOf(ui.f.who)].filter(Boolean).join(', ') || 'none'], ['Mined', M.length], ['Hot leads now', M.filter(m => m.status === 'hot').length],
+      ['Invites sent', M.filter(m => reached(m, 'invited')).length], ['Joined (complete, L1 and up)', c.length], ['Joined, other (L0 or incomplete)', L.length - c.length], ['Confirmed', c.filter(o => o.status === 'confirmed').length],
+      ['Record completeness %', pct(L.filter(o => o.complete).length, L.length)], ['Linked, not logged', D.notLogged.filter(o => inScope(o) && inRange(o.day)).length]].map(([Metric, Value]) => ({Metric, Value}))],
+    ['By level', lvlRows(LEVEL_CARDS.Overview()[1].metrics)],
+    ['Pace', lines.map(l => ({Metric: METRICS[l.metric], Pod: l.pod || 'All', Industry: l.industry || 'All', City: l.city || 'All', Person: l.team ? nameOf(l.team) : 'Team', From: l.d0, To: l.d1, Target: l.value, Actual: l.actual,
+      'Achievement %': l.ach, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
+    ['By city', [...CORE, 'Other'].map(cy => { const f = o => cy === 'Other' ? !CORE.includes(o.city) : o.city === cy; return {City: cy, Mined: M.filter(f).length, Joined: c.filter(f).length, Confirmed: c.filter(o => f(o) && o.status === 'confirmed').length}; })],
+    ['By industry', INDUSTRIES.map(i => ({Industry: i, Mined: M.filter(m => m.industry === i).length, Joined: c.filter(o => o.industry === i).length, Confirmed: c.filter(o => o.industry === i && o.status === 'confirmed').length}))],
+    ['By person', people.map(t => { const m = M.filter(x => x.by === t.id), o = L.filter(x => x.team === t.id); return {Name: t.name, Type: t.type === 'intern' ? 'Intern' : 'FTE CA', Pod: t.pod, Active: t.active ? 'Yes' : 'No', Mined: m.length,
+      'Hot leads': m.filter(x => reached(x, 'hot')).length, Invites: m.filter(x => reached(x, 'invited')).length, Joined: counted(o).length, Confirmed: counted(o).filter(x => x.status === 'confirmed').length, 'Complete %': pct(o.filter(x => x.complete).length, o.length)}; })],
+    ['Onboardings', L.map(o => ({Creator: o.username, 'Brought by': nameOf(o.team), Joined: dayLabel(o.day), Level: o.level, Pod: lvOf(o), Industry: o.industry, City: o.city, Type: o.type, Partner: partnerOf(o.partner)?.name || '',
+      'Total Creator Data': o.status, Complete: o.complete ? 'Yes' : 'No', Counted: o.complete && o.level !== 'L0' ? 'Yes' : 'No', Videos: o.videos, 'LIVE sessions': o.lives, 'GMV (Rp)': o.gmv}))],
+    ['Mining', M.map(m => ({Creator: m.username, 'Entered by': nameOf(m.by), Owner: nameOf(m.owner), Entered: dayLabel(m.day), Status: MSTAT[m.status][0], Level: m.level, Industry: m.industry, City: m.city, Province: m.province,
+      'Video GMV 3m (Rp)': sum(m.gmv3, x => x.video), 'LIVE GMV 3m (Rp)': sum(m.gmv3, x => x.live), 'Follow-up': m.follow, 'Last note': lastNote(m)}))]]);
+  log(`Downloaded overview pack ${rangeTxt()}`); toast('Overview downloaded: summary, by level, pace, city, industry, person, onboardings, mining.');
+}
 // What one person should do today: late and due follow-ups, hot leads to invite, records to fix, new creators with no post.
 function myDay() {
   const id = me(), mine = D.mining.filter(m => m.owner === id && OPEN_ST.includes(m.status)), mo = D.onb.filter(o => o.month === 'Oct' && o.team === id);
@@ -812,7 +844,9 @@ PAGES['Overview'] = () => {
   const L = ONB(), c = counted(L), M = MIN(), nl = D.notLogged.filter(inScope);
   const lines = D.targets.filter(t => t.month === 'Oct' && t.status === 'active' && (!me() || !t.team || t.team === me()) && (!ui.f.pod || !t.pod || t.pod === ui.f.pod));
   const fun = FLOW.map(st => [MSTAT[st][0], M.filter(m => reached(m, st)).length]);
-  return [h('div', {class: 'grid'}, kpi('Mined', N(M.length), {sub: 'creators entered this month', c: '--base', spark: Array.from({length: TODAY}, (_, d) => M.filter(m => m.day === d + 1).length)}),
+  return [h('div', {class: 'tools'}, h('b', {}, `Overview · ${rangeTxt()}`), h('span', {class: 'muted small'}, 'Every number follows the filters and dates at the top.'), h('span', {class: 'spacer'}),
+      may('report') ? h('button', {class: 'btn sm primary', onclick: overviewPack}, 'Download all metrics (.xlsx)') : null),
+    h('div', {class: 'grid'}, kpi('Mined', N(M.length), {sub: `entered ${rangeTxt()}`, c: '--base', spark: Array.from({length: TODAY}, (_, d) => M.filter(m => m.day === d + 1).length)}),
       kpi('Hot leads', N(M.filter(m => m.status === 'hot').length), {sub: 'ready for an invite'}), kpi('Invites sent', N(M.filter(m => reached(m, 'invited')).length)),
       kpi('Joined', N(c.length), {sub: `complete, L1 and up · ${L.length - counted(L).length} other`, c: '--growth'}), kpi('Confirmed', N(c.filter(o => o.status === 'confirmed').length), {sub: 'in Total Creator Data'}),
       kpi('Record completeness', pct(L.filter(o => o.complete).length, L.length) + '%'), me() ? null : kpi('Linked, not logged', N(nl.length), {sub: 'no credit for now'})),
@@ -861,7 +895,7 @@ function mineForm(m0) {
     if (problems.length) { err.style.display = 'block'; err.textContent = 'Add ' + problems.join(', ') + '.'; return; }
     const clean = {username: u, phone: f.phone, level: f.level, industry: f.industry, city: f.city, province: f.province, postal: f.postal, agency: f.agency, partner: f.partner, gmv3: f.gmv3.map(x => ({m: x.m, video: +x.video || 0, live: +x.live || 0})), note: f.note};
     if (m) { Object.assign(m, clean); log(`Edited mining record ${u}`); toast('Saved.'); }
-    else { const by = me() || 'n0'; D.mining.unshift({id: 'm' + Date.now(), by, owner: by, follow: isoAdd(TODAY_ISO, 1), comments: [], day: TODAY, status: 'mined', history: [{day: TODAY, status: 'mined', ...actor()}], ...clean}); log(`Mined ${u}`); toast(`${u} added to the mining list under ${nameOf(by)}.`); }
+    else { const by = me() || 'n0'; D.mining.unshift({id: 'm' + Date.now(), by, owner: by, follow: D.settings.newFollow ? isoAdd(TODAY_ISO, D.settings.newFollow) : '', comments: [], day: TODAY, status: 'mined', history: [{day: TODAY, status: 'mined', ...actor()}], ...clean}); log(`Mined ${u}`); toast(`${u} added to the mining list under ${nameOf(by)}.`); }
     dlg.close(); render();
   };
   put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, m ? `Edit ${m.username}` : 'Mine a creator'), h('p', {class: 'muted small', style: 'margin:0'}, `Saved under ${m ? nameOf(m.by) : nameOrRole()}. Links fill in by themselves.`),
@@ -902,6 +936,7 @@ function setStatus(m0, st) {
   if (m.status === 'joined') return toast('Joined is final. Change the onboarding record instead.');
   if (st === 'joined') return joinForm(m);
   m.status = st; m.history.push({day: TODAY, status: st, ...actor()});
+  if (D.settings.follow[st]) m.follow = isoAdd(TODAY_ISO, D.settings.follow[st]);
   if (CLOSED_ST.includes(st)) m.follow = '';
   log(`${MSTAT[st][0]}: ${m.username}`); toast(`${m.username} is now ${MSTAT[st][0]}.`); refresh(m.id);
 }
@@ -923,7 +958,7 @@ const lastNote = m => m.comments.at(-1)?.text || '';
 
 PAGES['Mining'] = () => {
   const mine = me(), view = ui.tab.mv || 'table', who = ui.tab.mw || (mine ? 'me' : 'all'), st = ui.tab.ms || 'open', sel = ui.sel ||= new Set();
-  const base = D.mining.filter(m => inScope(m) && (who === 'me' && mine ? m.owner === mine : !ui.f.who || m.owner === ui.f.who));
+  const base = D.mining.filter(m => inRange(m.day) && inScope(m) && (who === 'me' && mine ? m.owner === mine : !ui.f.who || m.owner === ui.f.who));
   const keep = m => st === 'all' || (st === 'open' ? OPEN_ST.includes(m.status) : st === 'closed' ? CLOSED_ST.includes(m.status) : m.status === st);
   const list = base.filter(keep);
   const pipe = h('div', {class: 'pipe'}, [['open', 'All open', '--base', base.filter(m => OPEN_ST.includes(m.status))], ...Object.entries(MSTAT).map(([k2, [l, c]]) => [k2, l, c, base.filter(m => m.status === k2)])]
@@ -1001,7 +1036,7 @@ function openMining(id) {
 // ================= Daily Tracker =================
 PAGES['Daily Tracker'] = () => {
   const people = D.team.filter(t => t.type !== 'ca_lead' && t.active && personScope(t.id) && (!ui.f.pod || t.pod === ui.f.pod));
-  const m = ui.tab.dt || 'joined', days = Array.from({length: TODAY}, (_, i) => i + 1), M = D.mining.filter(inScope), L = ONB();
+  const m = ui.tab.dt || 'joined', days = Array.from({length: Math.max(0, Math.min(ui.range.d1, TODAY) - ui.range.d0 + 1)}, (_, i) => ui.range.d0 + i), M = D.mining.filter(inScope), L = ONB();
   const val = (p, d) => m === 'joined' ? counted(L.filter(o => o.team === p.id && o.day === d)).length : M.filter(x => x.by === p.id && reached(x, m)?.day === d).length;
   const max = Math.max(1, ...people.flatMap(p => days.map(d => val(p, d))));
   const grid = h('div', {class: 'tbl'}, h('table', {class: 'days'}, h('thead', {}, h('tr', {}, h('th', {}, 'Name'), days.map(d => h('th', {}, String(d))), h('th', {class: 'n'}, 'Total'))),
@@ -1009,12 +1044,12 @@ PAGES['Daily Tracker'] = () => {
       h('td', {class: 'n'}, h('b', {}, N(sum(days, d => val(p, d))))))))));
   const lists = {inc: ['Incomplete records', L.filter(o => !o.complete)], pend: ['Not confirmed yet', L.filter(o => o.status !== 'confirmed')], nl: ['Linked, not logged', me() ? [] : D.notLogged.filter(inScope)]};
   const lt = ui.tab.dl || 'inc', lrows = lists[lt][1];
-  const listTbl = lt === 'nl' ? table([{k: 'username', label: 'Creator', render: o => person(o.username, `${o.city} · ${o.industry}`)}, {k: 'level', label: 'Level'}, {k: 'day', label: 'Linked', num: true, fmt: dayLabel}, {k: 'c', label: 'Credit', fixed: true, render: () => h('span', {class: 'muted'}, 'Empty for now')}], lrows, {sortKey: 'day'})
-    : table(onbCols, lrows.map(onbRow), {sortKey: 'day'});
+  const listTbl = lt === 'nl' ? table([{k: 'username', label: 'Creator', render: o => person(o.username, `${o.city} · ${o.industry}`)}, {k: 'level', label: 'Level'}, {k: 'day', label: 'Linked', num: true, fmt: dayLabel}, {k: 'c', label: 'Credit', fixed: true, render: () => h('span', {class: 'muted'}, 'Empty for now')}], lrows, {sortKey: 'day', pageSize: 13})
+    : table(onbCols, lrows.map(onbRow), {sortKey: 'day', pageSize: 13});
   const fun = people.map(p => { const x = M.filter(y => y.by === p.id); return {name: p.name, mined: x.length, hot: x.filter(y => reached(y, 'hot')).length, inv: x.filter(y => reached(y, 'invited')).length, joined: counted(L.filter(o => o.team === p.id)).length, conv: pct(counted(L.filter(o => o.team === p.id)).length, x.length)}; });
-  return [row(card('Day by day', `${MONTH}, days 1 to ${TODAY}. Joined counts complete records only.`, grid, seg([['joined', 'Joined'], ['mined', 'Mined'], ['hot', 'Hot leads'], ['invited', 'Invites']], m, v => { ui.tab.dt = v; render(); }, 'Metric'))),
+  return [row(card(`Day by day · ${rangeTxt()}`, 'Joined counts complete records only. Change the dates at the top.', grid, seg([['joined', 'Joined'], ['mined', 'Mined'], ['hot', 'Hot leads'], ['invited', 'Invites']], m, v => { ui.tab.dt = v; render(); }, 'Metric'))),
     h('div', {class: 'grid g21 mt'}, card('Records to look at', 'Fix these the same day so the numbers stay true.', listTbl, seg(Object.entries(lists).map(([k2, [l, r]]) => [k2, `${l} (${r.length})`]), lt, v => { ui.tab.dl = v; render(); }, 'List')),
-      card('Funnel per person', 'Mined to joined this month.', table([{k: 'name', label: 'Name'}, {k: 'mined', label: 'Mined', num: true}, {k: 'hot', label: 'Hot', num: true}, {k: 'inv', label: 'Invited', num: true}, {k: 'joined', label: 'Joined', num: true}, {k: 'conv', label: 'Mined → joined', num: true, fmt: v => v + '%'}], fun, {search: false, sortKey: 'joined', pageSize: 10})))];
+      card('Funnel per person', 'Mined to joined this month.', table([{k: 'name', label: 'Name'}, {k: 'mined', label: 'Mined', num: true}, {k: 'hot', label: 'Hot', num: true}, {k: 'inv', label: 'Invited', num: true}, {k: 'joined', label: 'Joined', num: true}, {k: 'conv', label: 'Mined → joined', num: true, fmt: v => v + '%'}], fun, {search: false, sortKey: 'joined', pageSize: 20})))];
 };
 
 // ================= My Creators: what the creators each person brought have done =================
@@ -1039,7 +1074,7 @@ PAGES['My Creators'] = () => {
 // ================= Bound Cash: entered by the CA Lead, only for creators who joined new this month =================
 function boundForm(b0, onb0) {
   const b = b0 && D.bound.find(x => x.id === b0.id), dlg = $('#modal'), err = h('div', {class: 'callout', style: 'display:none'});
-  const f = b ? JSON.parse(JSON.stringify(b)) : {onb: onb0 ? onb0.id : '', program: '', amount: '', salary: '', benefit: '', sow: {v: 5, ls: 0, ps: 0}, requirement: '', rules: 'Paid after the scope of work is delivered. No payment for deleted posts.', spk: '', notes: '', terms: planTerms(1, TODAY_ISO)};
+  const f = b ? JSON.parse(JSON.stringify(b)) : {onb: onb0 ? onb0.id : '', program: '', amount: '', salary: '', benefit: '', sow: {v: 5, ls: 0, ps: 0}, requirement: '', rules: 'Paid after the scope of work is delivered. No payment for deleted posts.', spk: '', notes: '', terms: planTerms(D.settings.plan, TODAY_ISO)};
   const locked = b && b.terms.some(t => t.stage !== 'pending'), termsBox = h('div', {class: 'stack', style: 'gap:6px'}), termSum = h('div', {class: 'small'});
   const sumTerms = () => { const tp = sum(f.terms, t => +t.pct || 0); put(termSum, tp === 100 ? h('span', {class: 'muted'}, `Total 100% · ${Rp(+f.amount || 0)}`) : h('span', {style: 'color:var(--rev)'}, `Termin add up to ${tp}%, must be 100%`)); };
   const drawTerms = () => { put(termsBox, f.terms.map((t, i) => h('div', {class: 'term-row'}, h('b', {class: 'small'}, f.terms.length === 1 ? 'Full payment' : `Termin ${i + 1}`),
@@ -1078,7 +1113,7 @@ PAGES['Bound Cash'] = () => {
   const tab = ui.tab.bc || 'entries';
   const rows = D.bound.map(b => { const o = D.onb.find(x => x.id === b.onb), p = D.programs.find(x => x.id === b.program), dv = delivered(b);
     return {...b, o, p, creator: o.username, team: o.team, teamName: nameOf(o.team), above: p ? b.amount > p.price : false, sowT: sowTxt(b.sow), dv, dpct: pct(dv.done, dv.of), st: bStage(b), paid: bPaid(b),
-      next: b.terms.find(t => t.stage !== 'paid')?.due || '', _rec: o.id}; }).filter(r => personScope(r.team) && inScope(r.o));
+      next: b.terms.find(t => t.stage !== 'paid')?.due || '', _rec: o.id}; }).filter(r => inRange(r.day) && personScope(r.team) && inScope(r.o));
   const fresh = ONB().filter(o => o.type === 'new' && o.complete), without = fresh.filter(o => !D.bound.some(b => b.onb === o.id));
   const act = r => { const b = D.bound.find(x => x.id === r.id); if (!may('bound')) return null;
     return h('div', {style: 'display:flex;gap:4px'}, h('button', {class: 'btn sm', onclick: () => boundForm(b)}, 'Edit'),
@@ -1087,7 +1122,7 @@ PAGES['Bound Cash'] = () => {
     may('bound') ? h('button', {class: 'btn sm primary', onclick: () => boundForm(null)}, '+ Add bound cash') : h('span', {class: 'muted small'}, 'Only the CA Lead adds and edits bound cash.'));
   if (tab === 'programs') return [tabs, card('Programs', 'Program prices. Bound cash above the price needs the Head.', table([{k: 'name', label: 'Program'}, {k: 'industry', label: 'Industry'}, {k: 'level', label: 'Level'}, {k: 'price', label: 'Price', num: true, fmt: Rp}, {k: 'scope', label: 'Scope'},
     {k: 'n', label: 'Bound cash on it', num: true}], D.programs.map(p => ({...p, n: D.bound.filter(b => b.program === p.id).length})), {search: false}))];
-  return [tabs, h('div', {class: 'grid'}, kpi('Joined new this month', N(fresh.length), {sub: 'eligible for bound cash', c: '--growth'}), kpi('With bound cash', N(rows.length), {sub: `${without.length} without`}),
+  return [tabs, h('div', {class: 'grid'}, kpi('Joined new', N(fresh.length), {sub: `${rangeTxt()} · eligible for bound cash`, c: '--growth'}), kpi('With bound cash', N(rows.length), {sub: `${without.length} without`}),
       kpi('Bound cash total', Rp(sum(rows, r => r.amount)), {sub: `+ ${Rp(sum(rows, r => r.salary))} salary a month`}), kpi('Drafts', N(rows.filter(r => r.stage === 'draft').length), {sub: 'not submitted yet'}),
       kpi('SOW delivered', N(rows.filter(r => r.dpct >= 100).length), {sub: 'full scope posted'}), kpi('Paid so far', Rp(sum(rows, r => r.paid)), {sub: `${rows.filter(r => r.terms.length > 1).length} on termin`, c: '--growth'})),
     row(card('Bound cash', 'One line per creator: amount, salary, SOW, rules and the SPK link. Submit sends it into the payment cycle.', table([
@@ -1104,7 +1139,7 @@ PAGES['Bound Cash'] = () => {
 // ================= Partnership: partners, their creators, their fee =================
 function partnerForm(p0) {
   const p = p0 && D.partners.find(x => x.id === p0.id), dlg = $('#modal'), err = h('div', {class: 'callout', style: 'display:none'});
-  const f = p ? {...p} : {name: '', contact: '', phone: '', email: '', bank: '', account: '', holder: '', taxId: '', start: '', end: '', fee: 10000, share: 0, payDay: 10, active: true};
+  const f = p ? {...p} : {name: '', contact: '', phone: '', email: '', bank: '', account: '', holder: '', taxId: '', start: '', end: '', fee: D.settings.partnerFee, share: D.settings.partnerShare, payDay: D.settings.partnerPayDay, active: true};
   const inp = (k2, label, attrs = {}) => h('label', {}, label, h('input', {value: f[k2] ?? '', ...attrs, oninput: e => { f[k2] = attrs.type === 'number' ? +e.target.value : e.target.value; }}));
   put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, p ? `Edit ${p.name}` : 'Add a partner'), h('p', {class: 'muted small', style: 'margin:0'}, 'Partner creators stay under Adtree Digital Indonesia; the partner only brings them in.'),
     h('div', {class: 'form'}, inp('name', 'Partner name *'), inp('contact', 'Contact person'), inp('phone', 'Phone'), inp('email', 'Email', {type: 'email'}),
@@ -1156,7 +1191,7 @@ function payLines() {
       detail: `${sowTxt(b.sow)} · ${dv.done}/${dv.of} delivered`, amount: Math.round(b.amount * t.pct / 100), due: t.due, stage: head ? 'needs_head' : t.stage, ready: termReady(t, dv.frac),
       bank: 'Creator account on file', spk: b.spk, lv: lvOf(o), _rec: o.id, set: st => st === 'approve' ? approve() : (t.stage = st)}));
     if (b.salary) out.push({id: `${b.id}-s`, kind: 'Salary', payee: o.username, team: o.team, term: 'October salary', when: 'Monthly', detail: sowTxt(b.sow), amount: b.salary,
-      due: `2026-10-${String(D.salaryDay).padStart(2, '0')}`, stage: head ? 'needs_head' : b.salaryStage, ready: true, bank: 'Creator account on file', spk: b.spk, lv: lvOf(o), _rec: o.id,
+      due: `2026-10-${String(D.settings.salaryDay).padStart(2, '0')}`, stage: head ? 'needs_head' : b.salaryStage, ready: true, bank: 'Creator account on file', spk: b.spk, lv: lvOf(o), _rec: o.id,
       set: st => st === 'approve' ? approve() : (b.salaryStage = st)});
   }
   for (const p of D.partners.filter(x => x.active)) {
@@ -1254,7 +1289,7 @@ PAGES['Weekly Report'] = () => {
         {Item: 'Joined last week', Value: w.onbP.length}, {Item: 'Bound cash added (Rp)', Value: sum(w.bc, x => x.amount)}, {Item: 'Payments due in 7 days or overdue (Rp)', Value: sum(pays, r => r.amount)},
         {Item: 'Incomplete records', Value: w.issues.incomplete}, {Item: 'Not confirmed', Value: w.issues.notConf}, {Item: 'Bound cash without SPK', Value: w.issues.noSpk}]],
       ['Pace', w.lines.map(l => ({Metric: METRICS[l.metric], Pod: l.pod || 'All', Industry: l.industry || 'All', City: l.city || 'All', Target: l.value, Actual: l.actual, 'Run rate %': Math.round(l.run * 100), 'Needed per day': l.req == null ? '' : +l.req.toFixed(1), Note: l.note}))],
-      ['By level', weekLevelRows(wi).map(([label, f]) => Object.fromEntries([['Metric', label], ...[...LV, null].map(l => { const v = f(l); return [l || 'Total', v == null ? '' : typeof v === 'number' ? Math.round(v * 10) / 10 : v]; })]))],
+      ['By level', lvlRows(weekLevelRows(wi))],
       ['People', w.people.map(p => ({Name: p.name, Type: p.type, Pod: p.pod, Mined: p.mined, Joined: p.joined}))],
       ['Joined this week', w.onbW.map(o => ({Creator: o.username, 'Brought by': nameOf(o.team), Level: o.level, Industry: o.industry, City: o.city, Joined: dayLabel(o.day), Type: o.type, 'Total Creator Data': o.status}))],
       ['Bound cash', D.bound.map(x => { const o = D.onb.find(y => y.id === x.onb); return {Creator: o.username, 'Bound cash (Rp)': x.amount, 'Salary (Rp)': x.salary, SOW: sowTxt(x.sow), Payment: termsTxt(x), 'Paid (Rp)': bPaid(x), Stage: BSTAGE[bStage(x)][0], SPK: x.spk}; })],
@@ -1286,11 +1321,72 @@ PAGES['Weekly Report'] = () => {
     row(card('Summary to paste in chat', null, h('pre', {class: 'paste'}, text)))];
 };
 
-// ================= Setup: team names, targets, activity =================
-PAGES['Setup'] = () => {
-  const tabs = [...(may('team') ? [['team', 'Team']] : []), ['targets', 'Targets'], ['activity', 'Activity']];
+// ================= Finance: Acquisition Hub budget and spending only =================
+PAGES['Finance'] = () => {
+  const canEdit = may('budget'), B = D.bound.map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})), committed = b => b.stage === 'draft' ? 0 : b.amount;
+  const pays = payLines(), paidOf = kind => sum(pays.filter(r => r.kind === kind && r.stage === 'paid'), r => r.amount);
+  const budgetIn = (obj, k2, label) => canEdit ? h('input', {type: 'number', class: 'cell-in num-in', min: 0, step: k2 === 'slots' ? 1 : 500000, value: obj[k2], 'aria-label': label,
+    onchange: e => { const v = Math.max(0, +e.target.value || 0); if (v === obj[k2]) return; obj[k2] = v; log(`${label}: ${k2 === 'slots' ? N(v) : Rp(v)}`); toast('Budget saved.'); render(); }}) : h('span', {}, k2 === 'slots' ? N(obj[k2]) : Rp(obj[k2]));
+  const line = (label, sub, obj, l, paid, slots) => { const c = sum(l, committed); return {label, sub, obj, budget: obj.budget, slots, used: slots == null ? null : l.filter(b => b.stage !== 'draft').length, drafts: l.filter(b => b.stage === 'draft').length,
+    committed: c, paid, left: obj.budget - c, usedPct: pct(c, obj.budget)}; };
+  const lines = [...D.programs.map(p => { const l = B.filter(b => b.program === p.id); return line(`${p.name} · ${p.industry} ${p.level}`, `${Rp(p.price)} each · ${p.scope}`, p, l, sum(l, bPaid), p.slots); }),
+    line('Bound cash outside a program', 'Deals with no program picked', D.budget.other, B.filter(b => !b.program), sum(B.filter(b => !b.program), bPaid), null),
+    {label: 'Creator salaries', sub: `Paid on the ${D.settings.salaryDay}th`, obj: D.budget.salary, budget: D.budget.salary.budget, slots: null, used: null, drafts: 0, committed: sum(B.filter(b => b.stage !== 'draft'), b => b.salary), paid: paidOf('Salary')},
+    {label: 'Partner fees', sub: 'Fee per new creator + % of redemption GMV', obj: D.budget.partner, budget: D.budget.partner.budget, slots: null, used: null, drafts: 0, committed: sum(D.partners.filter(p => p.active), p => partnerFee(p).total), paid: paidOf('Partner fee')}]
+    .map(r => ({...r, left: r.budget - r.committed, usedPct: pct(r.committed, r.budget)}));
+  const budget = sum(lines, r => r.budget), spent = sum(lines, r => r.committed), paid = sum(lines, r => r.paid), joinedNew = counted(D.onb.filter(o => o.month === 'Oct' && o.type === 'new')).length;
+  const inR = B.filter(b => inRange(b.day)), weeks = WEEKS.map(([w, l, a, b2]) => ({label: `${w} · ${l}`, value: sum(B.filter(b => b.day >= a && b.day <= b2), committed)}));
+  const over = lines.filter(r => r.left < 0);
+  return [h('div', {class: 'callout good'}, `Acquisition Hub only: the CA budget for ${MONTH}. ${canEdit ? 'You can change budget lines and slots; every change is in the activity log.' : 'Only the CA Lead changes these lines.'}`),
+    h('div', {class: 'grid mt'}, kpi('Monthly budget', Rp(budget), {c: '--base'}), kpi('Committed', Rp(spent), {sub: `${pct(spent, budget)}% of budget · ${pct(TODAY, DAYS)}% of the month gone`, c: spent / budget > TODAY / DAYS + 0.1 ? '--rev' : '--growth'}),
+      kpi('Paid', Rp(paid), {sub: `${pct(paid, spent)}% of committed`}), kpi('Left to commit', Rp(budget - spent), {c: budget - spent < 0 ? '--rev' : '--growth'}),
+      kpi('Cost per new creator', joinedNew ? Rp(spent / joinedNew) : '-', {sub: `${N(joinedNew)} joined new, complete, L1 and up`}), kpi('Lines over budget', N(over.length), {c: over.length ? '--rev' : '--growth', sub: over.map(r => r.label.split(' · ')[0]).join(', ') || 'none'})),
+    row(card('Budget lines', 'Committed = submitted bound cash (draft does not count), salaries of approved deals and this month’s partner fees.', table([
+      {k: 'label', label: 'Line', render: r => h('div', {}, h('b', {style: 'font-weight:600'}, r.label), h('div', {class: 'muted small'}, r.sub))},
+      {k: 'budget', label: 'Budget', num: true, render: r => budgetIn(r.obj, 'budget', `Budget ${r.label}`)}, {k: 'slots', label: 'Slots', num: true, render: r => r.slots == null ? h('span', {class: 'muted'}, '-') : h('div', {}, budgetIn(r.obj, 'slots', `Slots ${r.label}`), h('div', {class: 'muted small'}, `${r.used} used${r.drafts ? ` · ${r.drafts} draft` : ''}`))},
+      {k: 'committed', label: 'Committed', num: true, fmt: Rp}, {k: 'paid', label: 'Paid', num: true, fmt: Rp}, {k: 'left', label: 'Left', num: true, render: r => h('b', {style: r.left < 0 ? 'color:var(--rev)' : ''}, Rp(r.left))},
+      {k: 'usedPct', label: 'Used', render: r => meterRow(Math.min(100, r.usedPct), r.usedPct > 100 ? '--rev' : r.usedPct > 85 ? '--ops' : '--growth', r.usedPct + '%', 80)}], lines, {search: false, pageSize: 12}))),
+    h('div', {class: 'grid g2 mt'}, card('Committed by week', 'When bound cash was added.', hbars(weeks, {fmt: Rp, c: '--base'})),
+      card('What is left per line', null, hbars(lines.map(r => ({label: r.label.split(' · ').slice(0, 2).join(' · '), value: Math.max(0, r.left)})), {fmt: Rp, c: '--growth'}))),
+    row(card(`Bound cash added · ${rangeTxt()}`, 'Follows the date range at the top.', table([{k: 'creator', label: 'Creator', render: b => person(b.creator, `${b.o.level} · ${nameOf(b.o.team)}`)}, {k: 'prog', label: 'Program'},
+      {k: 'day', label: 'Added', num: true, fmt: dayLabel}, {k: 'amount', label: 'Bound cash', num: true, fmt: Rp}, {k: 'salary', label: 'Salary', num: true, fmt: v => v ? Rp(v) : '-'}, {k: 'plan', label: 'Payment'},
+      {k: 'st', label: 'Stage', render: b => chip(...BSTAGE[b.st])}], inR.map(b => ({...b, creator: b.o.username, prog: D.programs.find(p => p.id === b.program)?.name || 'No program', plan: termsTxt(b), st: bStage(b), _rec: b.o.id})), {sortKey: 'day', pageSize: 10})))];
+};
+
+// ================= Settings: rules and defaults for the Acquisition Hub =================
+function setupRules() {
+  const can = may('team'), f = JSON.parse(JSON.stringify(D.settings)), err = h('div', {class: 'callout', style: 'display:none'});
+  const num = (path, label, hint, min, max) => h('label', {}, label, h('input', {type: 'number', min, max, value: path.split('.').reduce((a, k2) => a[k2], f), disabled: !can,
+    oninput: e => { const ks = path.split('.'); ks.slice(0, -1).reduce((a, k2) => a[k2], f)[ks.at(-1)] = +e.target.value; }}), h('span', {class: 'small muted'}, hint));
+  const save = () => {
+    const bad = [!(f.salaryDay >= 1 && f.salaryDay <= 28) && 'salary day 1 to 28', !(f.partnerPayDay >= 1 && f.partnerPayDay <= 28) && 'partner pay day 1 to 28', !(f.partnerShare >= 0 && f.partnerShare <= 100) && 'partner % 0 to 100',
+      !(f.plan >= 1 && f.plan <= 4) && 'payment plan 1 to 4 termin', Object.values(f.follow).concat(f.newFollow).some(v => !(v >= 0 && v <= 30)) && 'follow-up days 0 to 30'].filter(Boolean);
+    if (bad.length) { err.style.display = 'block'; err.textContent = 'Check ' + bad.join(', ') + '.'; return; }
+    D.settings = f; log('Changed rules and defaults'); toast('Settings saved. New records use them from now on.'); render();
+  };
+  return [card('Rules and defaults', can ? 'Used by every form and list in the Acquisition Hub. Changes apply to new records; existing ones keep their values.' : 'Only the CA Lead and Admin change these.', h('div', {class: 'stack'},
+    h('div', {class: 'section-t', style: 'margin:0'}, 'Payments'), h('div', {class: 'form f3'}, num('salaryDay', 'Salary pay day', 'Day of the month creator salaries go out', 1, 28),
+      num('plan', 'Default payment plan (termin)', '1 = pay in full', 1, 4), num('partnerPayDay', 'Partner pay day', 'Day of next month partner fees go out', 1, 28)),
+    h('div', {class: 'section-t', style: 'margin:6px 0 0'}, 'New partners'), h('div', {class: 'form f3'}, num('partnerFee', 'Fee per new creator (Rp)', 'Prefilled on a new partner', 0, 1e7), num('partnerShare', '% of redemption GMV', 'Prefilled on a new partner', 0, 100)),
+    h('div', {class: 'section-t', style: 'margin:6px 0 0'}, 'Follow-ups set by themselves'), h('div', {class: 'form f3'}, num('newFollow', 'After mining a creator (days)', '0 = no follow-up', 0, 30),
+      num('follow.approaching', 'After Approaching (days)', '', 0, 30), num('follow.hot', 'After Hot lead (days)', '', 0, 30), num('follow.invited', 'After Invite sent (days)', '', 0, 30)),
+    h('div', {class: 'section-t', style: 'margin:6px 0 0'}, 'Fixed rules'), h('div', {}, ['An onboarding counts only with phone and industry filled', 'L0 is shown, never counted', 'Renewals from Expiring invites never get bound cash',
+      'Bound cash above the program price needs the Head', 'Creators Linked in Total Creator Data but not logged get no credit for now', 'Joined is final in Mining'].map(t => h('div', {class: 'status-row'}, h('span', {class: 'grow small'}, t), chip('Locked', '--muted', false)))),
+    err, can ? h('div', {class: 'foot', style: 'padding:0'}, h('button', {class: 'btn primary', onclick: save}, 'Save settings')) : null))];
+}
+function setupUploads() {
+  const U = Array.from({length: 7}, (_, i) => { const d = TODAY - i; return {day: d, at: `${dayLabel(d)} 07:${String(10 + i * 3).padStart(2, '0')}`, rows: 4250 + d * 7, linked: 18 + (d * 7) % 23, matched: 14 + (d * 5) % 17, by: 'BI (daily upload)'}; });
+  return [h('div', {class: 'grid'}, kpi('Last upload', U[0].at, {c: '--growth', sub: 'Total Creator Data, by BI'}), kpi('Newly linked today', N(U[0].linked)), kpi('Matched to our onboardings', N(U[0].matched)),
+      kpi('Linked, not logged', N(D.notLogged.length), {sub: 'no credit for now', c: '--rev'}), kpi('Waiting for confirmation', N(D.onb.filter(o => o.month === 'Oct' && o.status === 'pending').length))),
+    row(card('Total Creator Data uploads', 'BI uploads the file every morning. Onboardings turn Confirmed when the creator shows as Linked.', table([{k: 'at', label: 'Uploaded'}, {k: 'by', label: 'By'}, {k: 'rows', label: 'Rows', num: true},
+      {k: 'linked', label: 'Newly linked', num: true}, {k: 'matched', label: 'Matched', num: true}, {k: 'nl', label: 'Not logged', num: true}], U.map(u => ({...u, nl: u.linked - u.matched})), {search: false, sortKey: 'day'})))];
+}
+
+// ================= Settings: team names, targets, rules, uploads, activity =================
+PAGES['Settings'] = () => {
+  const tabs = [...(may('team') ? [['team', 'Team']] : []), ['targets', 'Targets'], ['rules', 'Rules and defaults'], ['uploads', 'Data uploads'], ['activity', 'Activity']];
   const tab = tabs.some(t => t[0] === ui.tab.setup) ? ui.tab.setup : tabs[0][0];
-  return [h('div', {class: 'tools'}, seg(tabs, tab, v => { ui.tab.setup = v; render(); }, 'Setup section')), ...({team: setupTeam, targets: setupTargets, activity: setupActivity}[tab])()];
+  return [h('div', {class: 'tools'}, seg(tabs, tab, v => { ui.tab.setup = v; render(); }, 'Settings section')), ...({team: setupTeam, targets: setupTargets, rules: setupRules, uploads: setupUploads, activity: setupActivity}[tab])()];
 };
 function nameForm(t) {
   const m = $('#modal'), f = t ? {...t, emails: t.emails.join(', '), cities: [...t.cities], industries: [...t.industries]} : {name: '', type: 'intern', emails: 'intern@sample.id', pod: 'L1', cities: [], industries: [], notes: ''};
@@ -1368,20 +1464,25 @@ const runChip = (run, target) => !target ? h('span', {class: 'muted'}, '-') : ch
 // metrics: [label, l => value, fmt]; l is a level, or null for the total column
 function byLevel(title, desc, metrics) {
   const cols = [...LV.filter(l => !ui.f.pod || l === ui.f.pod), null];
-  return card(title || 'By level', desc, h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, ''), cols.map(l => h('th', {class: 'n' + (l === 'L0' ? ' l0' : '')}, l || 'Total')))),
-    h('tbody', {}, metrics.map(([label, f, fmt = N]) => h('tr', {}, h('td', {}, label), cols.map(l => { const v = f(l); return h('td', {class: 'n' + (l === 'L0' ? ' l0' : '') + (l ? '' : ' tot')}, v == null ? '-' : fmt(v)); })))))));
+  return Object.assign(card(title || 'By level', desc, h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, ''), cols.map(l => h('th', {class: 'n' + (l === 'L0' ? ' l0' : '')}, l || 'Total')))),
+    h('tbody', {}, metrics.map(([label, f, fmt = N]) => h('tr', {}, h('td', {}, label), cols.map(l => { const v = f(l); return h('td', {class: 'n' + (l === 'L0' ? ' l0' : '') + (l ? '' : ' tot')}, v == null ? '-' : fmt(v)); }))))))), {metrics}); // metrics kept for downloads
 }
 const pctFmt = v => v + '%';
+// The same level metrics as spreadsheet rows (run-rate objects become a percent).
+const lvlRows = metrics => metrics.map(([label, f]) => Object.fromEntries([['Metric', label], ...[...LV, null].map(l => { const v = f(l);
+  return [l || 'Total', v == null ? '' : typeof v === 'object' ? Math.round(v.run * 100) + '%' : typeof v === 'number' ? Math.round(v * 10) / 10 : v]; })]));
 const LEVEL_CARDS = {
-  Overview: () => { const L = ONB(), M = MIN();
-    return [1, byLevel(`Onboarding by level · day ${TODAY} of ${DAYS}`, 'Joined counts complete records only. L0 is shown but never counted.', [
-      ['Target', l => l === 'L0' ? null : lvTarget(l) || null], ['Joined', l => counted(atL(L, l)).length || (l === 'L0' ? atL(L, l).filter(o => o.complete).length : 0)],
-      ['Achievement', l => l === 'L0' || !lvTarget(l) ? null : pct(counted(atL(L, l)).length, lvTarget(l)), pctFmt],
-      ['Run rate', l => l === 'L0' || !lvTarget(l) ? null : levelPace(counted(atL(L, l)).length, lvTarget(l)), v => runChip(v.run, 1)],
-      ['Needed / day', l => l === 'L0' || !lvTarget(l) ? null : levelPace(counted(atL(L, l)).length, lvTarget(l)).req, v => v.toFixed(1)],
+  Overview: () => { const L = ONB(), M = MIN(), LM = ONB_MTD();
+    const jm = l => counted(atL(LM, l)).length;
+    return [2, byLevel(`Onboarding by level · ${rangeTxt()}`, `Joined, confirmed, mined and invites follow the dates picked. Target, achievement and run rate are month to date (day ${TODAY} of ${DAYS}).`, [
+      ['Joined · dates picked', l => counted(atL(L, l)).length || (l === 'L0' ? atL(L, l).filter(o => o.complete).length : 0)], ['Target · month', l => l === 'L0' ? null : lvTarget(l) || null],
+      ['Joined · month to date', l => l === 'L0' ? atL(LM, l).filter(o => o.complete).length : jm(l)],
+      ['Achievement', l => l === 'L0' || !lvTarget(l) ? null : pct(jm(l), lvTarget(l)), pctFmt],
+      ['Run rate', l => l === 'L0' || !lvTarget(l) ? null : levelPace(jm(l), lvTarget(l)), v => runChip(v.run, 1)],
+      ['Needed / day', l => l === 'L0' || !lvTarget(l) ? null : levelPace(jm(l), lvTarget(l)).req, v => v.toFixed(1)],
       ['Confirmed', l => atL(L, l).filter(o => o.status === 'confirmed').length], ['Mined', l => atL(M, l).length], ['Hot leads now', l => atL(M, l).filter(m => m.status === 'hot').length],
       ['Invites sent', l => atL(M, l).filter(m => reached(m, 'invited')).length], ['Mined → joined', l => pct(atL(M, l).filter(m => m.status === 'joined').length, atL(M, l).length), pctFmt]])]; },
-  Mining: () => { const M = D.mining.filter(m => inScope(m) && (ui.tab.mw === 'me' && me() ? m.owner === me() : !ui.f.who || m.owner === ui.f.who));
+  Mining: () => { const M = D.mining.filter(m => inRange(m.day) && inScope(m) && (ui.tab.mw === 'me' && me() ? m.owner === me() : !ui.f.who || m.owner === ui.f.who));
     return [1, byLevel('Pipeline by level', 'How many creators sit in each status, per level.', [...Object.entries(MSTAT).map(([k2, [l]]) => [l, lv => atL(M, lv).filter(m => m.status === k2).length]),
       ['GMV, 3 months', l => sum(atL(M, l), g3), short], ['Mined → joined', l => pct(atL(M, l).filter(m => m.status === 'joined').length, atL(M, l).length), pctFmt]])]; },
   'Daily Tracker': () => { const L = ONB();
@@ -1405,8 +1506,12 @@ const LEVEL_CARDS = {
     return [1, byLevel('Creator payments by level', 'Bound cash and salaries. Partner fees are per partner, not per level.', [['Still to pay', l => sum(pl(l, r => r.stage !== 'paid'), r => r.amount), short],
       ['Due in 7 days', l => sum(pl(l, r => r.stage !== 'paid' && r.due <= isoAdd(TODAY_ISO, 7)), r => r.amount), short], ['Overdue', l => sum(pl(l, overdue), r => r.amount), short],
       ['Paid', l => sum(pl(l, r => r.stage === 'paid'), r => r.amount), short], ['Payments', l => pl(l, () => true).length]])]; },
+  Finance: () => { const B = D.bound.filter(b => b.stage !== 'draft').map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})), bl = l => B.filter(b => !l || lvOf(b.o) === l);
+    return [2, byLevel('Spending by level', 'Submitted bound cash and salaries. Partner fees are per partner.', [['Creators with bound cash', l => bl(l).length], ['Bound cash committed', l => sum(bl(l), b => b.amount), short],
+      ['Salaries a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['Average deal', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
+      ['Cost per new creator', l => { const n = counted(atL(D.onb.filter(o => o.month === 'Oct' && o.type === 'new'), l)).length; return n ? sum(bl(l), b => b.amount + b.salary) / n : null; }, short]])]; },
   'Weekly Report': () => [2, byLevel('This week by level', 'Joined counts complete records only.', weekLevelRows(ui.tab.wk ?? WEEKS.length - 1).map(([label, f, fmt]) => [label, f, fmt]))],
-  Setup: () => ui.tab.setup && ui.tab.setup !== 'team' ? null : [1, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pod === l).length],
+  Settings: () => ui.tab.setup && ui.tab.setup !== 'team' ? null : [1, byLevel('Team by pod', 'Who works each level this month.', [['FTE CAs', l => D.team.filter(t => t.active && t.type === 'fte_ca' && t.pod === l).length],
     ['Interns', l => D.team.filter(t => t.active && t.type === 'intern' && t.pod === l).length], ['Joined target', l => l === 'L0' ? null : lvTarget(l) || null],
     ['Target per person per day', l => { const n = D.team.filter(t => t.active && t.type !== 'ca_lead' && (!l || t.pod === l)).length, tg = lvTarget(l); return l === 'L0' || !n || !tg ? null : Math.ceil(tg / DAYS / n); }]])]
 };
@@ -1443,6 +1548,15 @@ function whoPicker() {
     h('div', {class: 'who-list'}, names.map(t => h('button', {class: 'who-btn', onclick: () => { ui.as = t.id; log('Started working'); dlg.close(); render(); }}, avatar(t.name), h('span', {}, t.name, h('small', {class: 'muted', style: 'display:block'}, `${t.pod} pod`)))))));
   dlg.showModal();
 }
+function rangeBox(fg) {
+  const r = ui.range, iso = d => `2026-10-${String(d).padStart(2, '0')}`;
+  const day = (k2, label) => h('input', {type: 'date', class: 'date-in', min: iso(1), max: iso(DAYS), value: iso(r[k2]), 'aria-label': label, onchange: e => {
+    const v = e.target.value;
+    if (!v.startsWith('2026-10-')) { toast(`Pick a day in ${MONTH}.`); return render(); }
+    const n = {...r, k: 'custom', [k2]: +v.slice(8)}; if (n.d0 > n.d1) [n.d0, n.d1] = [n.d1, n.d0]; ui.range = n; render(); }});
+  return fg('Dates', h('select', {'aria-label': 'Date range', onchange: e => { const p = RANGES.find(x => x[0] === e.target.value); if (p) { ui.range = {k: p[0], d0: p[2], d1: p[3]}; render(); } }},
+    [...RANGES.map(([k2, l]) => [k2, l]), ['custom', 'Custom']].map(([k2, l]) => h('option', {value: k2, selected: r.k === k2, disabled: k2 === 'custom'}, l))), day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To'));
+}
 function render() {
   try { localStorage.setItem('acq-hub-sim2', JSON.stringify({login: ui.login, page: ui.page, theme: ui.theme})); } catch {}
   document.documentElement.dataset.theme = ui.theme;
@@ -1457,7 +1571,7 @@ function render() {
     fg('Industry', h('select', {'aria-label': 'Industry', onchange: e => { ui.f.ind = e.target.value; render(); }}, [['', 'All industries'], ...INDUSTRIES.map(i => [i, i])].map(([v, l]) => h('option', {value: v, selected: ui.f.ind === v}, l)))),
     fg('City', h('select', {'aria-label': 'City', onchange: e => { ui.f.city = e.target.value; render(); }}, [['', 'All cities'], ...CORE.map(c => [c, c]), ['Other', 'Other regions']].map(([v, l]) => h('option', {value: v, selected: ui.f.city === v}, l)))),
     me() ? null : fg('Person', h('select', {'aria-label': 'Person', onchange: e => { ui.f.who = e.target.value; render(); }}, [['', 'Everyone'], ...people.map(p => [p.id, p.name])].map(([v, l]) => h('option', {value: v, selected: ui.f.who === v}, l)))),
-    h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `${MONTH} · day ${TODAY} of ${DAYS} · sample data`));
+    h('span', {class: 'spacer'}), MONTHLY.includes(ui.page) ? h('span', {class: 'muted small'}, `${MONTH} · monthly page, the date range does not apply`) : rangeBox(fg));
   if (role() === 'intern' && !ui.as) { put($('#page'), card(null, null, h('div', {class: 'empty'}, 'Pick your name to start.', h('div', {style: 'margin-top:10px'}, h('button', {class: 'btn primary', onclick: whoPicker}, 'Who is working?'))))); if (!$('#modal').open) whoPicker(); return; }
   const parts = PAGES[ui.page](), lc = LEVEL_CARDS[ui.page]?.();
   if (lc) parts.splice(lc[0], 0, h('div', {class: lc[0] ? 'mt' : ''}, lc[1]));
