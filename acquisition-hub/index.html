@@ -417,6 +417,24 @@ dialog:has(.wide-dlg){width:min(820px,96vw)}
 .fee-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .fee-grid label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);font-weight:600}
 @media (max-width:640px){.fee-grid{grid-template-columns:repeat(3,1fr)}}
+a{color:var(--base)}
+a.btn{color:inherit}
+.pick-inline{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pick-inline .pick{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border-radius:0;border-top:1px solid var(--line);padding:7px 10px}
+.pick-inline .pick:first-child{border-top:none}
+.pick-chosen{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--growth) 10%,transparent);border:1px solid color-mix(in srgb,var(--growth) 40%,transparent)}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.flow>div{display:grid;grid-template-columns:24px 1fr;gap:0 8px;padding:9px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.flow i{grid-row:span 2;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--base)}
+.flow b{font-size:12.5px}
+.flow span{font-size:11.5px;color:var(--muted)}
+.partner-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.partner-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);text-align:left}
+.partner-tabs button span{font-size:11.5px;color:var(--muted)}
+.partner-tabs button.on{border-color:var(--base);background:color-mix(in srgb,var(--base) 10%,var(--panel))}
+.partner-tabs button.add{justify-content:center;color:var(--base);font-weight:600;border-style:dashed}
+.status-row.total{border-top:1px solid var(--line);padding-top:6px}
+@media (max-width:760px){.flow{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -744,11 +762,11 @@ D.log.push({at: '20 Oct 08:55', login: 'intern.ca@sample.id', as: D.team.find(t 
 const logins = () => [[D.team[0].emails[0], 'ca_lead', `${D.team[0].name} · CA Lead`], ['yusuf.hidayat@sample.id', 'admin', 'Yusuf Hidayat · Admin, Data Team'],
   ...D.team.filter(t => t.type === 'fte_ca' && t.active).map(t => [t.emails[0], 'fte_ca', `${t.name} · FTE CA`]), [D.settings.internEmail, 'intern', 'Interns · shared login'],
   ['maya.anggraini@sample.id', 'head', 'Maya Anggraini · Head'], ['teguh.prasetyo@sample.id', 'finance', 'Teguh Prasetyo · Finance']];
-const GROUPS = [['Daily work', '--growth', ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Impact Calculator', 'Weekly Report']], ['Payments', '--rev', ['Bound Cash', 'Partnership', 'Payment Cycle', 'Finance']],
+const GROUPS = [['Daily work', '--growth', ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Impact Calculator', 'Weekly Report']], ['Payments', '--rev', ['Bound Cash & Salary', 'Partnership', 'Payment Cycle', 'Finance']],
   ['Settings', '--base', ['Team', 'Targets', 'Rules and defaults', 'Data uploads', 'Activity']]];
 const PAGES_ALL = GROUPS.flatMap(g => g[2]);
-const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash', 'Impact Calculator'],
-  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Bound Cash', 'Partnership', 'Payment Cycle', 'Finance']};
+const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash & Salary', 'Impact Calculator'],
+  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Bound Cash & Salary', 'Partnership', 'Payment Cycle', 'Finance']};
 const ui = {login: 'rina.kartika@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}, range: {k: 'mtd', d0: 1, d1: TODAY}};
 // Date range always sits inside the current month; pages that are monthly by nature ignore it.
 const RANGES = [['today', 'Today', TODAY, TODAY], ['yday', 'Yesterday', TODAY - 1, TODAY - 1], ['week', 'This week', TODAY - 1, TODAY], ['7d', 'Last 7 days', TODAY - 6, TODAY], ['mtd', 'Month to date', 1, TODAY], ['month', 'Whole month', 1, DAYS]];
@@ -1085,31 +1103,39 @@ function boundForm(b0, onb0) {
   const planSel = h('select', {disabled: locked, 'aria-label': 'Payment plan', onchange: e => { f.terms = planTerms(+e.target.value, TODAY_ISO); drawTerms(); }},
     [[1, 'Pay in full'], [2, '2 termin (installments)'], [3, '3 termin'], [4, '4 termin']].map(([v, l]) => h('option', {value: v, selected: f.terms.length === v}, l)));
   const eligible = D.onb.filter(o => o.month === 'Oct' && o.type === 'new' && o.complete && (!D.bound.some(x => x.onb === o.id) || (b && b.onb === o.id)));
-  const search = h('input', {placeholder: 'Search a creator who joined new this month', 'aria-label': 'Search creator'}), results = h('div', {class: 'pick-list'}), chosen = h('div', {});
-  const showChosen = () => { const o = D.onb.find(x => x.id === f.onb); put(chosen, o ? h('div', {class: 'status-row'}, person(o.username, `${o.level} · ${o.industry} · ${o.city} · brought by ${nameOf(o.team)} · joined ${dayLabel(o.day)}`), h('span', {class: 'grow'}), badge(o.status)) : h('span', {class: 'muted small'}, 'No creator picked yet.')); };
-  const doSearch = () => { const q = search.value.trim().toLowerCase(); put(results, q.length < 2 ? null : eligible.filter(o => o.username.includes(q)).slice(0, 6).map(o => h('button', {class: 'pick', onclick: () => { f.onb = o.id; search.value = ''; put(results); showChosen(); }}, o.username, h('small', {class: 'muted'}, ` ${o.level} · ${nameOf(o.team)}`)))); };
-  search.oninput = doSearch;
+  // Creator picker: always shows the eligible list (highest level first); typing narrows it by handle, level, city or who brought them.
+  const search = h('input', {type: 'search', placeholder: 'Type a handle, level, city or CA name', 'aria-label': 'Search creator'}), list = h('div', {class: 'stack', style: 'gap:6px'}), chosenBox = h('div', {}), picker = h('div', {class: 'stack', style: 'gap:6px'}, chosenBox, search, list);
+  eligible.sort((a, b2) => LEVELS.indexOf(b2.level) - LEVELS.indexOf(a.level) || b2.day - a.day);
+  const showChosen = () => { const o = D.onb.find(x => x.id === f.onb);
+    search.hidden = list.hidden = !!o; put(chosenBox);
+    if (o) return put(chosenBox, h('div', {class: 'pick-chosen'}, person(o.username, `${o.level} · ${o.industry} · ${o.city} · brought by ${nameOf(o.team)} · joined ${dayLabel(o.day)}`), h('span', {class: 'grow'}), badge(o.status),
+      b ? null : h('button', {class: 'btn sm', onclick: () => { f.onb = ''; showChosen(); search.focus(); }}, 'Change')));
+    const q = search.value.trim().toLowerCase(), hit = eligible.filter(o => { const hay = [o.username, o.level, o.city, o.industry, nameOf(o.team)].join(' ').toLowerCase(); return q.split(/\s+/).every(w => hay.includes(w)); });
+    put(list, h('div', {class: 'pick-inline'}, hit.length ? hit.slice(0, 6).map(o => h('button', {class: 'pick', type: 'button', onclick: () => { f.onb = o.id; showChosen(); }},
+      h('b', {}, o.username), h('span', {class: 'muted small'}, `${o.level} · ${o.industry} · ${o.city} · ${nameOf(o.team)} · ${dayLabel(o.day)}`))) : h('div', {class: 'muted small', style: 'padding:8px'}, 'No creator who joined new this month matches.')),
+      hit.length > 6 ? h('span', {class: 'muted small'}, `${hit.length - 6} more: type to narrow down.`) : null); };
+  search.oninput = showChosen;
   const num = (path, label, step = 50000) => h('label', {}, label, h('input', {type: 'number', min: 0, step, value: path.split('.').reduce((a, k2) => a[k2], f), oninput: e => { const ks = path.split('.'); ks.slice(0, -1).reduce((a, k2) => a[k2], f)[ks.at(-1)] = e.target.value; sumTerms(); }}));
   const txt = (k2, label, ph = '') => h('label', {class: 'wide'}, label, h('input', {value: f[k2], placeholder: ph, oninput: e => { f[k2] = e.target.value; }}));
-  put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, b ? 'Edit bound cash' : 'Add bound cash'), h('p', {class: 'muted small', style: 'margin:0'}, 'Only creators who joined new this month. Renewals from Expiring invites never get bound cash.'),
-    b ? null : h('div', {class: 'field'}, 'Creator', search, results), chosen,
+  put(dlg, h('div', {class: 'dlg wide-dlg'}, h('h2', {}, b ? 'Edit bound cash and salary' : 'Add bound cash or salary'), h('p', {class: 'muted small', style: 'margin:0'}, 'Only creators who joined new this month. Renewals from Expiring invites never get bound cash.'),
+    h('div', {class: 'field'}, 'Creator *', picker),
     h('div', {class: 'form'}, h('label', {}, 'Program', h('select', {onchange: e => { f.program = e.target.value; }}, h('option', {value: ''}, 'None'), D.programs.map(p => h('option', {value: p.id, selected: f.program === p.id}, `${p.name} · ${p.industry} ${p.level} · ${Rp(p.price)}`)))),
-      num('amount', 'Bound cash (Rp) *'), num('salary', 'Salary per month (Rp), if any'), h('label', {}, 'Additional benefit', h('input', {value: f.benefit, oninput: e => { f.benefit = e.target.value; }})),
+      num('amount', 'Bound cash, one time (Rp)'), num('salary', 'Salary per month (Rp)'), h('label', {}, 'Additional benefit', h('input', {value: f.benefit, oninput: e => { f.benefit = e.target.value; }})),
       num('sow.v', 'SOW: videos', 1), num('sow.ls', 'SOW: LIVE sessions', 1), num('sow.ps', 'SOW: photo slides', 1),
-      txt('requirement', 'Requirement', 'For example: post inside the campaign period, tag the merchant'), txt('rules', 'Rules'), txt('spk', 'SPK link (contract)', 'https://…'), txt('notes', 'Notes')),
+      txt('requirement', 'Requirement', 'For example: post inside the campaign period, tag the merchant'), txt('rules', 'Rules'), txt('spk', 'SPK link (contract)', 'docs.google.com/… (https is added for you)'), txt('notes', 'Notes')),
     h('div', {class: 'field'}, h('div', {class: 'status-row'}, h('span', {class: 'grow'}, 'Payment plan and pay dates *'), planSel), termsBox,
       h('span', {class: 'small muted'}, locked ? 'Payments already started: the plan is locked, open pay dates can still move.' : 'Finance pays on these dates once the condition is met. A salary is paid on the 25th each month.')), err,
     h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => dlg.close()}, 'Cancel'), h('button', {class: 'btn primary', onclick: () => {
-      const probs = [!f.onb && 'pick a creator', !(+f.amount > 0) && 'a bound cash amount', !(+f.sow.v + +f.sow.ls + +f.sow.ps > 0) && 'a scope of work', f.spk && !/^https?:\/\/\S+$/.test(f.spk) && 'an SPK link that starts with https://',
+      const probs = [!f.onb && 'pick a creator', !(+f.amount > 0 || +f.salary > 0) && 'a bound cash amount or a salary', !(+f.sow.v + +f.sow.ls + +f.sow.ps > 0) && 'a scope of work', f.spk && !/^\S+\.\S+$/.test(f.spk.replace(/^https?:\/\//, '')) && 'a valid SPK link',
         sum(f.terms, t => +t.pct || 0) !== 100 && 'termin that add up to 100%', f.terms.some(t => !/^\d{4}-\d\d-\d\d$/.test(t.due)) && 'a pay date for every termin'].filter(Boolean);
       if (probs.length) { err.style.display = 'block'; err.textContent = 'Add ' + probs.join(', ') + '.'; return; }
-      const clean = {onb: f.onb, program: f.program, amount: +f.amount, salary: +f.salary || 0, benefit: f.benefit, sow: {v: +f.sow.v || 0, ls: +f.sow.ls || 0, ps: +f.sow.ps || 0}, requirement: f.requirement, rules: f.rules, spk: f.spk, notes: f.notes,
+      const clean = {onb: f.onb, program: f.program, amount: +f.amount, salary: +f.salary || 0, benefit: f.benefit, sow: {v: +f.sow.v || 0, ls: +f.sow.ls || 0, ps: +f.sow.ps || 0}, requirement: f.requirement, rules: f.rules, spk: f.spk ? (/^https?:\/\//.test(f.spk) ? f.spk : 'https://' + f.spk) : '', notes: f.notes,
         terms: f.terms.map(t => ({pct: +t.pct, due: t.due, when: t.when, stage: t.stage || 'pending'}))};
       if (b) { Object.assign(b, clean); log(`Edited bound cash ${D.onb.find(o => o.id === b.onb).username}`); } else { D.bound.unshift({id: 'b' + Date.now(), stage: 'draft', salaryStage: 'pending', day: TODAY, ...clean}); log(`Added bound cash ${D.onb.find(o => o.id === f.onb).username} ${Rp(clean.amount)}`); }
       toast('Bound cash saved as a draft. Submit it to send it into the payment cycle.'); dlg.close(); render(); }}, 'Save'))));
   showChosen(); drawTerms(); dlg.showModal();
 }
-PAGES['Bound Cash'] = () => {
+PAGES['Bound Cash & Salary'] = () => {
   const tab = ui.tab.bc || 'entries';
   const rows = D.bound.map(b => { const o = D.onb.find(x => x.id === b.onb), p = D.programs.find(x => x.id === b.program), dv = delivered(b);
     return {...b, o, p, creator: o.username, team: o.team, teamName: nameOf(o.team), above: p ? b.amount > p.price : false, sowT: sowTxt(b.sow), dv, dpct: pct(dv.done, dv.of), st: bStage(b), paid: bPaid(b),
@@ -1154,31 +1180,36 @@ function partnerForm(p0) {
       dlg.close(); render(); }}, 'Save'))));
   dlg.showModal();
 }
+// Partner flow: partner sends creators, a CA mines them with the partner picked, the BI upload joins them, the fee goes to the payment cycle.
 PAGES['Partnership'] = () => {
-  const sel = D.partners.find(p => p.id === ui.tab.pp) || D.partners[0], fee = partnerFee(sel), canEdit = may('partners');
+  const canEdit = may('partners'), sel = D.partners.find(p => p.id === ui.tab.pp) || D.partners[0], fee = partnerFee(sel);
   const feeTxt = p => LV.filter(l => p.fees[l]).map(l => `${l} ${short(p.fees[l])}`).join(' · ') || 'No fee';
-  const list = D.partners.map(p => { const x = partnerFee(p); return {...p, feeTxt: feeTxt(p), n: x.all.length, fresh: x.fresh.length, gmv: x.gmv, total: x.total}; });
-  const addBox = h('div', {class: 'tools', style: 'margin:0'});
-  if (canEdit) { const q = h('input', {placeholder: 'Add a creator by username', 'aria-label': 'Add creator to partner', style: 'min-width:240px'}), res = h('div', {class: 'pick-list'});
-    q.oninput = () => { const s = q.value.trim().toLowerCase(); put(res, s.length < 2 ? null : D.onb.filter(o => !o.partner && o.username.includes(s)).slice(0, 6).map(o => h('button', {class: 'pick', onclick: () => { D.onb.find(x => x.id === o.id).partner = sel.id; log(`Added ${o.username} to ${sel.name}`); toast(`${o.username} now counts for ${sel.name}.`); render(); }}, o.username, h('small', {class: 'muted'}, ` ${o.level} · joined ${o.day} ${o.month}`)))); };
-    put(addBox, h('div', {class: 'field', style: 'position:relative'}, q, res)); }
-  return [h('div', {class: 'grid'}, kpi('Partners', N(D.partners.filter(p => p.active).length), {c: '--base'}), kpi('Creators via partners', N(sum(list, p => p.n))), kpi('New this month', N(sum(list, p => p.fresh))),
-      kpi('Their redemption GMV', Rp(sum(list, p => p.gmv)), {sub: 'this month'}), kpi('Partner fees this month', Rp(sum(list, p => p.total)), {sub: 'goes to the payment cycle', c: '--rev'})),
-    row(card('Partners', 'Click a partner to see its creators and fee.', table([{k: 'name', label: 'Partner', render: p => h('button', {class: 'link', style: 'font-size:13px;font-weight:600', onclick: () => { ui.tab.pp = p.id; render(); }}, p.name)},
-      {k: 'n', label: 'Creators', num: true}, {k: 'fresh', label: 'New this month', num: true}, {k: 'feeTxt', label: 'Fee / new creator', render: p => h('span', {class: 'small'}, p.feeTxt)}, {k: 'share', label: '% of GMV', num: true, fmt: v => v + '%'},
-      {k: 'gmv', label: 'Their GMV', num: true, fmt: Rp}, {k: 'total', label: 'Fee this month', num: true, fmt: v => h('b', {}, Rp(v))}, {k: 'bank', label: 'Bank', render: p => h('span', {class: 'small'}, `${p.bank} · ${p.account}`)},
-      {k: 'e', label: '', fixed: true, render: p => canEdit ? h('button', {class: 'btn sm', onclick: () => partnerForm(p)}, 'Edit') : null}], list, {search: false, sortKey: 'total'}),
-      canEdit ? h('button', {class: 'btn sm primary', onclick: () => partnerForm(null)}, '+ Add partner') : null)),
-    h('div', {class: 'grid g12 mt'}, card(sel.name, `${sel.contact || 'No contact'} · contract ${fmtDY(sel.start)} to ${fmtDY(sel.end)}`, h('div', {class: 'stack'},
-        props([['Bank', sel.bank], ['Account', sel.account], ['Holder', sel.holder], ['Tax ID', sel.taxId || '-'], ['% of GMV', sel.share + '%'], ['Pay day', `${sel.payDay} of next month`]]),
-        h('div', {class: 'section-t', style: 'margin:4px 0 0'}, 'This month’s fee'),
-        h('div', {class: 'stack', style: 'gap:6px;font-size:12.5px'}, LV.filter(l => sel.fees[l] || fee.fresh.some(o => lvOf(o) === l)).map(l => { const n = fee.fresh.filter(o => lvOf(o) === l).length; return h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${l}: ${n} new × ${Rp(sel.fees[l] || 0)}`), h('b', {}, Rp(n * (sel.fees[l] || 0)))); }),
-          h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${sel.share}% of ${Rp(fee.gmv)} redemption GMV`), h('b', {}, Rp(fee.feeShare))), h('div', {class: 'status-row'}, h('span', {class: 'grow'}, h('b', {}, 'Total')), h('b', {}, Rp(fee.total)))))),
-      card(`Creators from ${sel.name}`, 'Under Adtree Digital Indonesia, brought in by this partner. New joiners earn the per-creator fee; everyone’s GMV counts for the percentage.', table([
-        {k: 'username', label: 'Creator', render: o => person(o.username, `${o.level} · ${o.industry}`)}, {k: 'joined', label: 'Joined'}, {k: 'type', label: 'Type', render: o => o.type === 'new' ? chip('New', '--growth', false) : chip('Renewal', '--muted', false)},
-        {k: 'videos', label: 'Videos', num: true}, {k: 'lives', label: 'LIVE', num: true}, {k: 'gmv', label: 'GMV', num: true, fmt: Rp},
-        {k: 'x', label: '', fixed: true, render: o => canEdit ? h('button', {class: 'btn sm', onclick: () => { D.onb.find(y => y.id === o.id).partner = ''; log(`Removed ${o.username} from ${sel.name}`); render(); }}, 'Remove') : null}],
-        fee.all.map(o => ({...onbRow(o), joined: `${o.day} ${o.month}`})), {sortKey: 'gmv', pageSize: 8, tools: addBox})))];
+  const pipe = D.mining.filter(m => m.partner === sel.id && m.status !== 'joined'), payDate = `2026-11-${String(sel.payDay).padStart(2, '0')}`;
+  const steps = [['1', 'Partner sends creators', 'by chat or a list'], ['2', 'CA mines them', 'with “Brought by a partner” picked'], ['3', 'They join', 'when the BI upload shows them Linked'], ['4', 'Partner gets paid', `fee by level + % of GMV, on the ${sel.payDay}th`]];
+  const tabs = h('div', {class: 'partner-tabs'}, D.partners.filter(p => p.active || p.id === sel.id).map(p => { const x = partnerFee(p);
+    return h('button', {class: p.id === sel.id ? 'on' : '', onclick: () => { ui.tab.pp = p.id; render(); }}, h('b', {}, p.name), h('span', {}, `${x.all.length} creators · ${Rp(x.total)} this month`)); }),
+    canEdit ? h('button', {class: 'add', onclick: () => partnerForm(null)}, '+ Add partner') : null);
+  const addBox = canEdit ? (() => { const q = h('input', {type: 'search', placeholder: 'Link a creator who already joined', 'aria-label': 'Link a creator to this partner', style: 'min-width:240px'}), res = h('div', {class: 'pick-inline', style: 'display:none'});
+    q.oninput = () => { const v = q.value.trim().toLowerCase(), hit = v.length < 2 ? [] : D.onb.filter(o => !o.partner && o.username.includes(v)).slice(0, 5); res.style.display = hit.length ? '' : 'none';
+      put(res, hit.map(o => h('button', {class: 'pick', type: 'button', onclick: () => { D.onb.find(x => x.id === o.id).partner = sel.id; log(`Linked ${o.username} to ${sel.name}`); toast(`${o.username} now counts for ${sel.name}.`); render(); }}, h('b', {}, o.username), h('span', {class: 'muted small'}, `${o.level} · joined ${o.day} ${o.month}`)))); };
+    return h('div', {class: 'stack', style: 'gap:4px'}, q, res); })() : null;
+  return [h('div', {class: 'flow'}, steps.map(([n, t, d]) => h('div', {}, h('i', {}, n), h('b', {}, t), h('span', {}, d)))), h('div', {class: 'mt'}, tabs),
+    h('div', {class: 'grid mt'}, kpi('In the pipeline', N(pipe.filter(m => OPEN_ST.includes(m.status)).length), {sub: 'mined, not joined yet', c: '--base'}), kpi('Joined new this month', N(fee.fresh.length), {sub: 'earn the per-level fee', c: '--growth'}),
+      kpi('All their creators', N(fee.all.length)), kpi('Their redemption GMV', Rp(fee.gmv), {sub: `${sel.share}% goes to the partner`}), kpi('Fee this month', Rp(fee.total), {sub: `paid ${fmtD(payDate)}`, c: '--rev'})),
+    h('div', {class: 'grid g21 mt'}, card(`Creators from ${sel.name}`, 'Stay under Adtree Digital Indonesia. Joined creators earn the fee; everyone’s GMV counts for the %.', table([
+        {k: 'username', label: 'Creator', render: o => person(o.username, `${o.level} · ${o.industry} · ${o.city}`)}, {k: 'joined', label: 'Joined'}, {k: 'type', label: 'Type', render: o => o.type === 'new' ? chip('New', '--growth', false) : chip('Renewal', '--muted', false)},
+        {k: 'feeL', label: 'Fee', num: true, render: o => o.month === 'Oct' && o.type === 'new' && o.status === 'confirmed' ? Rp(sel.fees[lvOf(o)] || 0) : h('span', {class: 'muted'}, '-')}, {k: 'gmv', label: 'GMV', num: true, fmt: Rp},
+        {k: 'x', label: '', fixed: true, render: o => canEdit ? h('button', {class: 'btn sm', onclick: () => { D.onb.find(y => y.id === o.id).partner = ''; log(`Unlinked ${o.username} from ${sel.name}`); render(); }}, 'Unlink') : null}],
+        fee.all.map(o => ({...onbRow(o), joined: `${o.day} ${o.month}`})), {sortKey: 'gmv', pageSize: 8, tools: addBox})),
+      card('This month’s fee', `Goes into the Payment Cycle, paid ${fmtDY(payDate)}.`, h('div', {class: 'stack', style: 'gap:6px;font-size:12.5px'},
+        LV.map(l => { const n = fee.fresh.filter(o => lvOf(o) === l).length; return h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${l} · ${n} new × ${Rp(sel.fees[l] || 0)}`), h('b', {}, Rp(n * (sel.fees[l] || 0)))); }),
+        h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${sel.share}% of ${Rp(fee.gmv)} GMV`), h('b', {}, Rp(fee.feeShare))),
+        h('div', {class: 'status-row total'}, h('span', {class: 'grow'}, h('b', {}, 'Total')), h('b', {}, Rp(fee.total)))))),
+    h('div', {class: 'grid g12 mt'}, card('Partner details', `${sel.contact || 'No contact'} · ${sel.email || ''}`, h('div', {class: 'stack'},
+        props([['Contract', `${fmtDY(sel.start)} to ${fmtDY(sel.end)}`], ['Bank', sel.bank], ['Account', sel.account], ['Holder', sel.holder], ['Tax ID', sel.taxId || '-'], ['Pay day', `${sel.payDay} of next month`]]),
+        h('div', {class: 'small'}, h('span', {class: 'muted'}, 'Fee per new creator: '), feeTxt(sel)), canEdit ? h('button', {class: 'btn sm', style: 'align-self:flex-start', onclick: () => partnerForm(sel)}, 'Edit partner') : null)),
+      card('In the pipeline', 'Mined with this partner picked, not joined yet.', pipe.length ? table([{k: 'username', label: 'Creator', render: m => person(m.username, `${m.level} · ${nameOf(m.owner)}`)}, {k: 'status', label: 'Status', render: m => stat(m.status)},
+        {k: 'day', label: 'Mined', num: true, fmt: dayLabel}], pipe.map(m => ({...m, _rec: m.id})), {search: false, sortKey: 'day', pageSize: 6}) : h('div', {class: 'muted small'}, 'Nothing in the pipeline. In Mining, pick this partner under “Brought by a partner”.')))];
 };
 
 // ================= Payment Cycle: bound cash termin, salaries and partner fees, each with a pay date =================
@@ -1224,7 +1255,8 @@ PAGES['Payment Cycle'] = () => {
   const emailFinance = () => { const soon = open.filter(r => r.due <= in14).sort((a, b) => a.due.localeCompare(b.due)), lines = soon.slice(0, 40).map(r => `${fmtD(r.due)} | ${r.kind} | ${r.payee} | ${r.term} | ${Rp(r.amount)} | ${PST[r.stage][0]}`);
     const body = [`Hi Finance,`, ``, `Acquisition Hub payments due by ${fmtD(in14)}: ${soon.length} payments, ${Rp(tot(soon))}.`, ``, ...lines, soon.length > 40 ? `...and ${soon.length - 40} more in the file.` : '', ``, `The full schedule with accounts is attached (.xlsx).`, ``, nameOrRole()].join('\n');
     toFinance(); location.href = `mailto:${D.settings.financeEmail}?subject=${encodeURIComponent(`CA payment schedule · due by ${fmtD(in14)}`)}&body=${encodeURIComponent(body)}`; log('Emailed payment schedule to Finance'); };
-  return [h('div', {class: 'grid'}, kpi('Still to pay', Rp(tot(open)), {sub: `${open.length} payments`, c: '--rev'}), kpi('Due in 7 days', Rp(tot(buckets[1][1])), {sub: `${buckets[1][1].length} payments`}),
+  return [h('div', {class: 'callout good'}, 'Payment Cycle = every single payment to send out: who gets paid, how much, on which date, and where it stands. The budget for the month is in Finance.'),
+    h('div', {class: 'grid mt'}, kpi('Still to pay', Rp(tot(open)), {sub: `${open.length} payments`, c: '--rev'}), kpi('Due in 7 days', Rp(tot(buckets[1][1])), {sub: `${buckets[1][1].length} payments`}),
       kpi('Overdue', Rp(tot(buckets[0][1])), {sub: `${buckets[0][1].length} past the pay date`, c: buckets[0][1].length ? '--rev' : '--growth'}), kpi('Waiting for approval', Rp(tot(open.filter(r => ['estimated', 'needs_head'].includes(r.stage))))),
       kpi('Scheduled', Rp(tot(open.filter(r => r.stage === 'scheduled')))), kpi('Paid', Rp(tot(all.filter(r => r.stage === 'paid'))), {c: '--growth'})),
     row(card('Payments', 'Bound cash (in full or in termin), salaries and partner fees land here by themselves, each with its pay date. CA Lead approves, the Head approves bound cash above program price, Finance schedules and pays.', table([
@@ -1336,7 +1368,7 @@ PAGES['Finance'] = () => {
   const budget = sum(lines, r => r.budget), spent = sum(lines, r => r.committed), paid = sum(lines, r => r.paid), joinedNew = counted(D.onb.filter(o => o.month === 'Oct' && o.type === 'new')).length;
   const inR = B.filter(b => inRange(b.day)), weeks = WEEKS.map(([w, l, a, b2]) => ({label: `${w} · ${l}`, value: sum(B.filter(b => b.day >= a && b.day <= b2), committed)}));
   const over = lines.filter(r => r.left < 0);
-  return [h('div', {class: 'callout good'}, `Acquisition Hub only: the CA budget for ${MONTH}. ${canEdit ? 'You can change budget lines and slots; every change is in the activity log.' : 'Only the CA Lead changes these lines.'}`),
+  return [h('div', {class: 'callout good'}, `Finance = the CA budget for ${MONTH}: how much is set, used and left per program. Each single payment is in Payment Cycle. ${canEdit ? 'You can change budget lines and slots; every change is in the activity log.' : 'Only the CA Lead changes these lines.'}`),
     h('div', {class: 'grid mt'}, kpi('Monthly budget', Rp(budget), {c: '--base'}), kpi('Committed', Rp(spent), {sub: `${pct(spent, budget)}% of budget · ${pct(TODAY, DAYS)}% of the month gone`, c: spent / budget > TODAY / DAYS + 0.1 ? '--rev' : '--growth'}),
       kpi('Paid', Rp(paid), {sub: `${pct(paid, spent)}% of committed`}), kpi('Left to commit', Rp(budget - spent), {c: budget - spent < 0 ? '--rev' : '--growth'}),
       kpi('Cost per new creator', joinedNew ? Rp(spent / joinedNew) : '-', {sub: `${N(joinedNew)} joined new, complete, L1 and up`}), kpi('Lines over budget', N(over.length), {c: over.length ? '--rev' : '--growth', sub: over.map(r => r.label.split(' · ')[0]).join(', ') || 'none'})),
@@ -1527,12 +1559,12 @@ const LEVEL_CARDS = {
     return [2, byLevel('Activity by level', 'Linked creators only.', [['Creators', l => atL(L, l).length], ['Posted a video', l => atL(L, l).filter(o => o.videos).length], ['Went LIVE', l => atL(L, l).filter(o => o.lives).length],
       ['Active last 7 days', l => pct(atL(L, l).filter(isActive).length, atL(L, l).length), pctFmt], ['No post yet', l => atL(L, l).filter(o => o.lastPost == null).length],
       ['Videos', l => sum(atL(L, l), o => o.videos)], ['LIVE sessions', l => sum(atL(L, l), o => o.lives)], ['Redemption GMV', l => sum(atL(L, l), o => o.gmv), short]])]; },
-  'Bound Cash': () => { if (ui.tab.bc === 'programs') return null; const fresh = ONB().filter(o => o.type === 'new' && o.complete), B = D.bound.map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})).filter(b => personScope(b.o.team) && inScope(b.o)), bl = l => B.filter(b => !l || lvOf(b.o) === l);
+  'Bound Cash & Salary': () => { if (ui.tab.bc === 'programs') return null; const fresh = ONB().filter(o => o.type === 'new' && o.complete), B = D.bound.map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})).filter(b => personScope(b.o.team) && inScope(b.o)), bl = l => B.filter(b => !l || lvOf(b.o) === l);
     return [2, byLevel('Bound cash by level', 'New joiners only; renewals never get bound cash.', [['Joined new', l => atL(fresh, l).length], ['With bound cash', l => bl(l).length],
       ['Bound cash total', l => sum(bl(l), b => b.amount), short], ['Average per creator', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
       ['Salary a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['On termin', l => bl(l).filter(b => b.terms.length > 1).length]])]; },
   'Payment Cycle': () => { const P = payLines().filter(r => r.lv && (!r.team || personScope(r.team))), pl = (l, f) => P.filter(r => (!l || r.lv === l) && f(r));
-    return [1, byLevel('Creator payments by level', 'Bound cash and salaries. Partner fees are per partner, not per level.', [['Still to pay', l => sum(pl(l, r => r.stage !== 'paid'), r => r.amount), short],
+    return [2, byLevel('Creator payments by level', 'Bound cash and salaries. Partner fees are per partner, not per level.', [['Still to pay', l => sum(pl(l, r => r.stage !== 'paid'), r => r.amount), short],
       ['Due in 7 days', l => sum(pl(l, r => r.stage !== 'paid' && r.due <= isoAdd(TODAY_ISO, 7)), r => r.amount), short], ['Overdue', l => sum(pl(l, overdue), r => r.amount), short],
       ['Paid', l => sum(pl(l, r => r.stage === 'paid'), r => r.amount), short], ['Payments', l => pl(l, () => true).length]])]; },
   Finance: () => { const B = D.bound.filter(b => b.stage !== 'draft').map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})), bl = l => B.filter(b => !l || lvOf(b.o) === l);
