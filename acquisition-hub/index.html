@@ -762,15 +762,15 @@ D.log.push({at: '20 Oct 08:55', login: 'intern.ca@sample.id', as: D.team.find(t 
 const logins = () => [[D.team[0].emails[0], 'ca_lead', `${D.team[0].name} · CA Lead`], ['yusuf.hidayat@sample.id', 'admin', 'Yusuf Hidayat · Admin, Data Team'],
   ...D.team.filter(t => t.type === 'fte_ca' && t.active).map(t => [t.emails[0], 'fte_ca', `${t.name} · FTE CA`]), [D.settings.internEmail, 'intern', 'Interns · shared login'],
   ['maya.anggraini@sample.id', 'head', 'Maya Anggraini · Head'], ['teguh.prasetyo@sample.id', 'finance', 'Teguh Prasetyo · Finance']];
-const GROUPS = [['Daily work', '--growth', ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Impact Calculator', 'Weekly Report']], ['Payments', '--rev', ['Bound Cash & Salary', 'Partnership', 'Payment Cycle', 'Finance']],
+const GROUPS = [['Daily work', '--growth', ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Impact Calculator', 'Weekly Report']], ['Payments', '--rev', ['Bound Cash & Salary', 'Partnership', 'Payments']],
   ['Settings', '--base', ['Team', 'Targets', 'Rules and defaults', 'Data uploads', 'Activity']]];
 const PAGES_ALL = GROUPS.flatMap(g => g[2]);
 const ROLE_PAGES = {ca_lead: PAGES_ALL, admin: PAGES_ALL, head: PAGES_ALL, fte_ca: ['Overview', 'Mining', 'Daily Tracker', 'My Creators', 'Bound Cash & Salary', 'Impact Calculator'],
-  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Bound Cash & Salary', 'Partnership', 'Payment Cycle', 'Finance']};
+  intern: ['Overview', 'Mining', 'Daily Tracker', 'My Creators'], finance: ['Payments', 'Bound Cash & Salary', 'Partnership']};
 const ui = {login: 'rina.kartika@sample.id', as: null, page: 'Overview', f: {pod: '', ind: '', city: '', who: ''}, theme: 'light', tab: {}, range: {k: 'mtd', d0: 1, d1: TODAY}};
 // Date range always sits inside the current month; pages that are monthly by nature ignore it.
 const RANGES = [['today', 'Today', TODAY, TODAY], ['yday', 'Yesterday', TODAY - 1, TODAY - 1], ['week', 'This week', TODAY - 1, TODAY], ['7d', 'Last 7 days', TODAY - 6, TODAY], ['mtd', 'Month to date', 1, TODAY], ['month', 'Whole month', 1, DAYS]];
-const MONTHLY = ['Partnership', 'Payment Cycle', 'Impact Calculator', 'Weekly Report', 'Team', 'Targets', 'Rules and defaults', 'Data uploads', 'Activity'];
+const MONTHLY = ['Partnership', 'Payments', 'Impact Calculator', 'Weekly Report', 'Team', 'Targets', 'Rules and defaults', 'Data uploads', 'Activity'];
 const inRange = d => d >= ui.range.d0 && d <= ui.range.d1;
 const rangeTxt = () => ui.range.d0 === ui.range.d1 ? dayLabel(ui.range.d0) : `${ui.range.d0} to ${ui.range.d1} Oct`;
 try { Object.assign(ui, JSON.parse(localStorage.getItem('acq-hub-sim3') || '{}'), {as: null}); } catch {}
@@ -1132,7 +1132,7 @@ function boundForm(b0, onb0) {
       const clean = {onb: f.onb, program: f.program, amount: +f.amount, salary: +f.salary || 0, benefit: f.benefit, sow: {v: +f.sow.v || 0, ls: +f.sow.ls || 0, ps: +f.sow.ps || 0}, requirement: f.requirement, rules: f.rules, spk: f.spk ? (/^https?:\/\//.test(f.spk) ? f.spk : 'https://' + f.spk) : '', notes: f.notes,
         terms: f.terms.map(t => ({pct: +t.pct, due: t.due, when: t.when, stage: t.stage || 'pending'}))};
       if (b) { Object.assign(b, clean); log(`Edited bound cash ${D.onb.find(o => o.id === b.onb).username}`); } else { D.bound.unshift({id: 'b' + Date.now(), stage: 'draft', salaryStage: 'pending', day: TODAY, ...clean}); log(`Added bound cash ${D.onb.find(o => o.id === f.onb).username} ${Rp(clean.amount)}`); }
-      toast('Bound cash saved as a draft. Submit it to send it into the payment cycle.'); dlg.close(); render(); }}, 'Save'))));
+      toast('Bound cash saved as a draft. Submit it to send it to Payments.'); dlg.close(); render(); }}, 'Save'))));
   showChosen(); drawTerms(); dlg.showModal();
 }
 PAGES['Bound Cash & Salary'] = () => {
@@ -1151,7 +1151,7 @@ PAGES['Bound Cash & Salary'] = () => {
   return [tabs, h('div', {class: 'grid'}, kpi('Joined new', N(fresh.length), {sub: `${rangeTxt()} · eligible for bound cash`, c: '--growth'}), kpi('With bound cash', N(rows.length), {sub: `${without.length} without`}),
       kpi('Bound cash total', Rp(sum(rows, r => r.amount)), {sub: `+ ${Rp(sum(rows, r => r.salary))} salary a month`}), kpi('Drafts', N(rows.filter(r => r.stage === 'draft').length), {sub: 'not submitted yet'}),
       kpi('SOW delivered', N(rows.filter(r => r.dpct >= 100).length), {sub: 'full scope posted'}), kpi('Paid so far', Rp(sum(rows, r => r.paid)), {sub: `${rows.filter(r => r.terms.length > 1).length} on termin`, c: '--growth'})),
-    row(card('Bound cash', 'One line per creator: amount, salary, SOW, rules and the SPK link. Submit sends it into the payment cycle.', table([
+    row(card('Bound cash', 'One line per creator: amount, salary, SOW, rules and the SPK link. Submit sends it to Payments.', table([
       {k: 'creator', label: 'Creator', render: r => person(r.creator, `${r.o.level} · brought by ${r.teamName}`)}, {k: 'amount', label: 'Bound cash', num: true, render: r => h('span', {}, Rp(r.amount), r.above ? h('span', {class: 'chip', style: '--tc:var(--rev);margin-left:6px'}, 'above price') : null)},
       {k: 'salary', label: 'Salary', num: true, fmt: v => v ? Rp(v) : '-'}, {k: 'sowT', label: 'SOW'}, {k: 'dpct', label: 'Delivered', render: r => meterRow(r.dpct, r.dpct >= 100 ? '--growth' : '--ops', `${r.dv.done} / ${r.dv.of}`, 60)},
       {k: 'spk', label: 'SPK', render: r => r.spk ? h('a', {href: r.spk, target: '_blank', rel: 'noopener', class: 'small'}, 'Open SPK') : chip('No SPK', '--rev', false)},
@@ -1201,7 +1201,7 @@ PAGES['Partnership'] = () => {
         {k: 'feeL', label: 'Fee', num: true, render: o => o.month === 'Oct' && o.type === 'new' && o.status === 'confirmed' ? Rp(sel.fees[lvOf(o)] || 0) : h('span', {class: 'muted'}, '-')}, {k: 'gmv', label: 'GMV', num: true, fmt: Rp},
         {k: 'x', label: '', fixed: true, render: o => canEdit ? h('button', {class: 'btn sm', onclick: () => { D.onb.find(y => y.id === o.id).partner = ''; log(`Unlinked ${o.username} from ${sel.name}`); render(); }}, 'Unlink') : null}],
         fee.all.map(o => ({...onbRow(o), joined: `${o.day} ${o.month}`})), {sortKey: 'gmv', pageSize: 8, tools: addBox})),
-      card('This month’s fee', `Goes into the Payment Cycle, paid ${fmtDY(payDate)}.`, h('div', {class: 'stack', style: 'gap:6px;font-size:12.5px'},
+      card('This month’s fee', `Goes to Payments, paid ${fmtDY(payDate)}.`, h('div', {class: 'stack', style: 'gap:6px;font-size:12.5px'},
         LV.map(l => { const n = fee.fresh.filter(o => lvOf(o) === l).length; return h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${l} · ${n} new × ${Rp(sel.fees[l] || 0)}`), h('b', {}, Rp(n * (sel.fees[l] || 0)))); }),
         h('div', {class: 'status-row'}, h('span', {class: 'grow'}, `${sel.share}% of ${Rp(fee.gmv)} GMV`), h('b', {}, Rp(fee.feeShare))),
         h('div', {class: 'status-row total'}, h('span', {class: 'grow'}, h('b', {}, 'Total')), h('b', {}, Rp(fee.total)))))),
@@ -1236,7 +1236,7 @@ function payLines() {
 }
 // past the pay date and payable; a termin still waiting for its SOW is not overdue yet
 const overdue = r => r.stage !== 'paid' && r.ready && r.due < TODAY_ISO;
-PAGES['Payment Cycle'] = () => {
+const paymentsList = () => {
   const all = payLines().filter(r => !r.team || personScope(r.team)), f = ui.tab.pc || 'open', in7 = isoAdd(TODAY_ISO, 7), in14 = isoAdd(TODAY_ISO, 14), open = all.filter(r => r.stage !== 'paid');
   const keep = {open: r => r.stage !== 'paid', week: r => r.stage !== 'paid' && r.due >= TODAY_ISO && r.due <= in7, overdue, paid: r => r.stage === 'paid', all: () => true}[f];
   const step = r => {
@@ -1247,6 +1247,11 @@ PAGES['Payment Cycle'] = () => {
     if (r.stage === 'scheduled') return may('pay') ? go('paid', 'Mark paid') : h('span', {class: 'muted small'}, 'Finance pays');
     return null;
   };
+  // One click for the usual batch: CA Lead approves partner fees, Finance schedules everything ready and marks scheduled ones paid.
+  const bulk = () => { const est = open.filter(r => r.stage === 'estimated'), ready = open.filter(r => r.stage === 'pending' && r.ready), sch = open.filter(r => r.stage === 'scheduled');
+    const go = (list, st, label) => h('button', {class: 'btn sm primary', onclick: () => { list.forEach(r => r.set(st)); log(`${label}: ${list.length} payments`); toast(`${label}: ${list.length} payments, ${Rp(tot(list))}.`); render(); }}, `${label} (${list.length} · ${short(tot(list))})`);
+    const btns = [may('approvePay') && est.length && go(est, 'approve', 'Approve all estimated'), may('pay') && ready.length && go(ready, 'scheduled', 'Schedule all ready'), may('pay') && sch.length && go(sch, 'paid', 'Mark all scheduled paid')].filter(Boolean);
+    return btns.length ? h('div', {class: 'tools'}, ...btns) : null; };
   const tot = l => sum(l, r => r.amount), buckets = [['Overdue', open.filter(overdue)], ['Next 7 days', open.filter(r => r.due >= TODAY_ISO && r.due <= in7)], ['8 to 14 days', open.filter(r => r.due > in7 && r.due <= in14)], ['Later', open.filter(r => r.due > in14)]];
   const toFinance = () => { sheetsDownload(`CA-payment-schedule-${TODAY_ISO}.xlsx`, [['Payment schedule', open.sort((a, b) => a.due.localeCompare(b.due)).map(r => ({'Pay date': r.due, Type: r.kind, 'Pay to': r.payee, Payment: r.term, 'Paid when': r.when,
     'Amount (Rp)': r.amount, Account: r.bank, Stage: PST[r.stage][0], 'Ready to pay': r.ready && r.stage === 'pending' ? 'Yes' : r.stage === 'scheduled' ? 'Scheduled' : 'No', SPK: r.spk}))], ['Paid', all.filter(r => r.stage === 'paid').map(r => ({'Pay date': r.due, Type: r.kind, 'Pay to': r.payee, Payment: r.term, 'Amount (Rp)': r.amount}))]]);
@@ -1255,8 +1260,7 @@ PAGES['Payment Cycle'] = () => {
   const emailFinance = () => { const soon = open.filter(r => r.due <= in14).sort((a, b) => a.due.localeCompare(b.due)), lines = soon.slice(0, 40).map(r => `${fmtD(r.due)} | ${r.kind} | ${r.payee} | ${r.term} | ${Rp(r.amount)} | ${PST[r.stage][0]}`);
     const body = [`Hi Finance,`, ``, `Acquisition Hub payments due by ${fmtD(in14)}: ${soon.length} payments, ${Rp(tot(soon))}.`, ``, ...lines, soon.length > 40 ? `...and ${soon.length - 40} more in the file.` : '', ``, `The full schedule with accounts is attached (.xlsx).`, ``, nameOrRole()].join('\n');
     toFinance(); location.href = `mailto:${D.settings.financeEmail}?subject=${encodeURIComponent(`CA payment schedule · due by ${fmtD(in14)}`)}&body=${encodeURIComponent(body)}`; log('Emailed payment schedule to Finance'); };
-  return [h('div', {class: 'callout good'}, 'Payment Cycle = every single payment to send out: who gets paid, how much, on which date, and where it stands. The budget for the month is in Finance.'),
-    h('div', {class: 'grid mt'}, kpi('Still to pay', Rp(tot(open)), {sub: `${open.length} payments`, c: '--rev'}), kpi('Due in 7 days', Rp(tot(buckets[1][1])), {sub: `${buckets[1][1].length} payments`}),
+  return [bulk(), h('div', {class: 'grid'}, kpi('Still to pay', Rp(tot(open)), {sub: `${open.length} payments`, c: '--rev'}), kpi('Due in 7 days', Rp(tot(buckets[1][1])), {sub: `${buckets[1][1].length} payments`}),
       kpi('Overdue', Rp(tot(buckets[0][1])), {sub: `${buckets[0][1].length} past the pay date`, c: buckets[0][1].length ? '--rev' : '--growth'}), kpi('Waiting for approval', Rp(tot(open.filter(r => ['estimated', 'needs_head'].includes(r.stage))))),
       kpi('Scheduled', Rp(tot(open.filter(r => r.stage === 'scheduled')))), kpi('Paid', Rp(tot(all.filter(r => r.stage === 'paid'))), {c: '--growth'})),
     row(card('Payments', 'Bound cash (in full or in termin), salaries and partner fees land here by themselves, each with its pay date. CA Lead approves, the Head approves bound cash above program price, Finance schedules and pays.', table([
@@ -1353,7 +1357,7 @@ PAGES['Weekly Report'] = () => {
 };
 
 // ================= Finance: Acquisition Hub budget and spending only =================
-PAGES['Finance'] = () => {
+const budgetView = () => {
   const canEdit = may('budget'), B = D.bound.map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})), committed = b => b.stage === 'draft' ? 0 : b.amount;
   const pays = payLines(), paidOf = kind => sum(pays.filter(r => r.kind === kind && r.stage === 'paid'), r => r.amount);
   const budgetIn = (obj, k2, label) => canEdit ? h('input', {type: 'number', class: 'cell-in num-in', min: 0, step: k2 === 'slots' ? 1 : 500000, value: obj[k2], 'aria-label': label,
@@ -1366,10 +1370,9 @@ PAGES['Finance'] = () => {
     {label: 'Partner fees', sub: 'Fee per new creator + % of redemption GMV', obj: D.budget.partner, budget: D.budget.partner.budget, slots: null, used: null, drafts: 0, committed: sum(D.partners.filter(p => p.active), p => partnerFee(p).total), paid: paidOf('Partner fee')}]
     .map(r => ({...r, left: r.budget - r.committed, usedPct: pct(r.committed, r.budget)}));
   const budget = sum(lines, r => r.budget), spent = sum(lines, r => r.committed), paid = sum(lines, r => r.paid), joinedNew = counted(D.onb.filter(o => o.month === 'Oct' && o.type === 'new')).length;
-  const inR = B.filter(b => inRange(b.day)), weeks = WEEKS.map(([w, l, a, b2]) => ({label: `${w} · ${l}`, value: sum(B.filter(b => b.day >= a && b.day <= b2), committed)}));
+  const inR = B, weeks = WEEKS.map(([w, l, a, b2]) => ({label: `${w} · ${l}`, value: sum(B.filter(b => b.day >= a && b.day <= b2), committed)}));
   const over = lines.filter(r => r.left < 0);
-  return [h('div', {class: 'callout good'}, `Finance = the CA budget for ${MONTH}: how much is set, used and left per program. Each single payment is in Payment Cycle. ${canEdit ? 'You can change budget lines and slots; every change is in the activity log.' : 'Only the CA Lead changes these lines.'}`),
-    h('div', {class: 'grid mt'}, kpi('Monthly budget', Rp(budget), {c: '--base'}), kpi('Committed', Rp(spent), {sub: `${pct(spent, budget)}% of budget · ${pct(TODAY, DAYS)}% of the month gone`, c: spent / budget > TODAY / DAYS + 0.1 ? '--rev' : '--growth'}),
+  return [h('div', {class: 'grid'}, kpi('Monthly budget', Rp(budget), {c: '--base'}), kpi('Committed', Rp(spent), {sub: `${pct(spent, budget)}% of budget · ${pct(TODAY, DAYS)}% of the month gone`, c: spent / budget > TODAY / DAYS + 0.1 ? '--rev' : '--growth'}),
       kpi('Paid', Rp(paid), {sub: `${pct(paid, spent)}% of committed`}), kpi('Left to commit', Rp(budget - spent), {c: budget - spent < 0 ? '--rev' : '--growth'}),
       kpi('Cost per new creator', joinedNew ? Rp(spent / joinedNew) : '-', {sub: `${N(joinedNew)} joined new, complete, L1 and up`}), kpi('Lines over budget', N(over.length), {c: over.length ? '--rev' : '--growth', sub: over.map(r => r.label.split(' · ')[0]).join(', ') || 'none'})),
     row(card('Budget lines', 'Committed = submitted bound cash (draft does not count), salaries of approved deals and this month’s partner fees.', table([
@@ -1379,9 +1382,16 @@ PAGES['Finance'] = () => {
       {k: 'usedPct', label: 'Used', render: r => meterRow(Math.min(100, r.usedPct), r.usedPct > 100 ? '--rev' : r.usedPct > 85 ? '--ops' : '--growth', r.usedPct + '%', 80)}], lines, {search: false, pageSize: 12}))),
     h('div', {class: 'grid g2 mt'}, card('Committed by week', 'When bound cash was added.', hbars(weeks, {fmt: Rp, c: '--base'})),
       card('What is left per line', null, hbars(lines.map(r => ({label: r.label.split(' · ').slice(0, 2).join(' · '), value: Math.max(0, r.left)})), {fmt: Rp, c: '--growth'}))),
-    row(card(`Bound cash added · ${rangeTxt()}`, 'Follows the date range at the top.', table([{k: 'creator', label: 'Creator', render: b => person(b.creator, `${b.o.level} · ${nameOf(b.o.team)}`)}, {k: 'prog', label: 'Program'},
+    row(card('Bound cash added this month', 'Newest first.', table([{k: 'creator', label: 'Creator', render: b => person(b.creator, `${b.o.level} · ${nameOf(b.o.team)}`)}, {k: 'prog', label: 'Program'},
       {k: 'day', label: 'Added', num: true, fmt: dayLabel}, {k: 'amount', label: 'Bound cash', num: true, fmt: Rp}, {k: 'salary', label: 'Salary', num: true, fmt: v => v ? Rp(v) : '-'}, {k: 'plan', label: 'Payment'},
       {k: 'st', label: 'Stage', render: b => chip(...BSTAGE[b.st])}], inR.map(b => ({...b, creator: b.o.username, prog: D.programs.find(p => p.id === b.program)?.name || 'No program', plan: termsTxt(b), st: bStage(b), _rec: b.o.id})), {sortKey: 'day', pageSize: 10})))];
+};
+
+PAGES['Payments'] = () => {
+  const tab = ui.tab.pay === 'budget' ? 'budget' : 'list', canBudget = may('budget');
+  return [h('div', {class: 'tools'}, seg([['list', 'Payments to make'], ['budget', 'Budget']], tab, v => { ui.tab.pay = v; render(); }, 'Payments view'),
+    h('span', {class: 'muted small'}, tab === 'list' ? 'Every payment from bound cash, salaries and partner fees: who, how much, which date, and its stage.' : `CA budget for ${MONTH}: set, used and left per line. ${canBudget ? 'You can edit budgets and slots.' : 'Only the CA Lead edits it.'}`)),
+    ...(tab === 'list' ? paymentsList() : budgetView())];
 };
 
 // ================= Settings: rules and defaults for the Acquisition Hub =================
@@ -1563,11 +1573,12 @@ const LEVEL_CARDS = {
     return [2, byLevel('Bound cash by level', 'New joiners only; renewals never get bound cash.', [['Joined new', l => atL(fresh, l).length], ['With bound cash', l => bl(l).length],
       ['Bound cash total', l => sum(bl(l), b => b.amount), short], ['Average per creator', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
       ['Salary a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['On termin', l => bl(l).filter(b => b.terms.length > 1).length]])]; },
-  'Payment Cycle': () => { const P = payLines().filter(r => r.lv && (!r.team || personScope(r.team))), pl = (l, f) => P.filter(r => (!l || r.lv === l) && f(r));
+  Payments: () => ui.tab.pay === 'budget' ? budgetLevels() : payLevels(),
+  _pay: () => { const P = payLines().filter(r => r.lv && (!r.team || personScope(r.team))), pl = (l, f) => P.filter(r => (!l || r.lv === l) && f(r));
     return [2, byLevel('Creator payments by level', 'Bound cash and salaries. Partner fees are per partner, not per level.', [['Still to pay', l => sum(pl(l, r => r.stage !== 'paid'), r => r.amount), short],
       ['Due in 7 days', l => sum(pl(l, r => r.stage !== 'paid' && r.due <= isoAdd(TODAY_ISO, 7)), r => r.amount), short], ['Overdue', l => sum(pl(l, overdue), r => r.amount), short],
       ['Paid', l => sum(pl(l, r => r.stage === 'paid'), r => r.amount), short], ['Payments', l => pl(l, () => true).length]])]; },
-  Finance: () => { const B = D.bound.filter(b => b.stage !== 'draft').map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})), bl = l => B.filter(b => !l || lvOf(b.o) === l);
+  _budget: () => { const B = D.bound.filter(b => b.stage !== 'draft').map(b => ({...b, o: D.onb.find(x => x.id === b.onb)})), bl = l => B.filter(b => !l || lvOf(b.o) === l);
     return [2, byLevel('Spending by level', 'Submitted bound cash and salaries. Partner fees are per partner.', [['Creators with bound cash', l => bl(l).length], ['Bound cash committed', l => sum(bl(l), b => b.amount), short],
       ['Salaries a month', l => sum(bl(l), b => b.salary), short], ['Paid so far', l => sum(bl(l), bPaid), short], ['Average deal', l => bl(l).length ? sum(bl(l), b => b.amount) / bl(l).length : null, short],
       ['Cost per new creator', l => { const n = counted(atL(D.onb.filter(o => o.month === 'Oct' && o.type === 'new'), l)).length; return n ? sum(bl(l), b => b.amount + b.salary) / n : null; }, short]])]; },
@@ -1576,6 +1587,7 @@ const LEVEL_CARDS = {
     ['Interns', l => D.team.filter(t => t.active && t.type === 'intern' && t.pod === l).length], ['Joined target', l => l === 'L0' ? null : lvTarget(l) || null],
     ['Target per person per day', l => { const n = D.team.filter(t => t.active && t.type !== 'ca_lead' && (!l || t.pod === l)).length, tg = lvTarget(l); return l === 'L0' || !n || !tg ? null : Math.ceil(tg / DAYS / n); }]])]
 };
+const payLevels = () => { const lc = LEVEL_CARDS._pay(); return [lc[0] + 1, lc[1]]; }, budgetLevels = () => { const lc = LEVEL_CARDS._budget(); return [lc[0], lc[1]]; };
 function weekLevelRows(wi) {
   const [, , a, b] = WEEKS[wi], prev = WEEKS[wi - 1], oct = counted(D.onb.filter(o => o.month === 'Oct')), inW = (o, w) => w && o.day >= w[2] && o.day <= w[3];
   return [['Joined this week', l => atL(oct, l).filter(o => o.day >= a && o.day <= b).length], ['Joined last week', l => prev ? atL(oct, l).filter(o => inW(o, prev)).length : null],
