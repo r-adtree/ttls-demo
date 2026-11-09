@@ -1,0 +1,1268 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Performance Analytics · AdtreeGO</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f8a3b'/%3E%3Ccircle cx='13' cy='12' r='5' fill='white'/%3E%3Cpath d='M4 27c1-5 4.5-8 9-8s8 3 9 8' fill='white'/%3E%3Cpath d='M24 8v8M20 12h8' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Design notes (why):
+   - Dark by default to match the team's own CRM mind map; a light theme is one click away.
+   - The four group colors from that map (Growth, Operations, Revenue, Base) are the only accents.
+   - Work-tool density: 13px text, KPI strips instead of one big card per number, tight tables,
+     so a whole module fits on one screen. Every creator or merchant row opens its full profile. */
+:root{--font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--r-lg:12px;--r-md:9px;--r-sm:7px}
+:root[data-theme="dark"]{
+  --bg:#0a0c10;--side:#0d1015;--panel:#12151c;--panel2:#191d26;--hover:#1f2430;--line:rgba(255,255,255,.065);--line2:rgba(255,255,255,.11);
+  --text:#e9ecf2;--muted:#8a92a5;--faint:#5a6275;
+  --growth:#34c759;--ops:#ff9f0a;--rev:#ff6961;--base:#4da3ff;--good:#34c759;--warn:#ff9f0a;--bad:#ff6961;
+  --tint:.15;--shadow:none;color-scheme:dark}
+:root[data-theme="light"]{
+  --bg:#f6f7f9;--side:#ffffff;--panel:#ffffff;--panel2:#f1f3f6;--hover:#e9ecf1;--line:rgba(16,24,40,.08);--line2:rgba(16,24,40,.14);
+  --text:#161a22;--muted:#626a7b;--faint:#a0a6b3;
+  --growth:#1f8a3b;--ops:#b35c00;--rev:#cc2f26;--base:#0066d6;--good:#1f8a3b;--warn:#b35c00;--bad:#cc2f26;
+  --tint:.1;--shadow:0 1px 2px rgba(16,24,40,.04);color-scheme:light}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:13px/1.45 var(--font);font-feature-settings:"cv11","ss01";color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;display:flex}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;border-radius:var(--r-sm);padding:6px 10px}
+input,select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px;min-width:0;height:30px}
+textarea{height:auto}
+select{cursor:pointer}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--base);box-shadow:0 0 0 3px color-mix(in srgb,var(--base) 22%,transparent)}
+:focus-visible{outline:2px solid var(--base);outline-offset:2px}
+.btn{background:var(--panel2);border:1px solid var(--line);font-weight:500;height:30px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--base);border-color:var(--base);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.sm{height:24px;padding:0 8px;font-size:12px;border-radius:6px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.tag.on{background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-color:var(--ops);color:var(--ops)}
+
+aside{width:236px;flex-shrink:0;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.brand{display:flex;align-items:center;gap:9px;padding:14px 14px 4px;font-weight:700;font-size:13.5px;letter-spacing:-.01em}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
+.demo{margin:8px 14px 4px;font-size:11px;color:var(--ops);background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-radius:6px;padding:4px 8px}
+.navscroll{flex:1;overflow:auto;padding:2px 8px 12px}
+.navgroup{margin-top:12px}
+.navgroup-title{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 8px 4px}
+.navgroup-title i{width:6px;height:6px;border-radius:50%}
+.navitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:5px 8px;border-radius:7px;color:var(--muted);font-weight:500;font-size:13px;white-space:nowrap}
+.navitem:hover{background:var(--hover);color:var(--text)}
+.navitem.on{background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--text)}
+.navitem.on span:first-child{color:var(--c)}
+.navitem .chev{margin-left:auto;display:inline-flex;color:var(--faint);transition:transform .15s}
+.navmod.open > .navitem .chev{transform:rotate(90deg)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:1px 0 6px 16px;padding-left:9px;border-left:1px solid var(--line2)}
+.subitem{text-align:left;padding:4px 8px;font-size:12.5px;color:var(--muted);border-radius:6px;position:relative}
+.subitem:hover{color:var(--text);background:var(--hover)}
+.subitem.on{color:var(--text);font-weight:600;background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent)}
+.subitem.on::before{content:"";position:absolute;left:-10px;top:5px;bottom:5px;width:2px;border-radius:2px;background:var(--c)}
+.chartbox{width:100%;position:relative;overflow:hidden}
+.chartbox svg{display:block;position:absolute;inset:0}
+.side-foot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.side-foot label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+
+.wrap{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh}
+.top{display:flex;align-items:center;gap:10px;padding:0 20px;height:50px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(12px);position:sticky;top:0;z-index:10}
+.crumbs{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
+.crumbs b{color:var(--text);font-weight:600}
+.spacer{flex:1}
+.search{position:relative;width:230px}
+#scope{font-size:11px;color:var(--muted)}#scope b{color:var(--text);font-weight:550}
+#indf button.on{color:var(--text)}
+.search input{width:100%;padding-left:30px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);font:11px var(--font);color:var(--faint);border:1px solid var(--line2);border-radius:4px;padding:0 5px}
+.results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--panel);border:1px solid var(--line2);border-radius:var(--r-md);box-shadow:0 12px 32px rgba(0,0,0,.28);padding:4px;z-index:30;max-height:340px;overflow:auto}
+.results button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:7px 9px}
+.results button:hover{background:var(--hover)}
+.results span:last-child{color:var(--muted);font-size:12px}
+.seg{display:inline-flex;background:var(--panel2);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted)}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+main{flex:1;overflow:auto;padding:0 20px 48px}
+.page{max-width:1640px;margin:0 auto;padding-top:16px}
+
+.ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 12px}
+.ph-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--c);flex-shrink:0}
+h1{font-size:19px;line-height:1.2;letter-spacing:-.02em;margin:0;font-weight:650}
+.sub{color:var(--muted);margin:1px 0 0;font-size:12.5px}
+.scope{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:7px;padding:4px 9px;white-space:nowrap}
+.scope b{color:var(--text);font-weight:600}
+.tabs{display:flex;gap:2px;margin:0 0 16px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs button{white-space:nowrap;padding:8px 11px;border-radius:0;font-weight:500;color:var(--muted);font-size:12.5px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{color:var(--text);border-bottom-color:var(--c,var(--text))}
+
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(6,minmax(0,1fr))}.g3>*{grid-column:span 2}.g3>:nth-child(3n+1):last-child{grid-column:span 6}.g3>:nth-child(3n+1):nth-last-child(2),.g3>:nth-child(3n+2):last-child{grid-column:span 3}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.g12{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column}
+/* Cards in one row share a height; the chart or list inside grows to use it, so no empty band under a short card. */
+.card > .viz,.card > .chartbox{flex:1}
+.viz{display:flex;flex-direction:column}
+.viz > .chartbox{flex:1}
+.card > .hbars,.card > .funnel{flex:1;justify-content:space-evenly}
+.card > .donut-wrap{flex:1;justify-content:center}
+.card > .stack{flex:1}
+.card > .timeline{flex:1;justify-content:space-between}
+.fillv{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.donut-wrap.stack{flex-direction:column;align-items:stretch;justify-content:space-evenly;flex-wrap:nowrap}
+.donut-wrap.stack > div:first-child{align-self:center}
+.card{container-type:inline-size}
+@container (max-width:460px){.donut-wrap:not(.stack){flex-wrap:nowrap;gap:14px}.donut-wrap svg{width:118px;height:118px}.donut-list{min-width:0;gap:4px}.donut-list div{font-size:12px}}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:24px;flex-wrap:wrap}
+.card-h h3{margin:0;font-size:13px;font-weight:600}
+.card-h p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.mt{margin-top:12px}
+/* KPI strip: any grid of KPIs becomes one bordered bar with hairline dividers */
+.grid:has(> .kpi){display:flex;flex-wrap:wrap;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.grid:has(> .kpi) > .kpi{flex:1 1 128px;min-width:0}
+.grid:has(> .kpi:nth-child(8)) > .kpi{flex-basis:22%}
+.grid:has(> .kpi:nth-child(9)) > .kpi{flex-basis:18%}
+.kpi{display:flex;flex-direction:column;gap:2px;border:none;border-radius:0;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);padding:12px 14px;position:relative;container-type:inline-size}
+.kpi .l{font-size:11.5px;color:var(--muted);font-weight:500;line-height:1.3}
+.card .kpi .l{white-space:normal}
+.kpi .v{font-size:20px;font-weight:650;letter-spacing:-.02em;line-height:1.25;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .s{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kpi .spark{position:absolute;top:14px;right:14px;width:36%;max-width:120px;height:30px;opacity:.9}
+.kpi:has(.spark) .l{padding-right:38%}
+@container (max-width:150px){.kpi .spark{display:none}.kpi:has(.spark) .l{padding-right:0}}
+.delta{font-weight:600;font-size:11px;border-radius:5px;padding:0 5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.delta.up{color:var(--good);background:color-mix(in srgb,var(--good) calc(var(--tint)*100%),transparent)}
+.delta.down{color:var(--bad);background:color-mix(in srgb,var(--bad) calc(var(--tint)*100%),transparent)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:550;border-radius:5px;padding:1px 7px;white-space:nowrap;color:var(--tc,var(--muted));background:color-mix(in srgb,var(--tc,var(--muted)) calc(var(--tint)*100%),transparent)}
+.chip i{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tools .count{font-size:11.5px;color:var(--muted);margin-left:auto}
+.tbl{overflow:auto;margin:0 -16px -14px;border-top:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-size:11px;font-weight:550;color:var(--muted);text-align:left;padding:7px 10px;white-space:nowrap;position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);z-index:1}
+th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
+td{padding:6px 10px;border-top:1px solid var(--line);white-space:nowrap;height:38px}
+tbody tr:first-child td{border-top:none}
+th:first-child,td:first-child{padding-left:16px}th:last-child,td:last-child{padding-right:16px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:color-mix(in srgb,var(--hover) 55%,transparent)}
+tr.open{cursor:pointer}
+.who{display:flex;align-items:center;gap:8px;min-width:0}
+.ava{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.who small{display:block;color:var(--muted);font-size:11px;line-height:1.3}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:7px 16px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
+.tspark{width:84px;height:22px;display:block}
+
+.hbars{display:flex;flex-direction:column;gap:12px}
+.hbar{display:grid;grid-template-columns:minmax(84px,150px) 1fr auto;gap:12px;align-items:center;font-size:12.5px}
+.hbar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.track{position:relative;height:12px;border-radius:6px;background:color-mix(in srgb,var(--c,var(--base)) 11%,var(--panel2))}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--c,var(--base)) 70%,transparent),var(--c,var(--base)))}
+.goal{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--text);box-shadow:0 0 0 2px var(--panel)}
+.hbar .vl{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;min-width:60px}
+.hbar .vl small{color:var(--muted);font-weight:500}
+.meter{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden;min-width:50px}
+.meter span{display:block;height:100%;border-radius:99px;background:var(--c,var(--base))}
+.mrow{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:2px}
+svg text{font-family:var(--font)}
+.chart{width:100%;display:block}
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut-list{display:flex;flex-direction:column;gap:6px;flex:1;min-width:150px}
+.donut-list div{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.donut-list i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.donut-list .dl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.donut-list b{white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
+.days td{padding:3px 1px;text-align:center;height:auto}
+.days td:first-child{text-align:left;padding-left:16px;padding-right:10px;position:sticky;left:0;background:var(--panel);z-index:1}
+.days th{text-align:center;padding:6px 1px;font-size:10.5px}
+.days th:first-child{text-align:left}
+.dot{display:inline-block;width:15px;height:15px;border-radius:4px;background:var(--panel2);vertical-align:middle}
+.dot.p{background:color-mix(in srgb,var(--base) 55%,transparent)}.dot.s{background:var(--good)}.dot.l{background:color-mix(in srgb,#bf5af2 65%,transparent)}.dot.x{background:color-mix(in srgb,var(--bad) 55%,transparent)}
+.funnel{display:flex;flex-direction:column;gap:6px}
+.fstep{display:grid;grid-template-columns:84px 1fr 110px;gap:10px;align-items:center;font-size:12.5px}
+.fbar{height:30px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--base)) 26%,transparent);border-left:3px solid var(--c,var(--base));display:flex;align-items:center;padding-left:9px;font-weight:600;font-variant-numeric:tabular-nums;min-width:44px}
+.fstep .rate{color:var(--muted);font-size:11.5px;text-align:right}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form label,.field{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);font-weight:500}
+.form .wide{grid-column:1/-1}
+.range{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center}
+.range input{padding:0;height:auto;accent-color:var(--c,var(--base));background:none;border:none;box-shadow:none}
+.range b{color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
+.big{font-size:30px;font-weight:650;letter-spacing:-.025em;line-height:1.15;font-variant-numeric:tabular-nums}
+.status-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.status-row:first-child{border-top:none}
+.status-row .grow{flex:1;min-width:0}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.col{background:var(--panel2);border-radius:var(--r-md);padding:8px}
+.col h4{margin:2px 4px 8px;font-size:12px;color:var(--muted);font-weight:600;display:flex;gap:8px;align-items:center}
+.task{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:6px;display:flex;flex-direction:column;gap:6px}
+.task b{font-size:12.5px;font-weight:600}
+.task .row{display:flex;align-items:center;gap:8px}
+.preview{aspect-ratio:16/9;border-radius:10px;background:var(--panel2);display:grid;place-items:center;color:var(--muted);text-align:center}
+.pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.tile{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) 38%;gap:12px;align-items:end;box-shadow:var(--shadow);transition:border-color .15s}
+.tile-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile-p{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
+.tile-x .muted{text-align:right;margin-bottom:5px}
+.tile:hover{border-color:color-mix(in srgb,var(--c) 55%,transparent)}
+.tile-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--c);margin-bottom:4px}
+.tile-v{font-size:19px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile-l{font-size:12px}.tile-s{font-size:11.5px;color:var(--muted)}
+.tile-x{min-width:0}
+.section-t{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:18px 0 8px}
+.task-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.task-row:first-child{border-top:none}.task-row .grow{flex:1;min-width:0}
+.tick{width:18px;height:18px;padding:0;border-radius:50%;border:1.5px solid var(--line2);flex-shrink:0}
+.tick:hover{border-color:var(--good);background:color-mix(in srgb,var(--good) 20%,transparent)}
+.link{padding:0;color:var(--base);font-size:11.5px}.link:hover{text-decoration:underline}
+.bench{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:7px 10px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.bench b{font-size:11px;color:var(--faint);font-weight:600}
+.fresh{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.fresh i{width:6px;height:6px;border-radius:50%;background:var(--good)}
+.hint{font-size:11px;color:var(--faint);font-weight:400}
+.verdict{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:var(--r-lg);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),var(--panel))}
+.verdict > div:first-child{flex:1;min-width:0}
+.verdict-v{font-size:20px;font-weight:650;color:var(--c);letter-spacing:-.02em;margin:2px 0}
+.verdict-n{text-align:right}.verdict-n b{display:block;font-size:26px;font-weight:650;color:var(--c);font-variant-numeric:tabular-nums}
+.splitbar{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:2px}
+.sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.offer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end}
+.offer b{display:block;font-size:19px;font-weight:650;margin:2px 0;font-variant-numeric:tabular-nums}
+.camp{gap:10px}.camp .card-h{margin-bottom:0}
+.camp-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px}
+.camp-n div{display:flex;flex-direction:column}.camp-n b{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.camp-f{display:flex;align-items:center;gap:6px;margin-top:auto}
+.formula{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.term{display:flex;flex-direction:column;gap:2px;padding:8px 11px;border-radius:9px;background:var(--panel2);min-width:110px}
+.term small{font-size:11px;color:var(--muted)}.term b{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+.term .delta{align-self:flex-start}
+.term.bad{outline:1.5px solid var(--bad)}.term.res{background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),var(--panel2))}
+.op{align-self:center;color:var(--faint);font-size:16px;font-weight:600}
+.lens-read p{margin:2px 0 12px;font-size:13px;line-height:1.5}
+.callout{padding:9px 11px;border-radius:8px;background:color-mix(in srgb,var(--bad) calc(var(--tint)*100%),transparent);color:var(--text);font-size:12.5px}
+.callout.good{background:color-mix(in srgb,var(--good) calc(var(--tint)*100%),transparent)}
+tr.sel td{background:color-mix(in srgb,var(--ops) 10%,transparent)}
+.split{display:inline-flex;flex-direction:column;gap:1px;width:15px;height:17px;border-radius:4px;overflow:hidden;vertical-align:middle}
+.split i{flex:1;background:var(--panel2)}
+.split .v1{background:color-mix(in srgb,var(--base) 60%,transparent)}.split .v2{background:var(--good)}
+.split .l1{background:color-mix(in srgb,#bf5af2 75%,transparent)}.split .l2{background:color-mix(in srgb,var(--bad) 60%,transparent)}
+.filters{display:flex;align-items:center;gap:16px;padding:8px 20px;border-bottom:1px solid var(--line);background:var(--side);flex-wrap:wrap}
+.fgroup{display:flex;align-items:center;gap:7px}
+.fgroup + .fgroup{padding-left:14px;border-left:1px solid var(--line)}
+.filters .seg button{padding:3px 9px}
+.freset{margin-left:auto}
+@media (max-width:1360px){.flabel{display:none}.filters{gap:12px}.fgroup + .fgroup{padding-left:12px}}
+.flabel{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.filters .seg button.on{background:color-mix(in srgb,var(--base) 22%,var(--panel));color:var(--text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--base) 45%,transparent)}
+.dates{display:inline-flex;align-items:center;gap:6px}.dates input{height:26px;padding:2px 6px;font-size:12px}
+.fsum{font-size:11.5px;color:var(--muted)}
+.rchart{display:flex;flex-direction:column;gap:14px;justify-content:center;flex:1}
+.rrow{display:grid;grid-template-columns:110px 1fr 150px;gap:14px;align-items:center}
+.rrow .nm b{display:block;font-size:12.5px}.rrow .nm small{color:var(--muted);font-size:11px}
+.rtrack{position:relative;height:22px;border-radius:6px;background:repeating-linear-gradient(90deg,var(--panel2) 0 calc(20% - 1px),var(--line) calc(20% - 1px) 20%)}
+.rtrack .band{position:absolute;top:4px;bottom:4px;border-radius:5px;background:color-mix(in srgb,var(--c) 45%,transparent);border:1px solid var(--c)}
+.rtrack .med{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--text);box-shadow:0 0 0 3px var(--panel)}
+.rtrack .p90{position:absolute;top:1px;bottom:1px;width:2px;margin-left:-1px;background:var(--good)}
+.rrow .vl{text-align:right;font-variant-numeric:tabular-nums}.rrow .vl b{display:block}.rrow .vl small{color:var(--muted);font-size:11px}
+.lg-band,.lg-med,.lg-p90{display:inline-block;width:14px;height:8px;border-radius:3px}
+.lg-band{background:color-mix(in srgb,var(--base) 45%,transparent);border:1px solid var(--base)}.lg-med{width:9px;height:9px;border-radius:50%;background:var(--text)}.lg-p90{width:2px;height:12px;background:var(--good)}
+.ladder{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}.ladder > .rung{flex:1 1 170px}
+.rung{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.rung::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--base)}
+.rung-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rung-v{font-size:21px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rung-r{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.rung-r small{display:block;font-size:11px;color:var(--muted)}.rung-r b{font-size:13px;font-variant-numeric:tabular-nums}
+.rung-f{font-size:11.5px;color:var(--base);margin-top:8px}
+.tlist{display:flex;flex-direction:column}
+.trow{display:grid;grid-template-columns:minmax(170px,1.3fr) minmax(220px,1.3fr) minmax(110px,.8fr) minmax(150px,1fr) minmax(170px,1.1fr) minmax(130px,.9fr);gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:12.5px}
+.trow.th{font-size:11px;color:var(--muted);font-weight:550;padding:4px 0 8px;border-top:none}
+.trow:nth-child(2){border-top:none}
+.tset{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.tset select{max-width:170px}
+.tbig{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.radio{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0;cursor:pointer}.radio input{height:auto;accent-color:var(--base)}
+.prog{gap:10px}.prog .card-h{margin-bottom:0}
+.pfacts{display:grid;grid-template-columns:86px 1fr;gap:6px 10px;margin:0;font-size:12.5px}.pfacts dt{color:var(--muted)}.pfacts dd{margin:0}
+.pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.pstats small{display:block;font-size:11px;color:var(--muted)}.pstats b{font-variant-numeric:tabular-nums}
+.labels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px 8px}
+.labels .navitem{border:1px solid var(--line)}
+.inbox button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 6px;border-radius:7px;border-top:1px solid var(--line)}
+.inbox button:first-child{border-top:none}
+.inbox button:hover{background:var(--hover)}
+.inbox .num{min-width:38px;font-size:16px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--c)}
+.inbox .go{color:var(--faint);font-size:12px}
+dialog{border:none;border-radius:14px;padding:0;width:min(600px,94vw);background:var(--panel);color:var(--text);box-shadow:0 24px 64px rgba(0,0,0,.45)}
+dialog::backdrop{background:rgba(5,7,10,.5);backdrop-filter:blur(2px)}
+.dlg{padding:20px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font-size:18px;letter-spacing:-.02em}
+.foot{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+/* Record drawer: the full profile of one creator or merchant */
+dialog.drawer{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(680px,100vw);border-radius:0;border-left:1px solid var(--line2)}
+.rec{display:flex;flex-direction:column;height:100%}
+.rec-h{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line)}
+.rec-h .ava{width:44px;height:44px;font-size:15px}
+.rec-h h2{margin:0;font-size:17px;letter-spacing:-.01em}
+.rec-b{flex:1;overflow:auto;padding:14px 18px 24px;display:flex;flex-direction:column;gap:16px}
+.rec-b > *{flex-shrink:0}
+.rec-b .grid:has(> .kpi) > .kpi{flex-basis:22%}
+.rec-b .hbar{grid-template-columns:minmax(120px,210px) 1fr auto}
+.rec-f{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.props{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}
+.props div{font-size:11.5px;color:var(--muted)}
+.props b{display:block;color:var(--text);font-size:12.5px;font-weight:550;margin-top:1px}
+.sec h4{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.timeline{display:flex;flex-direction:column}
+.ev{display:grid;grid-template-columns:18px 1fr auto;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.ev:first-child{border-top:none}
+.ev i{width:8px;height:8px;border-radius:50%;margin:5px 0 0 4px;background:var(--c)}
+.ev small{display:block;color:var(--muted);font-size:11.5px}
+.ev time{color:var(--faint);font-size:11.5px;white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:500;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw}
+#toast[hidden]{display:none}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.muted{color:var(--muted)}.small{font-size:11.5px}
+.menu-btn{display:none}
+@media (max-width:1180px){.grid:has(> .kpi) > .kpi{flex-basis:170px!important}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g21,.g12{grid-template-columns:minmax(0,1fr)}
+  .g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g3>*{grid-column:auto!important}.g3>:last-child:nth-child(odd){grid-column:1/-1!important}.pulse>:last-child:nth-child(odd){grid-column:1/-1}}
+@media (max-width:1180px){.trow{grid-template-columns:1fr 1fr}.trow.th{display:none}.pulse{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:820px){
+  .pulse{grid-template-columns:minmax(0,1fr)!important}
+  body{display:block}aside{position:fixed;inset:0 auto 0 0;z-index:40;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.4)}
+  body.nav-open aside{transform:none}.menu-btn{display:inline-flex}
+  .wrap{height:auto;min-height:100vh}.top{padding:8px 12px;height:auto;flex-wrap:wrap}.search{order:9;width:100%}main{padding:0 12px 40px}#scope{display:none}
+  .g4,.g2,.board,.form,.offer,.trow{grid-template-columns:minmax(0,1fr)}.labels{grid-template-columns:repeat(2,minmax(0,1fr))}.rrow{grid-template-columns:70px 1fr 96px;gap:8px}.filters{padding:8px 12px;gap:10px}.fsum{display:none}.fstep{grid-template-columns:64px 1fr 84px}.props{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid:has(> .kpi) > .kpi{flex-basis:40%!important}.g3{grid-template-columns:minmax(0,1fr)}.scope{white-space:normal}
+}
+
+/* Acquisition Hub simulation additions */
+.heat{display:inline-grid;place-items:center;min-width:22px;height:20px;border-radius:5px;font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums;background:var(--panel2)}
+.mining-res{min-height:28px;display:flex;align-items:center}
+.checks{display:flex;flex-wrap:wrap;gap:2px 14px}
+.who-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.who-btn{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}
+.who-btn:hover{border-color:var(--growth)}
+.as-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.as-chip b{color:var(--text)}
+.journey-mini{display:flex;flex-wrap:wrap;gap:4px}
+.journey-mini span{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--panel2);color:var(--faint)}
+.journey-mini span.done{color:var(--growth);background:color-mix(in srgb,var(--growth) 14%,transparent)}
+.journey-mini span.now{color:#fff;background:var(--growth);font-weight:600}
+.callout{border-radius:8px;padding:10px 12px;background:color-mix(in srgb,var(--bad) 12%,transparent);font-size:12.5px}
+.callout.good{background:color-mix(in srgb,var(--good) 12%,transparent)}
+.wide-dlg{gap:14px}
+dialog:has(.wide-dlg){width:min(820px,96vw)}
+.auto{font-size:12px;color:var(--base);padding:8px 0;word-break:break-all}
+.gmv-box{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gmv-box label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);font-weight:500}
+.pick-list{display:flex;flex-direction:column;gap:2px;position:absolute;z-index:5;top:100%;left:0;right:0;background:var(--panel);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.pick-list:empty{display:none}
+.field{position:relative}
+.pick{text-align:left;padding:8px 10px;border-radius:6px;font-size:12.5px}
+.pick:hover{background:var(--panel2)}
+.term-row{display:grid;grid-template-columns:90px 80px 150px 1fr auto;gap:8px;align-items:center}
+.term-row input[type=number]{width:56px}
+.report{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.45}
+.paste{white-space:pre-wrap;font-size:12px;margin:0;padding:12px;border-radius:8px;background:var(--panel2);user-select:all}
+@media (max-width:640px){.term-row{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}}
+.st-sel{appearance:none;-webkit-appearance:none;border:none;border-radius:6px;height:24px;padding:0 22px 0 9px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--tc);background:color-mix(in srgb,var(--tc) 16%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23889' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
+.st-sel:disabled{cursor:default;opacity:1;background-image:none;padding-right:9px}
+.cell-sel,.cell-in{border:1px solid transparent;background:transparent;font-size:12.5px;height:26px;padding:0 6px;border-radius:6px;color:var(--text);max-width:100%}
+.cell-sel:hover:not(:disabled),.cell-in:hover:not(:disabled),.cell-sel:focus,.cell-in:focus{border-color:var(--line);background:var(--panel2)}
+.cell-in[type=date]{width:130px}
+.note-line{font-size:11.5px;color:var(--muted);margin:3px 0 0 34px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.pipe button{text-align:left;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:9px 12px;background:var(--panel);display:flex;flex-direction:column;gap:1px;box-shadow:var(--shadow)}
+.pipe button:hover{background:var(--hover)}
+.pipe button.on{background:color-mix(in srgb,var(--c) 12%,var(--panel));border-color:var(--c)}
+.pipe b{font-size:20px;letter-spacing:-.02em}
+.pipe span{font-size:11.5px;color:var(--muted)}
+.bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--base) 12%,transparent);margin-bottom:10px;font-size:12.5px}
+.pl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:2px 10px;align-items:center;font-size:12.5px}
+.pl>span{color:var(--muted)}
+.pl .cell-in,.pl .cell-sel{width:100%}
+.comment-box{display:flex;gap:8px;align-items:flex-start}
+.comment-box textarea{flex:1;min-height:60px;resize:vertical;font:inherit;font-size:12.5px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.fu-list{display:flex;flex-direction:column}
+.fu{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(160px,2fr) auto auto auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.fu:first-child{border-top:none}
+.fu-name{font-size:13px;font-weight:600;text-align:left;color:var(--text)}
+.fu-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:760px){.fu{grid-template-columns:1fr auto}.fu-sub{grid-column:1/-1}}
+.myday{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.myday-i{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);border-left:3px solid var(--c);background:var(--panel2)}
+.myday-i:hover{background:var(--hover)}
+.myday-i b{font-size:20px}
+.myday-i span{font-size:12px;color:var(--muted)}
+.lvl table{font-size:12.5px}
+.lvl th.n,.lvl td.n{min-width:64px}
+.lvl td:first-child{color:var(--muted);white-space:nowrap}
+.lvl .l0{color:var(--faint)}
+.lvl td.tot{font-weight:650;background:var(--panel2)}
+.date-in{height:28px;font-size:12px;padding:0 6px;width:128px}
+.num-in{width:110px;text-align:right}
+.form.f3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.form.f3{grid-template-columns:1fr}}
+.intern-chip{border:none;cursor:pointer}
+.intern-chip:hover{filter:brightness(1.1)}
+.intern-chip:disabled{cursor:default}
+.fee-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.fee-grid label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);font-weight:600}
+@media (max-width:640px){.fee-grid{grid-template-columns:repeat(3,1fr)}}
+a{color:var(--base)}
+a.btn{color:inherit}
+.pick-inline{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pick-inline .pick{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border-radius:0;border-top:1px solid var(--line);padding:7px 10px}
+.pick-inline .pick:first-child{border-top:none}
+.pick-chosen{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--growth) 10%,transparent);border:1px solid color-mix(in srgb,var(--growth) 40%,transparent)}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.flow>div{display:grid;grid-template-columns:24px 1fr;gap:0 8px;padding:9px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.flow i{grid-row:span 2;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--base)}
+.flow b{font-size:12.5px}
+.flow span{font-size:11.5px;color:var(--muted)}
+.partner-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.partner-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);text-align:left}
+.partner-tabs button span{font-size:11.5px;color:var(--muted)}
+.partner-tabs button.on{border-color:var(--base);background:color-mix(in srgb,var(--base) 10%,var(--panel))}
+.partner-tabs button.add{justify-content:center;color:var(--base);font-weight:600;border-style:dashed}
+.status-row.total{border-top:1px solid var(--line);padding-top:6px}
+@media (max-width:760px){.flow{grid-template-columns:1fr 1fr}}
+.pick-h{display:flex;align-items:center;gap:8px}
+.pick-chips{display:flex;flex-wrap:wrap;gap:5px}
+.pick-chips button{padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);font-size:12px;color:var(--muted)}
+.pick-chips button.on{border-color:var(--base);background:color-mix(in srgb,var(--base) 14%,transparent);color:var(--text);font-weight:600}
+.tgt-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:10px 12px;border-radius:10px;background:var(--panel2);font-size:13px}
+.form .form{min-width:0}
+.form input[type=date]{width:100%;min-width:0}
+.link.cnt{font-size:13px;font-weight:600}
+.check-line{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;font-size:12.5px;color:var(--text)!important}
+.check-line input{width:auto;height:auto}
+.tot-row td{font-weight:650;background:var(--panel2)}
+.mix{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--panel2);min-width:120px}
+.mix i{display:block;height:100%}
+.signals{display:flex;flex-direction:column}
+.signal{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.signal:first-child{border-top:none}
+.signal>i{width:8px;height:8px;border-radius:50%;background:var(--c);flex-shrink:0}
+.dot-c{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.heatmap td,.heatmap th{text-align:center}
+.heatmap td:first-child{text-align:left;font-weight:600}
+code.small{font-size:11px;white-space:normal;word-break:break-word;color:var(--muted)}
+</style>
+</head>
+<body>
+<aside aria-label="Navigation">
+  <div class="brand"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--growth)"/><circle cx="13" cy="12" r="5" fill="#fff"/><path d="M4 27c1-5 4.5-8 9-8s8 3 9 8" fill="#fff"/><path d="M24 8v8M20 12h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+    <div>AdtreeGO<small>Performance Analytics · TTLS Ops</small></div></div>
+  <div class="demo" title="Every name and number here is made up">Simulation · sample data only</div>
+  <div class="navscroll" id="nav"></div>
+  <div class="side-foot">
+    <button class="btn sm" id="theme" type="button">Dark mode</button>
+  </div>
+</aside>
+<div class="wrap">
+  <div class="top">
+    <button class="btn sm menu-btn" id="menu" type="button" aria-label="Open menu">Menu</button>
+    <div class="crumbs" id="crumbs"></div>
+    <div class="spacer"></div>
+    <div id="as"></div>
+  </div>
+  <div class="filters" id="filters" aria-label="Filters"></div>
+  <main><div class="page" id="page"></div></main>
+</div>
+<dialog id="modal"></dialog>
+<dialog id="drawer" class="drawer" aria-label="Record"></dialog>
+<div id="toast" role="status" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k in e && typeof v !== 'string') e[k] = v;
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(3)) if (c != null && c !== false) e.append(c);
+  return e;
+}
+const put = (node, ...kids) => node.replaceChildren(...kids.flat(3).filter(c => c != null && c !== false));
+const N = n => Math.round(n).toLocaleString('en-US');
+const Rp = n => n >= 1e9 ? `Rp ${(n / 1e9).toFixed(2)} B` : n >= 1e6 ? `Rp ${(n / 1e6).toFixed(1)} M` : n >= 1e3 ? `Rp ${Math.round(n / 1e3)} K` : `Rp ${N(n)}`;
+const short = n => Rp(n).replace('Rp ', '');
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const sum = (rows, f) => rows.reduce((a, r) => a + f(r), 0);
+function delta(now, before) {
+  if (!before) return null;
+  const d = Math.round((now - before) / before * 100);
+  return h('span', {class: 'delta ' + (d >= 0 ? 'up' : 'down')}, `${d >= 0 ? '+' : ''}${d}%`);
+}
+let toastT;
+function toast(t) { const e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { e.hidden = true; }, 2600); }
+
+function card(title, desc, body, action) {
+  return h('section', {class: 'card'}, title ? h('div', {class: 'card-h'}, h('div', {}, h('h3', {}, title), desc ? h('p', {}, desc) : null), h('div', {class: 'spacer'}), action || null) : null, body);
+}
+function kpi(label, value, {sub, d, spark, c} = {}) {
+  return h('div', {class: 'card kpi'}, h('span', {class: 'l'}, label), h('span', {class: 'v'}, value),
+    sub || d ? h('span', {class: 's'}, d || null, sub || null) : null, spark ? h('div', {class: 'spark', html: sparkline(spark, c || '--base')}) : null);
+}
+function sparkline(vals, c, H = 34) {
+  // Own min to max, not from zero, so small moves stay visible.
+  const W = 200, max = Math.max(...vals), min = Math.min(...vals), x = i => i / (vals.length - 1) * W, y = v => H - 3 - (v - min) / (max - min || 1) * (H - 6);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" height="${H}" aria-hidden="true"><polygon points="0,${H} ${pts} ${W},${H}" fill="var(${c})" opacity=".1"/><polyline points="${pts}" fill="none" stroke="var(${c})" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+}
+const chip = (text, c = '--muted', dot = true) => h('span', {class: 'chip', style: `--tc:var(${c})`}, dot ? h('i') : null, text);
+function avatar(name) {
+  const colors = ['--growth', '--ops', '--base', '--rev'], i = [...name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 4;
+  return h('span', {class: 'ava', style: `background:var(${colors[i]})`}, name.replace('@', '').slice(0, 2).toUpperCase());
+}
+const person = (name, sub) => h('div', {class: 'who'}, avatar(name), h('div', {}, name, sub ? h('small', {}, sub) : null));
+const meter = (p, c, w = 70) => h('div', {class: 'meter', style: `--c:var(${c});width:${typeof w === 'number' ? w + 'px' : w}`}, h('span', {style: `width:${Math.max(0, Math.min(100, p))}%`}));
+const meterRow = (p, c, label, w) => h('div', {class: 'mrow'}, meter(p, c, w), label ?? (Math.round(p) + '%'));
+function chart(draw, height, label) {
+  const box = h('div', {class: 'chartbox', style: `min-height:${height}px`, role: 'img', 'aria-label': label});
+  let w0 = 0;
+  let h0 = 0;
+  new ResizeObserver(([e]) => { const w = Math.floor(e.contentRect.width), hh = Math.floor(e.contentRect.height) || height;
+    if (w > 0 && (w !== w0 || hh !== h0)) { w0 = w; h0 = hh; box.innerHTML = `<svg width="${w}" height="${hh}" viewBox="0 0 ${w} ${hh}">${draw(w, hh).replace(/>([^<>]+)</g, (m, t) => '>' + word(t) + '<')}</svg>`; } }).observe(box);
+  return box;
+}
+const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const nice = v => { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math.log10(v)), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; };
+const fit = (t, px) => { t = word(t); const n = Math.max(3, Math.floor(px / 6.3)); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+const legend = series => h('div', {class: 'legend'}, series.map(se => h('span', {}, h('i', {style: `background:var(${se.c})${se.dash ? ';height:2px' : ''}`}), se.name)));
+function hbars(items, {fmt = N, c, share} = {}) {
+  const max = Math.max(1, ...items.map(i => Math.max(i.value, i.target || 0))), tot = sum(items, i => i.value) || 1;
+  return h('div', {class: 'hbars'}, items.map(i => h('div', {class: 'hbar', title: `${i.label}: ${fmt(i.value)}${i.target ? ' of ' + fmt(i.target) : ''}`}, h('span', {class: 'nm'}, i.label),
+    h('div', {class: 'track', style: `--c:var(${i.c || c || '--base'})`}, h('div', {class: 'fill', style: `width:${i.value > 0 ? Math.max(2, i.value / max * 100) : 0}%`}), i.target ? h('div', {class: 'goal', style: `left:${i.target / max * 100}%`}) : null),
+    h('span', {class: 'vl'}, fmt(i.value), i.target ? h('small', {}, ` / ${fmt(i.target)}`) : share ? h('small', {}, ` ${pct(i.value, tot)}%`) : null))));
+}
+function donut(items, {center, fmt = N, stack} = {}) {
+  const total = sum(items, i => i.value) || 1, R0 = 46, C = 2 * Math.PI * R0;
+  let off = 0;
+  const arcs = items.map(i => { const len = i.value / total * C, s = `<circle r="${R0}" cx="60" cy="60" fill="none" stroke="var(${i.c})" stroke-width="13" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"><title>${esc(i.label)}: ${fmt(i.value)}</title></circle>`; off += len; return s; }).join('');
+  return h('div', {class: 'donut-wrap' + (stack ? ' stack' : '')}, h('div', {html: `<svg width="150" height="150" viewBox="0 0 120 120" role="img" aria-label="Share chart"><circle r="${R0}" cx="60" cy="60" fill="none" stroke="var(--panel2)" stroke-width="13"/>${arcs}<text x="60" y="61" text-anchor="middle" font-size="16" font-weight="650" fill="var(--text)">${center ?? N(total)}</text><text x="60" y="75" text-anchor="middle" font-size="9" fill="var(--muted)">total</text></svg>`}),
+    h('div', {class: 'donut-list'}, items.map(i => h('div', {}, h('i', {style: `background:var(${i.c})`}), h('span', {class: 'dl', title: i.label}, i.label), h('b', {}, fmt(i.value)), h('span', {class: 'muted', style: 'width:36px;text-align:right'}, pct(i.value, total) + '%')))));
+}
+function area(series, labels, {fmt = N, height = 220, zero = true} = {}) {
+  const vals = series.flatMap(s => s.values), top = Math.max(1, ...vals), bot = zero ? 0 : Math.min(...vals);
+  const step = nice((top - bot) / 4 || top / 4), lo = zero ? 0 : Math.max(0, Math.floor(bot / step) * step), hi = Math.max(lo + step, Math.ceil(top / step) * step);
+  return h('div', {class: 'viz'}, chart((W, H) => {
+    const L = 54, R = 14, T = 10, B = 22, n = labels.length, x = i => L + i * (W - L - R) / Math.max(1, n - 1), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    let s = '';
+    for (let t = lo; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 8}" y="${y(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${fmt(t)}</text>`;
+    const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - L - R) / 46))));
+    s += labels.map((l, i) => i === n - 1 || (i % every === 0 && n - 1 - i >= every) ? `<text x="${x(i)}" y="${H - 6}" font-size="10.5" fill="var(--muted)" text-anchor="${i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'}">${esc(l)}</text>` : '').join('');
+    for (const se of series) {
+      const pts = se.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+      if (se.fill !== false) s += `<polygon points="${x(0)},${y(lo)} ${pts} ${x(n - 1)},${y(lo)}" fill="var(${se.c})" opacity=".09"/>`;
+      s += `<polyline points="${pts}" fill="none" stroke="var(${se.c})" stroke-width="${se.dash ? 1.5 : 2}" ${se.dash ? 'stroke-dasharray="4 4"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
+      if (!se.dash) s += `<circle cx="${x(n - 1)}" cy="${y(se.values.at(-1))}" r="3.5" fill="var(${se.c})" stroke="var(--panel)" stroke-width="2"/>` +
+        se.values.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="9" fill="transparent"><title>${esc(labels[i])} · ${esc(se.name)}: ${fmt(v)}</title></circle>`).join('');
+    }
+    return s;
+  }, height, series.map(x => x.name).join(', ')), series.length > 1 ? legend(series) : null);
+}
+function columns(items, {fmt = N, height = 220, ref} = {}) {
+  const top = Math.max(1, ref ? ref.value : 0, ...items.map(i => Math.max(i.value, i.target || 0))), step = nice(top / 3), hi = Math.ceil(top * 1.12 / step) * step;
+  return chart((W, H) => {
+    const L = 48, T = 14, B = 24, bw = (W - L - 4) / Math.max(1, items.length), w = Math.min(42, bw * 0.6), y = v => T + (H - T - B) * (1 - v / hi), small = bw < 44;
+    let s = '';
+    for (let t = 0; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" ${t ? 'stroke-dasharray="2 4"' : ''}/><text x="${L - 8}" y="${y(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${fmt(t)}</text>`;
+    s += items.map((it, i) => {
+      const cx = L + bw * i + bw / 2, top = y(it.value), bh = Math.max(2, H - B - top), r = Math.min(5, w / 2, bh), x0 = cx - w / 2;
+      const path = `M${x0},${H - B} V${top + r} Q${x0},${top} ${x0 + r},${top} H${x0 + w - r} Q${x0 + w},${top} ${x0 + w},${top + r} V${H - B} Z`;
+      return `<path d="${path}" fill="var(${it.c || '--base'})"><title>${esc(it.label)}: ${fmt(it.value)}${it.target ? ' of ' + fmt(it.target) : ''}</title></path>` +
+        (it.target ? `<line x1="${x0 - 5}" x2="${x0 + w + 5}" y1="${y(it.target)}" y2="${y(it.target)}" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>` : '') +
+        (small ? '' : `<text x="${cx}" y="${Math.min(top, it.target ? y(it.target) : 1e9) - 6}" font-size="10.5" text-anchor="middle" fill="var(--text)" font-weight="600">${fmt(it.value)}</text>`) +
+        `<text x="${cx}" y="${H - 7}" font-size="10.5" text-anchor="middle" fill="var(--muted)">${esc(fit(it.label, bw - 4))}</text>`;
+    }).join('');
+    if (ref) { const yy = y(ref.value), tw = ref.label.length * 5.9 + 10;
+      s += `<line x1="${L}" x2="${W}" y1="${yy}" y2="${yy}" stroke="var(--text)" stroke-width="1.2" stroke-dasharray="5 4" opacity=".6"/><rect x="${W - tw}" y="${yy - 18}" width="${tw}" height="15" rx="4" fill="var(--panel2)"/><text x="${W - 5}" y="${yy - 7}" font-size="10.5" text-anchor="end" fill="var(--text)">${esc(ref.label)}</text>`; }
+    return s;
+  }, height, 'Column chart');
+}
+function table(cols, rows, {pageSize = 10, sortKey, dir = -1, search = true, tools, state} = {}) {
+  // state (optional) keeps filter, sort and page when the page re-renders
+  let q = state?.q ?? '', key = state?.key ?? sortKey, d = state?.d ?? dir, page = state?.page ?? 0;
+  const box = h('div');
+  const draw = () => {
+    if (state) Object.assign(state, {q, key, d, page});
+    let list = rows.filter(r => !q || cols.some(c => c.k && String(r[c.k] ?? '').toLowerCase().includes(q)));
+    if (key) list = [...list].sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * d);
+    const pages = Math.max(1, Math.ceil(list.length / pageSize)); page = Math.min(page, pages - 1);
+    const shown = list.slice(page * pageSize, page * pageSize + pageSize);
+    put(box,
+      search || tools ? h('div', {class: 'tools'}, search ? h('input', {type: 'search', placeholder: 'Filter', value: q, 'aria-label': 'Filter rows', style: 'width:200px', oninput: e => { q = e.target.value.toLowerCase(); page = 0; draw(); const i = box.querySelector('input'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }}) : null,
+        tools || null, h('span', {class: 'count'}, `${list.length} ${list.length === 1 ? 'row' : 'rows'}`), h('button', {class: 'btn sm', onclick: () => exportCsv(cols, list)}, 'Export CSV')) : null,
+      h('div', {class: 'tbl'}, h('table', {}, h('thead', {}, h('tr', {}, cols.map(c => h('th', {class: (c.num ? 'n ' : '') + (c.k && !c.fixed ? 'sort' : ''),
+        onclick: c.k && !c.fixed ? () => { d = key === c.k ? -d : -1; key = c.k; draw(); } : null}, c.label, key === c.k ? (d > 0 ? ' ↑' : ' ↓') : '')))),
+        h('tbody', {}, shown.length ? shown.map(r => { const open = opener(r); return h('tr', {class: open ? 'open' : null, onclick: open ? e => { if (!e.target.closest('button,select,input,a')) open(); } : null}, cols.map(c => h('td', {class: c.num ? 'n' : ''}, c.render ? c.render(r) : c.fmt ? c.fmt(r[c.k], r) : String(r[c.k] ?? '')))); })
+          : h('tr', {}, h('td', {colspan: cols.length, class: 'empty'}, 'Nothing here for this filter.')))),
+        pages > 1 ? h('div', {class: 'pager'}, `${page + 1} of ${pages}`, h('button', {class: 'btn sm', disabled: page === 0, onclick: () => { page--; draw(); }}, 'Previous'), h('button', {class: 'btn sm', disabled: page >= pages - 1, onclick: () => { page++; draw(); }}, 'Next')) : null));
+    reword(box);
+  };
+  draw();
+  return box;
+}
+const seg = (options, value, onPick, label) => h('div', {class: 'seg', role: 'group', 'aria-label': label}, options.map(([v, t]) => h('button', {class: v === value ? 'on' : '', 'aria-pressed': String(v === value), onclick: () => onPick(v)}, t)));
+const row = (...kids) => h('div', {class: 'mt'}, ...kids);
+
+function progressLine(label, v, target, fmt = Rp) {
+  const p = pct(v, target);
+  return h('div', {}, h('div', {style: 'display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:5px'}, h('span', {class: 'muted'}, label),
+    h('span', {}, h('b', {}, fmt(v)), h('span', {class: 'muted'}, ` / ${fmt(target)} · ${p}%`))), meter(p, p >= 100 ? '--growth' : p >= 70 ? '--base' : '--ops', '100%'));
+}
+const funnel = (steps, c) => h('div', {class: 'funnel'}, steps.map(([n, v], i) => h('div', {class: 'fstep', style: `--c:var(${c})`}, h('span', {}, n),
+  h('div', {}, h('div', {class: 'fbar', style: `width:${Math.max(10, pct(v, steps[0][1]))}%`}, N(v))), h('span', {class: 'rate'}, i ? pct(v, steps[i - 1][1]) + '% of previous' : ''))));
+function drawer(head, body, foot) {
+  const d = $('#drawer');
+  put(d, h('div', {class: 'rec'}, h('div', {class: 'rec-h'}, ...head, h('button', {class: 'btn sm', onclick: () => d.close()}, 'Close')), h('div', {class: 'rec-b'}, ...body), h('div', {class: 'rec-f'}, ...foot)));
+  if (!d.open) d.showModal();
+  d.querySelector('.rec-b').scrollTop = 0;
+  reword(d);
+}
+const sec = (title, ...kids) => h('div', {class: 'sec'}, h('h4', {}, title), ...kids);
+const mini = (l, v, s) => h('div', {class: 'kpi'}, h('span', {class: 'l'}, l), h('span', {class: 'v', style: 'font-size:16px'}, v), s ? h('span', {class: 's'}, s) : null);
+const props = list => h('div', {class: 'props'}, list.map(([l, v]) => h('div', {}, l, h('b', {}, v))));
+const rate = (a, b) => (a / Math.max(1, b) * 100).toFixed(1) + '%';
+const tspark = (vals, c) => h('div', {class: 'tspark', html: sparkline(vals, c, 22)});
+// ================= Performance Analytics simulation: sample data only, nothing is saved =================
+const word = t => t, reword = () => {};
+function download(name, blob) { const url = URL.createObjectURL(blob); h('a', {href: url, download: name}).click(); setTimeout(() => URL.revokeObjectURL(url), 1500); }
+function exportCsv(cols, list) {
+  const cs = cols.filter(c => c.k && c.label && !c.fixed);
+  const q = v => { const t = typeof v === 'number' ? Math.round(v * 100) / 100 : v ?? ''; return `"${(typeof t === 'string' && /^[=+\-@\t\r]/.test(t) ? "'" + t : String(t)).replace(/"/g, '""')}"`; };
+  download(`performance-${ui.page.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`, new Blob(['﻿' + [cs.map(c => q(c.label)), ...list.map(r => cs.map(c => q(r[c.k])))].map(x => x.join(',')).join('\r\n')], {type: 'text/csv'}));
+  toast(`Exported ${list.length} rows.`);
+}
+function sheetsDownload(file, sheets) {
+  // shortcut: SheetJS comes from a CDN; offline it falls back to a CSV of the first sheet
+  if (!window.XLSX) { const [, rows] = sheets[0]; return exportCsv(Object.keys(rows[0] || {}).map(k2 => ({k: k2, label: k2})), rows); }
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(([name, rows]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{Note: 'Nothing here'}]), name));
+  download(file, new Blob([XLSX.write(wb, {bookType: 'xlsx', type: 'array'})], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+}
+function opener(r) { return r && r._open || null; }
+
+// ---------- sample data (seeded, the same every time) ----------
+let seed = 20261109;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const pick = a => a[Math.floor(rnd() * a.length)];
+const int = (a, b) => Math.floor(a + rnd() * (b - a + 1));
+const gauss = () => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
+const pois = l => { if (!(l > 0)) return 0; if (l > 25) return Math.max(0, Math.round(l + Math.sqrt(l) * gauss())); const L = Math.exp(-l); let k = 0, p = rnd(); while (p > L) { k++; p *= rnd(); } return k; };
+const pickW = (items, w) => { let r = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < items.length; i++) { r -= w[i]; if (r <= 0) return items[i]; } return items.at(-1); };
+
+// Calendar: data runs 1 Aug to 8 Nov 2026 (TikTok exports land one day late); August is only there to compare September with.
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY0 = Date.UTC(2026, 7, 1), DATA_DAYS = 100, LAST = DATA_DAYS - 1;
+const MONTHS = [{k: 'Aug', label: 'August 2026', s: 0, n: 31}, {k: 'Sep', label: 'September 2026', s: 31, n: 30}, {k: 'Oct', label: 'October 2026', s: 61, n: 31}, {k: 'Nov', label: 'November 2026', s: 92, n: 30}];
+const mIdx = g => g < 31 ? 0 : g < 61 ? 1 : g < 92 ? 2 : 3;
+const dLab = g => { const t = new Date(DAY0 + g * 864e5); return `${t.getUTCDate()} ${MON[t.getUTCMonth()]}`; };
+const wday = g => new Date(DAY0 + g * 864e5).getUTCDay();
+
+const IND = ['Accommodation', 'Things To Do', 'Dining'];
+const INDP = {Accommodation: {aov: 650e3, rr: [0.62, 0.8]}, 'Things To Do': {aov: 170e3, rr: [0.8, 0.92]}, Dining: {aov: 85e3, rr: [0.86, 0.96]}};
+const CORE = ['Jakarta', 'Bandung', 'Surabaya', 'Bali', 'Yogyakarta'];
+const CITIES = ['Jakarta', 'Bandung', 'Surabaya', 'Bali', 'Yogyakarta', 'Bekasi', 'Tangerang', 'Bogor', 'Depok', 'Semarang', 'Medan', 'Makassar'], CITY_W = [22, 13, 11, 12, 8, 6, 6, 5, 4, 5, 4, 4];
+const CC = {Jakarta: 'jkt', Bandung: 'bdg', Surabaya: 'sby', Bali: 'bli', Yogyakarta: 'yog', Bekasi: 'bks', Tangerang: 'tgr', Bogor: 'bgr', Depok: 'dpk', Semarang: 'smg', Medan: 'mdn', Makassar: 'mks'};
+const LV = ['L0', 'L1', 'L2', 'L3', 'L4'], LVC = {L0: '--muted', L1: '--base', L2: '--growth', L3: '--ops', L4: '--rev'};
+// Monthly redemption GMV a creator needs to keep a level (sample rule); reaching the next one moves them up on the 2nd of the month.
+const BENCH = {L0: 3e5, L1: 1e6, L2: 8e6, L3: 3e7, L4: 8e7};
+const lvlOf = g => g >= BENCH.L4 ? 'L4' : g >= BENCH.L3 ? 'L3' : g >= BENCH.L2 ? 'L2' : g >= BENCH.L1 ? 'L1' : 'L0';
+const STREAMS = [{k: 'acc', ind: 'Accommodation', live: false, label: 'Accommodation · Video', c: '--base'}, {k: 'ttd', ind: 'Things To Do', live: false, label: 'Things To Do · Video', c: '--growth'},
+  {k: 'sv', ind: 'Dining', live: false, label: 'Dining · Video (SV)', c: '--ops'}, {k: 'ls', ind: 'Dining', live: true, label: 'Dining · LIVE (LS)', c: '--rev'}];
+
+function makeData() {
+  const used = new Set();
+  const HW = {Dining: ['kuliner', 'jajan', 'makan', 'foodie', 'ngemil', 'santap', 'dapur', 'livemakan', 'jualan'], Accommodation: ['staycation', 'nginep', 'hotelhop', 'villa'], 'Things To Do': ['jalanjalan', 'explore', 'liburan', 'main', 'trip']};
+  const HN = ['rara', 'dinda', 'bayu', 'tiara', 'andre', 'mita', 'yoga', 'sasa', 'kiki', 'novi', 'rizky', 'putri', 'gita', 'reza', 'nana', 'oki', 'wulan', 'tegar', 'lia', 'arya', 'sinta', 'bobby', 'mega', 'fikri', 'dewi', 'raka', 'intan', 'galih'];
+  const handle = (ind, city) => { let u; do { u = `@${pick(HW[ind])}${pick(HN)}.${CC[city]}`; if (used.has(u)) u += int(2, 99); } while (used.has(u)); used.add(u); return u; };
+  const MN = {Accommodation: [['Hotel', 'Villa', 'Resort', 'Guest House', 'Homestay', 'Boutique Hotel', 'Glamping'], ['Tirta Ayu', 'Sekar Sari', 'Bukit Indah', 'Lembah Asri', 'Pantai Biru', 'Kenanga', 'Samudra', 'Cempaka', 'Puri Mas', 'Taman Sari', 'Arunika', 'Swarga', 'Kirana', 'Nirwana']],
+    'Things To Do': [['Taman Rekreasi', 'Wahana', 'Kebun', 'Museum', 'Arung Jeram', 'Water Park', 'Taman Satwa', 'Trampoline Park', 'Tur Sepeda', 'Kelas Membatik', 'Snorkeling'], ['Ceria', 'Petualang', 'Pelangi', 'Lestari', 'Lembah Hijau', 'Nusantara', 'Kirana', 'Samudra', 'Bukit Indah', 'Taman Sari']],
+    Dining: [['Kopi', 'Bakmi', 'Sate', 'Ayam Bakar', 'Warung', 'Seafood', 'Dimsum', 'Martabak', 'Soto', 'Nasi Goreng', 'Sushi', 'Bebek Goreng', 'Steak'], ['Senja', 'Pelangi', 'Pak Darto', 'Bu Ratna', 'Nusantara', 'Kencana', 'Sederhana', 'Bahagia', 'Mentari', 'Sinar', 'Jaya Rasa', 'Rempah', 'Kampung', 'Juragan']]};
+  const merchants = [];
+  for (const ind of IND) for (let i = 0, n = {Accommodation: 90, 'Things To Do': 70, Dining: 110}[ind]; i < n; i++) {
+    let name; do { name = `${pick(MN[ind][0])} ${pick(MN[ind][1])}`; } while (used.has(name)); used.add(name);
+    merchants.push({i: merchants.length, name, ind, city: pickW(CITIES, CITY_W), promoted: rnd() < 0.55});
+  }
+  const PRODUCTS = ['Paket Hemat 2 Orang', 'Voucher Rp 50K', 'Voucher Rp 100K', 'Paket Keluarga', 'Buy 1 Get 1', 'Paket Ulang Tahun', 'Menu Spesial', 'Paket Makan Siang', 'Paket Nongkrong'];
+  const brands = [];
+  for (let i = 0; i < 34; i++) {
+    let name; do { name = `${pick(MN.Dining[0])} ${pick(MN.Dining[1])}`; } while (used.has(name)); used.add(name);
+    const prods = [...PRODUCTS].sort(() => rnd() - 0.5).slice(0, int(3, 5)), w = prods.map(() => 0.3 + rnd()), tw = w.reduce((a, b) => a + b, 0);
+    brands.push({i, name, promoted: rnd() < 0.6, products: prods.map((p, k) => ({i: `${i}-${k}`, name: p, share: w[k] / tw, price: int(3, 25) * 10000}))});
+  }
+  const creators = [], rooms = [], HOURS = [...Array(24).keys()], HOUR_W = HOURS.map(x => x < 8 ? 0.2 : x < 11 ? 1 : x < 14 ? 3 : x < 17 ? 1.5 : x < 19 ? 2.5 : x < 23 ? 4 : 1);
+  for (let ci = 0; ci < 1540; ci++) {
+    const lsOnly = ci >= 1500, ind = lsOnly ? 'Dining' : pickW(IND, [27, 27, 46]), city = pickW(CITIES, CITY_W), P = INDP[ind];
+    const tier = lsOnly ? 0 : rnd(), q = 10 ** (lsOnly ? 5.3 + 0.4 * gauss() : tier < 0.009 ? 8.05 + 0.2 * gauss() : tier < 0.035 ? 7.45 + 0.25 * gauss() : 6.3 + 0.45 * gauss()), join = rnd() < 0.86 ? 0 : int(4, LAST - 3);
+    const c = {i: ci, handle: handle(ind, city), ind, city, join, q, aov: P.aov * (0.7 + rnd() * 0.6), ctr: 0.015 + rnd() * 0.035, cvr: 0.02 + rnd() * 0.07, rr: P.rr[0] + rnd() * (P.rr[1] - P.rr[0]),
+      cq: {dur: int(12, 75), comp: 18 + rnd() * 30, like: 2 + rnd() * 7, com: 0.1 + rnd() * 0.9}, ls: lsOnly || (ind === 'Dining' && rnd() < (q > 8e6 ? 0.42 : 0.16)), lsOnly};
+    // Each creator sells at 1 to 5 places of their industry, most in their own city.
+    const own = merchants.filter(m => m.ind === ind && m.city === city), any = merchants.filter(m => m.ind === ind), k = Math.max(1, Math.min(5, Math.round(1 + Math.log10(q / 2e5) * 1.3 + rnd())));
+    const ms = new Set(); for (let t = 0; t < k * 3 && ms.size < k; t++) ms.add((own.length && rnd() < 0.75 ? pick(own) : pick(any)).i);
+    const w = [...ms].map(() => 0.2 + rnd()), tw = w.reduce((a, b) => a + b, 0); c.links = [...ms].map((m, x) => [m, w[x] / tw]);
+    // Video, one value per day
+    const V = c.V = Object.fromEntries(['np', 'vw', 'ck', 'od', 'sp', 'gs', 'gr', 'gn'].map(f => [f, new Float32Array(DATA_DAYS)]));
+    const lazy = rnd() < 0.4, act = MONTHS.map(() => rnd() < (lazy ? 0.8 : 0.2) ? 0 : 0.45 + rnd() * 0.95), ppm = Math.max(1, 2 + 3.2 * Math.log10(Math.max(q, 2e5) / 2e5));
+    const viewsPM = q / (c.aov * c.rr) / c.cvr / c.ctr, vpp = viewsPM * 0.75 / (ppm * 4), legacy = viewsPM / 30 * 0.25;
+    for (let d = join; d < DATA_DAYS; d++) {
+      const m = mIdx(d), a = act[m], np = Math.min(3, pois(ppm / 30 * a * [0.8, 0.95, 1, 1, 1.05, 1.15, 1.1][wday(d)]));
+      V.np[d] = np;
+      let all = 0, fresh = 0, recent = 0;
+      for (let kk = 0; kk <= 20 && d - kk >= join; kk++) { const p = V.np[d - kk]; if (!p) continue; const x = p * vpp * 0.75 ** kk; all += x; if (mIdx(d - kk) === m) fresh += x; if (kk < 14) recent += p; }
+      const base = legacy * (a ? 1 : 0.1), share = fresh / (all + base || 1), views = Math.round((all + base) * (0.7 + rnd() * 0.6));
+      const clicks = Math.round(views * c.ctr * (0.85 + rnd() * 0.3)), orders = pois(clicks * c.cvr), sales = orders * c.aov * (0.75 + rnd() * 0.5), red = sales * c.rr * (0.92 + rnd() * 0.08);
+      V.vw[d] = views; V.ck[d] = clicks; V.od[d] = orders; V.gs[d] = sales; V.gr[d] = red; V.gn[d] = red * share; V.sp[d] = orders ? Math.min(1 + Math.floor(orders / 5), Math.max(1, recent + 2)) : 0;
+    }
+    // LIVE, built from single sessions (rooms)
+    if (c.ls) {
+      const qL = 10 ** (6.72 + 0.55 * gauss()), spm = 5 + int(0, 16), actL = MONTHS.map(() => rnd() < 0.12 ? 0 : 0.5 + rnd() * 0.9);
+      const pref = brands.filter(b => b.promoted), bl = new Set(); for (let t = 0, nb = int(1, 3); t < 9 && bl.size < nb; t++) bl.add((rnd() < 0.6 ? pick(pref) : pick(brands)).i);
+      c.brands = [...bl];
+      const L = c.L = Object.fromEntries(['ses', 'val', 'sec', 'vwr', 'en', 'lod', 'lgs', 'lgr'].map(f => [f, new Float32Array(DATA_DAYS)]));
+      for (let d = join; d < DATA_DAYS; d++) {
+        const n = Math.min(2, pois(spm / 30 * actL[mIdx(d)]));
+        for (let r = 0; r < n; r++) {
+          const dur = Math.max(15, Math.min(300, Math.round(Math.exp(4.3 + 0.5 * gauss())))), aov = int(60, 140) * 1000, target = qL / spm * (dur / 90) * (0.5 + rnd());
+          const od = pois(target / (aov * 0.93)), ent = 0.05 + rnd() * 0.15, pur = 0.02 + rnd() * 0.07, vw = Math.max(30, Math.round(Math.max(1, od) / (ent * pur) * (0.8 + rnd() * 0.4)));
+          const gs = od * aov * (0.85 + rnd() * 0.3), room = {c: ci, d, hr: pickW(HOURS, HOUR_W), dur, valid: dur >= 60, vw, en: Math.round(vw * ent), od, gs, gr: gs * (0.88 + rnd() * 0.09), b: pick(c.brands)};
+          rooms.push(room);
+          L.ses[d]++; L.val[d] += room.valid ? 1 : 0; L.sec[d] += dur * 60; L.vwr[d] += vw; L.en[d] += room.en; L.lod[d] += od; L.lgs[d] += gs; L.lgr[d] += room.gr;
+        }
+      }
+    }
+    // Level history: start from what the creator usually makes, then move on the 2nd of each month by last month's GMV.
+    const hist = [[join, join ? (q > 8e6 ? 'L1' : 'L0') : lvlOf(q * 0.85 + (c.L ? 6e6 : 0))]];
+    for (const m of MONTHS.slice(1)) {
+      if (m.s <= join + 10) continue;
+      const pm = MONTHS[MONTHS.indexOf(m) - 1], from = Math.max(pm.s, join);
+      let g = 0; for (let d = from; d < m.s; d++) g += V.gr[d] + (c.L ? c.L.lgr[d] : 0);
+      g *= pm.n / (m.s - from);
+      const cur = hist.at(-1)[1], x = LV.indexOf(cur);
+      const next = x < 4 && g >= BENCH[LV[x + 1]] && rnd() < 0.7 ? LV[x + 1] : x > 0 && g < BENCH[cur] * 0.25 && rnd() < 0.3 ? LV[x - 1] : cur;
+      if (next !== cur) hist.push([m.s + 1, next]);
+    }
+    c.hist = hist;
+    creators.push(c);
+  }
+  return {creators, merchants, brands, rooms};
+}
+const D = makeData();
+const levelAt = (c, g) => { let l = c.hist[0][1]; for (const [d, x] of c.hist) if (d <= g) l = x; return l; };
+
+// ---------- who sees what ----------
+const ui = {page: 'Overview', month: 'Nov', range: {k: 'mtd', d0: 1, d1: 8}, f: {lvl: '', city: ''}, theme: 'light', tab: {}};
+try { const sv = JSON.parse(localStorage.getItem('perf-sim1') || '{}'); if (sv.page) ui.page = sv.page; if (sv.theme) ui.theme = sv.theme; } catch {}
+const avail = m => m.k === 'Nov' ? LAST - m.s + 1 : m.n;
+function period() {
+  const m = MONTHS.find(x => x.k === ui.month), n = avail(m), d1 = Math.min(ui.range.d1, n), d0 = Math.min(ui.range.d0, d1), pm = MONTHS[MONTHS.indexOf(m) - 1], p1 = Math.min(d1, pm.n), p0 = Math.min(d0, p1);
+  return {m, pm, n, d0, d1, a: m.s + d0 - 1, b: m.s + d1 - 1, pa: pm.s + p0 - 1, pb: pm.s + p1 - 1, days: d1 - d0 + 1, label: d0 === d1 ? `${d0} ${m.k}` : `${d0} to ${d1} ${m.k}`, plabel: p0 === p1 ? `${p0} ${pm.k}` : `${p0} to ${p1} ${pm.k}`};
+}
+const RANGES = [['last', 'Last data day'], ['7d', 'Last 7 days'], ['mtd', 'Month to date'], ['month', 'Whole month']];
+function setRange(k2) { const m = MONTHS.find(x => x.k === ui.month), n = avail(m); ui.range = {k: k2, d0: k2 === 'last' ? n : k2 === '7d' ? Math.max(1, n - 6) : 1, d1: n}; }
+
+// ---------- totals ----------
+const FIELDS = ['np', 'vw', 'ck', 'od', 'sp', 'gs', 'gr', 'gn', 'ses', 'val', 'sec', 'vwr', 'en', 'lod', 'lgs', 'lgr'];
+const SC = new Map();
+// Per creator totals for days a..b, plus level at day b, last post and last LIVE; cached because every page reads it.
+function stats(a, b) {
+  const key = a + ':' + b; if (SC.has(key)) return SC.get(key);
+  if (SC.size > 24) SC.clear();
+  const out = D.creators.map(c => {
+    const s = {c, lvl: levelAt(c, b), linked: c.join <= b, last: -1, lastL: -1};
+    for (const f of FIELDS) s[f] = 0;
+    if (s.linked) {
+      for (const f of ['np', 'vw', 'ck', 'od', 'sp', 'gs', 'gr', 'gn']) { const arr = c.V[f]; let t = 0; for (let d = a; d <= b; d++) t += arr[d]; s[f] = t; }
+      if (c.L) for (const f of ['ses', 'val', 'sec', 'vwr', 'en', 'lod', 'lgs', 'lgr']) { const arr = c.L[f]; let t = 0; for (let d = a; d <= b; d++) t += arr[d]; s[f] = t; }
+      for (let d = b; d >= c.join; d--) if (c.V.np[d]) { s.last = d; break; }
+      if (c.L) for (let d = b; d >= c.join; d--) if (c.L.ses[d]) { s.lastL = d; break; }
+    }
+    s.vAct = s.np > 0 || s.od > 0; s.lAct = s.ses > 0 || s.lod > 0; s.gmv = s.gr + s.lgr;
+    return s;
+  });
+  SC.set(key, out); return out;
+}
+const tot = list => { const t = {n: list.length}; for (const f of FIELDS) t[f] = 0; for (const s of list) for (const f of FIELDS) t[f] += s[f]; return t; };
+const cityOk = city => !ui.f.city || (ui.f.city === 'Other' ? !CORE.includes(city) : city === ui.f.city);
+const F = s => s.linked && (!ui.f.lvl || s.lvl === ui.f.lvl) && cityOk(s.c.city);
+const bench = (l, P) => BENCH[l] * P.days / 30;
+const hitB = (s, P) => s.gmv >= bench(s.lvl, P);
+const dormant = (s, b, live) => (live ? s.lastL : s.last) < 0 || b - (live ? s.lastL : s.last) >= 14;
+const ratio = (a, b) => b ? a / b : 0;
+const rt = (a, b, dp = 1) => b ? (a / b * 100).toFixed(dp) + '%' : '-';
+const dd = (now, prev) => delta(now, prev) || h('span', {class: 'muted'}, '-');
+const ago = (g, b) => g < 0 ? 'No post in 3 months' : b - g === 0 ? 'Today' : `${b - g} d ago`;
+
+// Video merchants: each creator's numbers are split over the places they sell at.
+const MC = new Map();
+function mstats(a, b) {
+  const key = `${a}:${b}:${ui.f.lvl}`; if (MC.has(key)) return MC.get(key);
+  if (MC.size > 24) MC.clear();
+  const M = D.merchants.map(m => ({m, np: 0, vw: 0, ck: 0, od: 0, gs: 0, gr: 0, gn: 0, act: 0, crs: [], byL: Object.fromEntries(LV.map(l => [l, 0])), npL: Object.fromEntries(LV.map(l => [l, 0])), reach: new Set()}));
+  for (const s of stats(a, b)) {
+    if (!s.linked || (ui.f.lvl && s.lvl !== ui.f.lvl) || !(s.np || s.od)) continue;
+    for (const [mi, w] of s.c.links) {
+      const x = M[mi];
+      for (const f of ['np', 'vw', 'ck', 'od', 'gs', 'gr', 'gn']) x[f] += s[f] * w;
+      x.act++; x.byL[s.lvl] += s.gr * w; x.npL[s.lvl] += s.np * w; x.reach.add(s.lvl); x.crs.push({s, gr: s.gr * w, np: s.np * w});
+    }
+  }
+  MC.set(key, M); return M;
+}
+// LIVE brands and their products, straight from the sessions.
+function bstats(a, b) {
+  const S = stats(a, b), B = D.brands.map(br => ({br, ses: 0, val: 0, od: 0, gs: 0, gr: 0, crs: new Map(), byL: Object.fromEntries(LV.map(l => [l, 0])), sesL: Object.fromEntries(LV.map(l => [l, 0])), prod: br.products.map(p => ({p, od: 0, gs: 0, gr: 0, rooms: 0}))}));
+  for (const r of D.rooms) {
+    if (r.d < a || r.d > b) continue;
+    const s = S[r.c]; if (ui.f.lvl && s.lvl !== ui.f.lvl) continue;
+    const x = B[r.b]; x.ses++; x.val += r.valid ? 1 : 0; x.od += r.od; x.gs += r.gs; x.gr += r.gr; x.byL[s.lvl] += r.gr; x.sesL[s.lvl]++; x.crs.set(r.c, (x.crs.get(r.c) || 0) + r.gr);
+    x.prod.forEach(pp => { pp.od += r.od * pp.p.share; pp.gs += r.gs * pp.p.share; pp.gr += r.gr * pp.p.share; pp.rooms += r.gs > 0 ? 1 : 0; });
+  }
+  return B;
+}
+function daily(list, a, b, f) { const out = new Array(b - a + 1).fill(0); for (const s of list) { const c = s.c; if (!s.linked) continue; for (let d = a; d <= b; d++) out[d - a] += f(c, d); } return out; }
+const gmvDay = (c, d) => c.V.gr[d] + (c.L ? c.L.lgr[d] : 0);
+// This month by day next to the same days of last month.
+function trend(listNow, listPrev, f, P) { const n = P.n, pn = Math.min(n, P.pm.n); return {now: daily(listNow, P.m.s, P.m.s + n - 1, f), prev: daily(listPrev, P.pm.s, P.pm.s + pn - 1, f), labels: Array.from({length: n}, (_, i) => String(i + 1))}; }
+
+// ---------- level tables ----------
+// rows: one per level plus a Total row; every column reads the level's current list (cur) and the same days last month (prev).
+function lvlRows(cur, prev) {
+  const ls = LV.filter(l => !ui.f.lvl || l === ui.f.lvl);
+  const mk = (l, cu, pr) => ({lvl: l, cur: cu, prev: pr, t: tot(cu), p: tot(pr)});
+  return [...ls.map(l => mk(l, cur.filter(s => s.lvl === l), prev.filter(s => s.lvl === l))), {...mk('Total', cur, prev), total: true}];
+}
+function ltable(cols, rows, all) {
+  return h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Level'), cols.map(c => h('th', {class: c.text ? '' : 'n', title: c.tip || null}, c.label)))),
+    h('tbody', {}, rows.map(r => h('tr', {class: r.total ? 'tot-row' : null}, h('td', {}, r.total ? h('b', {}, 'Total') : chip(r.lvl, LVC[r.lvl], false)), cols.map(c => h('td', {class: c.text ? '' : 'n'}, c.v(r, all))))))));
+}
+const mixBar = byL => { const t = sum(LV, l => byL[l]) || 1; return h('div', {class: 'mix', title: LV.map(l => `${l} ${pct(byL[l], t)}%`).join(' · ')}, LV.map(l => byL[l] > 0 ? h('i', {style: `width:${byL[l] / t * 100}%;background:var(${LVC[l]})`}) : null)); };
+const mixLegend = () => h('div', {class: 'legend', style: 'margin-top:6px'}, LV.map(l => h('span', {}, h('i', {style: `background:var(${LVC[l]})`}), l)));
+const tabs = (opts, key, def) => seg(opts, ui.tab[key] || def, v => { ui.tab[key] = v; render(); }, 'View');
+const vStatus = (s, P) => !s.linked ? ['Not linked yet', '--muted'] : hitB(s, P) ? ['Hit benchmark', '--growth'] : s.od ? ['Sold', '--base'] : s.np ? ['Posted, no sale', '--ops'] : dormant(s, P.b) ? ['Dormant 14+ days', '--rev'] : ['Quiet', '--muted'];
+const lStatus = (s, P) => !s.linked ? ['Not linked yet', '--muted'] : hitB(s, P) ? ['Hit benchmark', '--growth'] : s.lod ? ['Sold', '--base'] : s.ses ? ['LIVE, no sale', '--ops'] : dormant(s, P.b, true) ? ['No LIVE 14+ days', '--rev'] : ['Quiet', '--muted'];
+const levelChip = l => chip(l, LVC[l], false);
+
+// ================= Overview =================
+const PAGES = {};
+PAGES['Overview'] = () => {
+  const P = period(), all = stats(P.a, P.b), allP = stats(P.pa, P.pb), S = all.filter(F), Sp = allP.filter(F), t = tot(S), tp = tot(Sp);
+  const act = S.filter(s => s.vAct || s.lAct).length, actP = Sp.filter(s => s.vAct || s.lAct).length, hit = S.filter(s => hitB(s, P)).length;
+  const M = mstats(P.a, P.b).filter(x => cityOk(x.m.city)), B = bstats(P.a, P.b), mAct = M.filter(x => x.gr > 0).length + B.filter(x => x.gr > 0).length;
+  const tr = trend(S, Sp, gmvDay, P), byStream = trendStreams(S, P);
+  const streams = STREAMS.map(st => { const cu = S.filter(s => st.live ? s.c.L : s.c.ind === st.ind), pr = Sp.filter(s => st.live ? s.c.L : s.c.ind === st.ind), a = tot(cu), b = tot(pr);
+    const g = st.live ? a.lgr : a.gr, gp = st.live ? b.lgr : b.gr, ac = cu.filter(s => st.live ? s.lAct : s.vAct).length;
+    return {...st, g, gp, ac, n: cu.length, od: st.live ? a.lod : a.od, gs: st.live ? a.lgs : a.gs, places: st.live ? B.filter(x => x.gr > 0).length : M.filter(x => x.m.ind === st.ind && x.gr > 0).length,
+      _open: () => { ui.page = st.live ? 'Creator · LIVE' : 'Creator · Video'; if (!st.live) ui.tab.cvi = st.ind; render(); }}; });
+  const gTot = sum(streams, x => x.g) || 1;
+  const cities = [...CORE, 'Other'].map(cy => { const inC = s => cy === 'Other' ? !CORE.includes(s.c.city) : s.c.city === cy, cu = S.filter(inC), pr = Sp.filter(inC);
+    return {city: cy, g: tot(cu).gr + tot(cu).lgr, gp: tot(pr).gr + tot(pr).lgr, ac: cu.filter(s => s.vAct || s.lAct).length, n: cu.length}; });
+  const topC = [...S].sort((a, b) => b.gmv - a.gmv).slice(0, 10);
+  const topM = [...M.filter(x => x.gr > 0).map(x => ({name: x.m.name, sub: `${x.m.ind} · ${x.m.city}`, kind: 'Video', g: x.gr, _open: () => openMerchant(x.m.i)})),
+    ...B.filter(x => x.gr > 0).map(x => ({name: x.br.name, sub: 'Dining LIVE brand', kind: 'LIVE', g: x.gr, _open: () => openBrand(x.br.i)}))].sort((a, b) => b.g - a.g).slice(0, 10);
+  const R = lvlRows(S, Sp);
+  return [h('div', {class: 'tools'}, h('b', {}, `TTLS performance · ${P.label}`), h('span', {class: 'muted small'}, `Compared with ${P.plabel}. Linked creators only. Every number follows the filters at the top.`), h('span', {class: 'spacer'}),
+      h('button', {class: 'btn sm primary', onclick: () => overviewPack(P, S, streams, R, cities, topC, topM)}, 'Download all (.xlsx)')),
+    h('div', {class: 'grid'}, kpi('Redemption GMV', Rp(t.gr + t.lgr), {d: delta(t.gr + t.lgr, tp.gr + tp.lgr), sub: `vs ${P.plabel}`, c: '--growth', spark: tr.now}), kpi('Sales GMV', Rp(t.gs + t.lgs), {d: delta(t.gs + t.lgs, tp.gs + tp.lgs)}),
+      kpi('Orders', N(t.od + t.lod), {d: delta(t.od + t.lod, tp.od + tp.lod)}), kpi('AOV', Rp(ratio(t.gs + t.lgs, t.od + t.lod))), kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}), kpi('Valid LIVE sessions', N(t.val), {d: delta(t.val, tp.val)}),
+      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} linked · ${pct(act, S.length)}%`}), kpi('Hit level benchmark', N(hit), {sub: `${pct(hit, S.length)}% of linked`}), kpi('Merchants with sales', N(mAct), {sub: 'places and LIVE brands'})),
+    row(card('Signals', 'Plain rules on this data, checked every time the page opens. Click Open to see the detail.', signals(P, S, Sp, streams, cities, M, B))),
+    h('div', {class: 'grid g2 mt'}, card('Redemption GMV by day', `${P.m.label} next to the same days of ${P.pm.label}.`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 210})),
+      card('By industry and format', 'Each line by day this month.', area(byStream, tr.labels, {fmt: short, height: 210}))),
+    row(card('By industry and format', 'Click a line to open it.', table([{k: 'label', label: 'Industry · format', render: r => h('div', {class: 'who'}, h('i', {class: 'dot-c', style: `background:var(${r.c})`}), h('b', {style: 'font-weight:600'}, r.label))},
+      {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: r => dd(r.g, r.gp)},
+      {k: 'ac', label: 'Active creators', num: true, render: r => `${N(r.ac)} of ${N(r.n)}`}, {k: 'gpa', label: 'GMV / active creator', num: true, fmt: Rp}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp},
+      {k: 'places', label: 'Merchants with sales', num: true, fmt: N}], streams.map(x => ({...x, sh: pct(x.g, gTot), chg: ratio(x.g, x.gp), gpa: ratio(x.g, x.ac), aov: ratio(x.gs, x.od)})), {search: false, sortKey: 'g', pageSize: 6}))),
+    row(card(`By level · ${P.label}`, 'Level = the creator’s level at the end of the dates picked. L0 is shown in full here.', ltable([
+      {label: 'Linked', v: r => N(r.cur.length)}, {label: 'Active', v: r => N(r.cur.filter(s => s.vAct || s.lAct).length)}, {label: 'Active %', v: r => pct(r.cur.filter(s => s.vAct || s.lAct).length, r.cur.length) + '%'},
+      {label: 'Hit benchmark', v: r => N(r.cur.filter(s => hitB(s, P)).length)}, {label: 'New posts', v: r => N(r.t.np)}, {label: 'Valid LIVE', v: r => N(r.t.val)}, {label: 'Orders', v: r => N(r.t.od + r.t.lod)},
+      {label: 'Redemption GMV', v: r => h('b', {}, Rp(r.t.gr + r.t.lgr))}, {label: 'Share', v: r => pct(r.t.gr + r.t.lgr, t.gr + t.lgr) + '%'},
+      {label: 'GMV / active creator', v: r => Rp(ratio(r.t.gr + r.t.lgr, r.cur.filter(s => s.vAct || s.lAct).length))}, {label: `vs ${P.plabel}`, v: r => dd(r.t.gr + r.t.lgr, r.p.gr + r.p.lgr)}], R))),
+    h('div', {class: 'grid g2 mt'}, card('GMV by city', 'Share of redemption GMV.', hbars(cities.map(x => ({label: x.city, value: x.g, c: '--growth'})), {fmt: short, share: true})),
+      card('By city', 'Five core cities and other regions.', table([{k: 'city', label: 'City'}, {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'},
+        {k: 'chg', label: 'vs last month', num: true, render: r => dd(r.g, r.gp)}, {k: 'ac', label: 'Active creators', num: true, render: r => `${N(r.ac)} of ${N(r.n)}`}],
+        cities.map(x => ({...x, sh: pct(x.g, t.gr + t.lgr), chg: ratio(x.g, x.gp)})), {search: false, sortKey: 'g', pageSize: 6}))),
+    h('div', {class: 'grid g2 mt'}, card('Top creators', 'By redemption GMV, video and LIVE together.', table([{k: 'h', label: 'Creator', render: s => person(s.c.handle, `${s.c.ind} · ${s.c.city}`)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)},
+        {k: 'gmv', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: s => dd(s.gmv, allP[s.c.i].gmv)}], topC.map(s => ({...s, h: s.c.handle, chg: ratio(s.gmv, allP[s.c.i].gmv), _open: () => openCreator(s.c.i)})), {search: false, sortKey: 'gmv', pageSize: 10})),
+      card('Top merchants', 'Places (video) and LIVE brands, by redemption GMV.', table([{k: 'name', label: 'Merchant', render: r => person(r.name, r.sub)}, {k: 'kind', label: 'Format', render: r => chip(r.kind, r.kind === 'LIVE' ? '--rev' : '--base', false)},
+        {k: 'g', label: 'GMV', num: true, fmt: Rp}], topM, {search: false, sortKey: 'g', pageSize: 10})))];
+};
+function trendStreams(S, P) {
+  const n = P.n, labels = Array.from({length: n}, (_, i) => i);
+  return STREAMS.map(st => ({name: st.label, c: st.c, fill: false, values: daily(S.filter(s => st.live ? s.c.L : s.c.ind === st.ind), P.m.s, P.m.s + n - 1, st.live ? (c, d) => c.L.lgr[d] : (c, d) => c.V.gr[d]), labels}));
+}
+// Rule-based signals only (no AI): biggest moves, weakest activation, dormant pockets, coverage gaps.
+function signals(P, S, Sp, streams, cities, M, B) {
+  const out = [], push = (c, text, go) => out.push({c, text, go});
+  const mv = streams.filter(x => x.gp).map(x => ({...x, d: (x.g - x.gp) / x.gp * 100})).sort((a, b) => a.d - b.d);
+  if (mv.length) { const lo = mv[0], hi = mv.at(-1);
+    if (lo.d < -3) push('--rev', `${lo.label} is down ${Math.abs(Math.round(lo.d))}% vs ${P.plabel}.`, () => { ui.page = lo.live ? 'Creator · LIVE' : 'Creator · Video'; if (!lo.live) ui.tab.cvi = lo.ind; render(); });
+    if (hi.d > 3) push('--growth', `${hi.label} grew ${Math.round(hi.d)}% vs ${P.plabel}.`, () => { ui.page = hi.live ? 'Creator · LIVE' : 'Creator · Video'; if (!hi.live) ui.tab.cvi = hi.ind; render(); }); }
+  const lv = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => { const x = S.filter(s => s.lvl === l); return {l, n: x.length, a: pct(x.filter(s => s.vAct || s.lAct).length, x.length)}; }).filter(x => x.n >= 5).sort((a, b) => a.a - b.a);
+  if (lv.length) push('--ops', `${lv[0].l} has the lowest active rate: ${lv[0].a}% of ${N(lv[0].n)} creators.`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'act'; render(); });
+  const dorm = S.filter(s => dormant(s, P.b) && !s.lAct), byL = LV.map(l => [l, dorm.filter(s => s.lvl === l).length]).sort((a, b) => b[1] - a[1]);
+  if (dorm.length) push('--rev', `${N(dorm.length)} linked creators have not posted for 14+ days, most of them ${byL[0][0]} (${N(byL[0][1])}).`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'act'; render(); });
+  const cs = cities.filter(x => x.gp).map(x => ({...x, d: (x.g - x.gp) / x.gp * 100})).sort((a, b) => b.d - a.d);
+  if (cs.length > 1) push(cs[0].d >= 0 ? '--growth' : '--ops', `${cs[0].city} moved most: ${cs[0].d >= 0 ? '+' : ''}${Math.round(cs[0].d)}%. ${cs.at(-1).city} moved least: ${cs.at(-1).d >= 0 ? '+' : ''}${Math.round(cs.at(-1).d)}%.`, null);
+  const prom = M.filter(x => x.m.promoted), cov = prom.filter(x => x.np > 0).length;
+  if (prom.length) push(pct(cov, prom.length) < 60 ? '--ops' : '--growth', `${pct(prom.length - cov, prom.length)}% of promoted places (${N(prom.length - cov)}) have no new post in these dates.`, () => { ui.page = 'Merchant · Video'; ui.tab.mvt = 'act'; render(); });
+  const t = tot(S); if (t.ses) push(ratio(t.val, t.ses) < 0.6 ? '--ops' : '--base', `${rt(t.val, t.ses, 0)} of LIVE sessions were valid (60 minutes or more).`, () => { ui.page = 'Creator · LIVE'; ui.tab.clt = 'ses'; render(); });
+  const l2 = S.filter(s => ['L2', 'L3', 'L4'].includes(s.lvl)); if (l2.length) push('--base', `${pct(l2.filter(s => hitB(s, P)).length, l2.length)}% of L2 to L4 creators are on track for their level benchmark.`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'level'; render(); });
+  return h('div', {class: 'signals'}, out.map(x => h('div', {class: 'signal', style: `--c:var(${x.c})`}, h('i'), h('span', {class: 'grow'}, x.text), x.go ? h('button', {class: 'btn sm', onclick: x.go}, 'Open') : null)));
+}
+function overviewPack(P, S, streams, R, cities, topC, topM) {
+  const lvlSheet = R.map(r => ({Level: r.total ? 'Total' : r.lvl, Linked: r.cur.length, Active: r.cur.filter(s => s.vAct || s.lAct).length, 'New posts': r.t.np, 'Valid LIVE': r.t.val, Orders: r.t.od + r.t.lod, 'Redemption GMV (Rp)': Math.round(r.t.gr + r.t.lgr), 'Last month same days (Rp)': Math.round(r.p.gr + r.p.lgr)}));
+  sheetsDownload(`TTLS-performance-${P.label.replace(/ /g, '-')}.xlsx`, [
+    ['Summary', [['Dates', P.label], ['Compared with', P.plabel], ['Filters', [ui.f.lvl, ui.f.city].filter(Boolean).join(', ') || 'none'], ['Redemption GMV (Rp)', Math.round(tot(S).gr + tot(S).lgr)], ['Linked creators', S.length], ['Active creators', S.filter(s => s.vAct || s.lAct).length]].map(([Metric, Value]) => ({Metric, Value}))],
+    ['By industry and format', streams.map(x => ({'Industry · format': x.label, 'Redemption GMV (Rp)': Math.round(x.g), 'Last month same days (Rp)': Math.round(x.gp), 'Active creators': x.ac, 'Linked creators': x.n, Orders: x.od, 'Merchants with sales': x.places}))],
+    ['By level', lvlSheet], ['By city', cities.map(x => ({City: x.city, 'Redemption GMV (Rp)': Math.round(x.g), 'Last month same days (Rp)': Math.round(x.gp), 'Active creators': x.ac, 'Linked creators': x.n}))],
+    ['Top creators', topC.map(s => ({Creator: s.c.handle, Level: s.lvl, Industry: s.c.ind, City: s.c.city, 'Redemption GMV (Rp)': Math.round(s.gmv)}))],
+    ['Top merchants', topM.map(x => ({Merchant: x.name, Format: x.kind, Where: x.sub, 'Redemption GMV (Rp)': Math.round(x.g)}))]]);
+  toast('Downloaded: summary, industry and format, level, city, top creators, top merchants.');
+}
+
+// ================= Creator · Video =================
+PAGES['Creator · Video'] = () => {
+  const P = period(), ind = ui.tab.cvi || '', tab = ui.tab.cvt || 'level', inI = s => !ind || s.c.ind === ind;
+  const all = stats(P.a, P.b), S = all.filter(s => F(s) && inI(s)), Sp = stats(P.pa, P.pb).filter(s => F(s) && inI(s)), t = tot(S), tp = tot(Sp);
+  const act = S.filter(s => s.vAct).length, actP = Sp.filter(s => s.vAct).length, tr = trend(S, Sp, (c, d) => c.V.gr[d], P);
+  const head = [h('div', {class: 'tools'}, seg([['', 'All industries'], ...IND.map(i => [i, i === 'Dining' ? 'Dining (SV)' : i])], ind, v => { ui.tab.cvi = v; render(); }, 'Industry'),
+      tabs([['level', 'Level'], ['act', 'Activation'], ['content', 'Content'], ['list', 'Creators']], 'cvt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `Video only · vs ${P.plabel}`)),
+    h('div', {class: 'grid'}, kpi('Video redemption GMV', Rp(t.gr), {d: delta(t.gr, tp.gr), sub: `vs ${P.plabel}`, c: '--base', spark: tr.now}), kpi('Orders', N(t.od), {d: delta(t.od, tp.od)}), kpi('AOV', Rp(ratio(t.gs, t.od))),
+      kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}), kpi('Views', N(t.vw), {d: delta(t.vw, tp.vw)}), kpi('CTR', rt(t.ck, t.vw), {sub: 'clicks ÷ views'}), kpi('CVR', rt(t.od, t.ck), {sub: 'orders ÷ clicks'}),
+      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} · ${pct(act, S.length)}%`}), kpi('GMV / active creator', Rp(ratio(t.gr, act))))];
+  const R = lvlRows(S, Sp);
+  if (tab === 'level') return [...head,
+    row(card(`Video by level · ${P.label}`, 'Level at the end of the dates picked. Share is of video GMV.', ltable([
+      {label: 'Linked', v: r => N(r.cur.length)}, {label: 'Active', v: r => N(r.cur.filter(s => s.vAct).length)}, {label: 'Active %', v: r => pct(r.cur.filter(s => s.vAct).length, r.cur.length) + '%'},
+      {label: 'Hit benchmark', v: r => N(r.cur.filter(s => hitB(s, P)).length)}, {label: 'New posts', v: r => N(r.t.np)}, {label: 'Views', v: r => N(r.t.vw)}, {label: 'CTR', v: r => rt(r.t.ck, r.t.vw)}, {label: 'CVR', v: r => rt(r.t.od, r.t.ck)},
+      {label: 'Orders', v: r => N(r.t.od)}, {label: 'AOV', v: r => Rp(ratio(r.t.gs, r.t.od))}, {label: 'Redemption GMV', v: r => h('b', {}, Rp(r.t.gr))}, {label: 'Share', v: r => pct(r.t.gr, t.gr) + '%'},
+      {label: 'GMV / active', v: r => Rp(ratio(r.t.gr, r.cur.filter(s => s.vAct).length))}, {label: 'GMV / new post', v: r => Rp(ratio(r.t.gr, r.t.np))}, {label: `vs ${P.plabel}`, v: r => dd(r.t.gr, r.p.gr)}], R))),
+    h('div', {class: 'grid g2 mt'}, card('GMV by level', `Bar = ${P.label}. Line = ${P.plabel}.`, columns(R.filter(r => !r.total).map(r => ({label: r.lvl, value: r.t.gr, target: r.p.gr, c: LVC[r.lvl]})), {fmt: short, height: 220})),
+      card('Where video GMV comes from', 'Share of video GMV per level.', donut(R.filter(r => !r.total && r.t.gr > 0).map(r => ({label: r.lvl, value: r.t.gr, c: LVC[r.lvl]})), {fmt: short, center: short(t.gr)}))),
+    row(levelMoves(P, s => F(s) && inI(s)))];
+  if (tab === 'act') {
+    const posted = S.filter(s => s.np > 0).length, sold = S.filter(s => s.od > 0).length, dorm = S.filter(s => dormant(s, P.b));
+    const newJ = s => s.c.join >= P.m.s && s.c.join <= P.b, prevMonth = stats(P.pm.s, P.pm.s + P.pm.n - 1);
+    const ad = trend(S, Sp, (c, d) => c.V.np[d] > 0 || c.V.od[d] > 0 ? 1 : 0, P);
+    return [...head,
+      h('div', {class: 'grid g12 mt'}, card('Activation', `Each step is part of the one before (${P.label}). Posted a new video: ${N(posted)}.`, funnel([['Linked creators', S.length], ['Active (posted or sold)', S.filter(s => s.vAct).length], ['Made a sale', sold], ['Sold and hit benchmark', S.filter(s => s.od > 0 && hitB(s, P)).length]], '--base')),
+        card('Active creators by day', 'Posted or sold that day.', area([{name: P.m.k, values: ad.now, c: '--base'}, {name: P.pm.k, values: ad.prev, c: '--muted', dash: true, fill: false}], ad.labels, {height: 200}))),
+      row(card('Activation by level', 'Dormant = no new video for 14 days or more, counted up to the end of the dates picked.', ltable([
+        {label: 'Linked', v: r => N(r.cur.length)}, {label: 'Posted', v: r => N(r.cur.filter(s => s.np > 0).length)}, {label: 'Posted %', v: r => pct(r.cur.filter(s => s.np > 0).length, r.cur.length) + '%'},
+        {label: 'Sold', v: r => N(r.cur.filter(s => s.od > 0).length)}, {label: 'Sold %', v: r => pct(r.cur.filter(s => s.od > 0).length, r.cur.length) + '%'},
+        {label: 'Active %', v: r => h('b', {}, pct(r.cur.filter(s => s.vAct).length, r.cur.length) + '%')}, {label: 'vs last month', v: r => dd(pct(r.cur.filter(s => s.vAct).length, r.cur.length), pct(r.prev.filter(s => s.vAct).length, r.prev.length))},
+        {label: 'Hit benchmark %', v: r => pct(r.cur.filter(s => hitB(s, P)).length, r.cur.length) + '%'}, {label: 'Dormant 14+ days', v: r => N(r.cur.filter(s => dormant(s, P.b)).length)},
+        {label: 'Joined this month', v: r => N(r.cur.filter(newJ).length)}, {label: 'of them active', v: r => N(r.cur.filter(s => newJ(s) && s.vAct).length)}], R))),
+      row(card(`Dormant creators · ${N(dorm.length)}`, 'Linked, no new video for 14+ days. Biggest sellers last month first: they are the ones worth a call.', table([
+        {k: 'h', label: 'Creator', render: s => person(s.c.handle, `${s.c.ind} · ${s.c.city}`)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)}, {k: 'lastN', label: 'Last new video', num: true, render: s => s.last < 0 ? h('span', {class: 'muted'}, 'None in 3 months') : `${dLab(s.last)} · ${P.b - s.last} d ago`},
+        {k: 'pm', label: `GMV in ${P.pm.k}`, num: true, fmt: Rp}, {k: 'gr', label: 'GMV in these dates', num: true, fmt: Rp}, {k: 'places', label: 'Places they sell at', num: true}],
+        dorm.map(s => ({...s, h: s.c.handle, lastN: s.last, pm: prevMonth[s.c.i].gr, places: s.c.links.length, _open: () => openCreator(s.c.i)})), {sortKey: 'pm', pageSize: 10})))];
+  }
+  if (tab === 'content') {
+    const W = (list, f) => { const v = sum(list, s => s.vw); return v ? sum(list, s => s.vw * s.c.cq[f]) / v : 0; };
+    const np = trend(S, Sp, (c, d) => c.V.np[d], P);
+    return [...head,
+      h('div', {class: 'grid mt'}, kpi('Views per new post', N(ratio(t.vw, t.np))), kpi('Sold posts', N(t.sp), {sub: 'posts with at least one order'}), kpi('GMV from new posts', rt(t.gn, t.gr, 0), {sub: 'posted this month · the rest is older posts'}),
+        kpi('Video completion', W(S, 'comp').toFixed(1) + '%'), kpi('Like rate', W(S, 'like').toFixed(1) + '%'), kpi('Comment rate', W(S, 'com').toFixed(2) + '%'), kpi('Avg duration', Math.round(W(S, 'dur')) + ' s')),
+      row(card('Content by level', 'Rates are weighted by views. New posts = posted inside the dates picked.', ltable([
+        {label: 'New posts', v: r => N(r.t.np)}, {label: 'Posts / active', v: r => ratio(r.t.np, r.cur.filter(s => s.vAct).length).toFixed(1)}, {label: 'Views', v: r => N(r.t.vw)}, {label: 'Views / new post', v: r => N(ratio(r.t.vw, r.t.np))},
+        {label: 'CTR', v: r => rt(r.t.ck, r.t.vw)}, {label: 'CVR', v: r => rt(r.t.od, r.t.ck)}, {label: 'Sold posts', v: r => N(r.t.sp)}, {label: 'GMV from new posts', v: r => rt(r.t.gn, r.t.gr, 0)},
+        {label: 'Completion', v: r => W(r.cur, 'comp').toFixed(1) + '%'}, {label: 'Like rate', v: r => W(r.cur, 'like').toFixed(1) + '%'}, {label: 'Comment rate', v: r => W(r.cur, 'com').toFixed(2) + '%'}, {label: 'Avg duration', v: r => Math.round(W(r.cur, 'dur')) + ' s'},
+        {label: 'New posts vs last month', v: r => dd(r.t.np, r.p.np)}], R))),
+      h('div', {class: 'grid g2 mt'}, card('New posts by day', `${P.m.label} next to ${P.pm.label}.`, area([{name: P.m.k, values: np.now, c: '--base'}, {name: P.pm.k, values: np.prev, c: '--muted', dash: true, fill: false}], np.labels, {height: 200})),
+        card('GMV from new posts, by level', 'The share of each level’s video GMV that comes from videos posted this month.', hbars(R.filter(r => !r.total).map(r => ({label: r.lvl, value: pct(r.t.gn, r.t.gr), c: LVC[r.lvl]})), {fmt: v => v + '%'})))];
+  }
+  const st = ui.tab.cvs || 'all', SpAll = stats(P.pa, P.pb);
+  const keep = {all: () => true, active: s => s.vAct, hit: s => hitB(s, P), dormant: s => dormant(s, P.b), none: s => !s.vAct}[st];
+  return [...head, row(card('Creators', 'Click a creator for the full profile.', table([
+    {k: 'h', label: 'Creator', render: s => person(s.c.handle, `${s.c.ind} · ${s.c.city}`)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)}, {k: 'stt', label: 'Status', render: s => chip(...vStatus(s, P), false)},
+    {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'vw', label: 'Views', num: true, fmt: N}, {k: 'ctr', label: 'CTR', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'cvr', label: 'CVR', num: true, fmt: v => v.toFixed(1) + '%'},
+    {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: s => dd(s.gr, SpAll[s.c.i].gr)}, {k: 'gpp', label: 'GMV / post', num: true, fmt: Rp},
+    {k: 'last', label: 'Last new post', num: true, render: s => h('span', {class: 'small'}, ago(s.last, P.b))}, {k: 'tr', label: 'This month', fixed: true, render: s => tspark(Array.from({length: P.n}, (_, i) => s.c.V.gr[P.m.s + i]), '--base')}],
+    S.filter(keep).map(s => ({...s, h: s.c.handle, stt: vStatus(s, P)[0], ctr: ratio(s.ck, s.vw) * 100, cvr: ratio(s.od, s.ck) * 100, chg: ratio(s.gr, SpAll[s.c.i].gr), gpp: ratio(s.gr, s.np), _open: () => openCreator(s.c.i)})),
+    {sortKey: 'gr', pageSize: 15, state: ui.tab.cvState ||= {}, tools: seg([['all', 'All'], ['active', 'Active'], ['hit', 'Hit benchmark'], ['dormant', 'Dormant'], ['none', 'Not active']], st, v => { ui.tab.cvs = v; render(); }, 'Status')})))];
+};
+// Level moves inside the selected month, from the level log (up, down, joined).
+function levelMoves(P, keep) {
+  const s0 = P.m.s, all = stats(P.a, P.b).filter(keep), moves = [];
+  for (const s of all) for (const [d, l] of s.c.hist.slice(1)) if (d >= s0 && d <= P.b) { const before = levelAt(s.c, d - 1); moves.push({s, d, from: before, to: l, up: LV.indexOf(l) > LV.indexOf(before)}); }
+  const pm = stats(P.pm.s, P.pm.s + P.pm.n - 1);
+  const rows = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({l, start: all.filter(s => s.c.join < s0 && levelAt(s.c, s0) === l).length, upOut: moves.filter(x => x.from === l && x.up).length, downOut: moves.filter(x => x.from === l && !x.up).length,
+    inn: moves.filter(x => x.to === l).length, joined: all.filter(s => s.c.join >= s0 && s.c.join <= P.b && s.c.hist[0][1] === l).length, end: all.filter(s => s.lvl === l).length}));
+  return card(`Level moves in ${P.m.label}`, 'From the level log: levels change on the 2nd of the month based on last month’s GMV.', h('div', {class: 'stack'},
+    h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Level', 'Start of month', 'Moved up', 'Moved down', 'Came in', 'Joined', 'Now'].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
+      h('tbody', {}, rows.map(r => h('tr', {}, h('td', {}, levelChip(r.l)), h('td', {class: 'n'}, N(r.start)), h('td', {class: 'n', style: 'color:var(--growth)'}, r.upOut ? '↑ ' + N(r.upOut) : '0'), h('td', {class: 'n', style: 'color:var(--rev)'}, r.downOut ? '↓ ' + N(r.downOut) : '0'),
+        h('td', {class: 'n'}, N(r.inn)), h('td', {class: 'n'}, N(r.joined)), h('td', {class: 'n'}, h('b', {}, N(r.end)))))))),
+    table([{k: 'h', label: 'Creator', render: x => person(x.s.c.handle, x.s.c.city)}, {k: 'mv', label: 'Move', render: x => h('span', {}, levelChip(x.from), x.up ? ' ↑ ' : ' ↓ ', levelChip(x.to))}, {k: 'd', label: 'Day', num: true, fmt: dLab},
+      {k: 'g', label: `GMV in ${P.pm.k}`, num: true, fmt: Rp}], moves.map(x => ({...x, h: x.s.c.handle, mv: x.to, g: pm[x.s.c.i].gmv, _open: () => openCreator(x.s.c.i)})), {sortKey: 'g', pageSize: 6, search: false})));
+}
+
+// ================= Creator · LIVE =================
+PAGES['Creator · LIVE'] = () => {
+  const P = period(), tab = ui.tab.clt || 'level', isL = s => !!s.c.L;
+  const S = stats(P.a, P.b).filter(s => F(s) && isL(s)), Sp = stats(P.pa, P.pb).filter(s => F(s) && isL(s)), t = tot(S), tp = tot(Sp);
+  const act = S.filter(s => s.lAct).length, tr = trend(S, Sp, (c, d) => c.L.lgr[d], P);
+  const head = [h('div', {class: 'tools'}, h('b', {}, 'Dining · LIVE (LS)'), tabs([['level', 'Level'], ['act', 'Activation'], ['ses', 'Sessions'], ['list', 'Creators']], 'clt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `LIVE only · vs ${P.plabel}`)),
+    h('div', {class: 'grid'}, kpi('LIVE redemption GMV', Rp(t.lgr), {d: delta(t.lgr, tp.lgr), sub: `vs ${P.plabel}`, c: '--rev', spark: tr.now}), kpi('Sessions', N(t.ses), {d: delta(t.ses, tp.ses)}), kpi('Valid sessions', N(t.val), {sub: `${rt(t.val, t.ses, 0)} of sessions`}),
+      kpi('LIVE hours', N(t.sec / 3600)), kpi('Viewers', N(t.vwr), {d: delta(t.vwr, tp.vwr)}), kpi('Entering rate', rt(t.en, t.vwr), {sub: 'entered ÷ viewers'}), kpi('Purchase rate', rt(t.lod, t.en), {sub: 'orders ÷ entered'}),
+      kpi('GPM', Rp(ratio(t.lgs, t.vwr) * 1000), {sub: 'sales per 1,000 viewers'}), kpi('Active LIVE creators', N(act), {sub: `of ${N(S.length)} · ${pct(act, S.length)}%`}))];
+  const R = lvlRows(S, Sp);
+  if (tab === 'level') return [...head,
+    row(card(`LIVE by level · ${P.label}`, 'Valid = 60 minutes or more. Share is of LIVE GMV.', ltable([
+      {label: 'LIVE creators', v: r => N(r.cur.length)}, {label: 'Went LIVE', v: r => N(r.cur.filter(s => s.ses > 0).length)}, {label: 'Sessions', v: r => N(r.t.ses)}, {label: 'Valid', v: r => N(r.t.val)}, {label: 'Valid %', v: r => rt(r.t.val, r.t.ses, 0)},
+      {label: 'Hours', v: r => N(r.t.sec / 3600)}, {label: 'Viewers', v: r => N(r.t.vwr)}, {label: 'Entering', v: r => rt(r.t.en, r.t.vwr)}, {label: 'Purchase', v: r => rt(r.t.lod, r.t.en)}, {label: 'Orders', v: r => N(r.t.lod)},
+      {label: 'AOV', v: r => Rp(ratio(r.t.lgs, r.t.lod))}, {label: 'Redemption GMV', v: r => h('b', {}, Rp(r.t.lgr))}, {label: 'Share', v: r => pct(r.t.lgr, t.lgr) + '%'}, {label: 'GMV / valid session', v: r => Rp(ratio(r.t.lgr, r.t.val))},
+      {label: 'GMV / hour', v: r => Rp(ratio(r.t.lgr, r.t.sec / 3600))}, {label: `vs ${P.plabel}`, v: r => dd(r.t.lgr, r.p.lgr)}], R))),
+    h('div', {class: 'grid g2 mt'}, card('LIVE GMV by level', `Bar = ${P.label}. Line = ${P.plabel}.`, columns(R.filter(r => !r.total).map(r => ({label: r.lvl, value: r.t.lgr, target: r.p.lgr, c: LVC[r.lvl]})), {fmt: short, height: 220})),
+      card('LIVE GMV by day', `${P.m.label} next to ${P.pm.label}.`, area([{name: P.m.k, values: tr.now, c: '--rev'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 220}))),
+    row(levelMoves(P, s => F(s) && isL(s)))];
+  if (tab === 'act') {
+    const went = S.filter(s => s.ses > 0).length, valid = S.filter(s => s.val > 0).length, sold = S.filter(s => s.lod > 0).length, dorm = S.filter(s => dormant(s, P.b, true));
+    const ad = trend(S, Sp, (c, d) => c.L.ses[d] > 0 ? 1 : 0, P), prevMonth = stats(P.pm.s, P.pm.s + P.pm.n - 1);
+    return [...head,
+      h('div', {class: 'grid g12 mt'}, card('Activation', `Each step is part of the one before (${P.label}). Had a valid session: ${N(valid)}.`, funnel([['LIVE creators', S.length], ['Went LIVE', went], ['Sold in LIVE', sold], ['Sold and hit benchmark', S.filter(s => s.lod > 0 && hitB(s, P)).length]], '--rev')),
+        card('Creators LIVE by day', 'At least one session that day.', area([{name: P.m.k, values: ad.now, c: '--rev'}, {name: P.pm.k, values: ad.prev, c: '--muted', dash: true, fill: false}], ad.labels, {height: 200}))),
+      row(card('Activation by level', 'No LIVE 14+ days = no session for 14 days or more, counted up to the end of the dates picked.', ltable([
+        {label: 'LIVE creators', v: r => N(r.cur.length)}, {label: 'Went LIVE', v: r => N(r.cur.filter(s => s.ses > 0).length)}, {label: 'Went LIVE %', v: r => pct(r.cur.filter(s => s.ses > 0).length, r.cur.length) + '%'},
+        {label: 'Valid session %', v: r => pct(r.cur.filter(s => s.val > 0).length, r.cur.length) + '%'}, {label: 'Sold %', v: r => pct(r.cur.filter(s => s.lod > 0).length, r.cur.length) + '%'},
+        {label: 'Sessions / active', v: r => ratio(r.t.ses, r.cur.filter(s => s.ses > 0).length).toFixed(1)}, {label: 'Hit benchmark %', v: r => pct(r.cur.filter(s => hitB(s, P)).length, r.cur.length) + '%'},
+        {label: 'No LIVE 14+ days', v: r => N(r.cur.filter(s => dormant(s, P.b, true)).length)}], R))),
+      row(card(`No LIVE for 14+ days · ${N(dorm.length)}`, 'Biggest LIVE sellers last month first.', table([{k: 'h', label: 'Creator', render: s => person(s.c.handle, s.c.city)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)},
+        {k: 'lastL', label: 'Last LIVE', num: true, render: s => s.lastL < 0 ? h('span', {class: 'muted'}, 'None in 3 months') : `${dLab(s.lastL)} · ${P.b - s.lastL} d ago`}, {k: 'pm', label: `LIVE GMV in ${P.pm.k}`, num: true, fmt: Rp}, {k: 'gr', label: 'Video GMV in these dates', num: true, fmt: Rp}],
+        dorm.map(s => ({...s, h: s.c.handle, pm: prevMonth[s.c.i].lgr, _open: () => openCreator(s.c.i)})), {sortKey: 'pm', pageSize: 10})))];
+  }
+  if (tab === 'ses') {
+    const ok = new Set(S.map(s => s.c.i)), RM = D.rooms.filter(r => r.d >= P.a && r.d <= P.b && ok.has(r.c)), hrs = [...Array(18).keys()].map(x => x + 6);
+    const grid = WD.map((_, w) => hrs.map(hr => { const x = RM.filter(r => wday(r.d) === w && r.hr === hr); return {n: x.length, g: sum(x, r => r.gr)}; })), gmax = Math.max(1, ...grid.flat().map(x => x.n ? x.g / x.n : 0));
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    return [...head,
+      h('div', {class: 'grid mt'}, kpi('Avg session', Math.round(ratio(sum(RM, r => r.dur), RM.length)) + ' min'), kpi('Viewers / session', N(ratio(t.vwr, t.ses))), kpi('GMV / session', Rp(ratio(t.lgr, t.ses))), kpi('Sessions with a sale', rt(RM.filter(r => r.od > 0).length, RM.length, 0)),
+        kpi('Best hour', (() => { const by = hrs.map(hr => [hr, sum(RM.filter(r => r.hr === hr), r => r.gr)]).sort((a, b) => b[1] - a[1])[0]; return by && by[1] ? `${by[0]}:00` : '-'; })(), {sub: 'most GMV started then'})),
+      row(card('When LIVE sells', 'Rows = day of the week, columns = start hour. Number = sessions. Darker = more GMV per session.', h('div', {class: 'tbl'}, h('table', {class: 'days heatmap'}, h('thead', {}, h('tr', {}, h('th', {}, ''), hrs.map(hr => h('th', {}, String(hr))))),
+        h('tbody', {}, order.map(w => h('tr', {}, h('td', {}, WD[w]), hrs.map((hr, i) => { const x = grid[w][i], v = x.n ? x.g / x.n / gmax : 0; return h('td', {}, h('span', {class: 'heat', style: x.n ? `background:color-mix(in srgb,var(--rev) ${12 + v * 70}%,transparent)` : '', title: `${WD[w]} ${hr}:00 · ${x.n} sessions · ${Rp(ratio(x.g, x.n))} per session`}, x.n || '')); })))))))),
+      row(card('Sessions', 'Every LIVE room in the dates picked. Click a row for the creator.', table([{k: 'day', label: 'Day', render: r => `${dLab(r.d)} · ${String(r.hr).padStart(2, '0')}:00`}, {k: 'h', label: 'Creator', render: r => person(D.creators[r.c].handle, levelAt(D.creators[r.c], P.b))},
+        {k: 'brand', label: 'Brand'}, {k: 'dur', label: 'Minutes', num: true}, {k: 'valid', label: 'Valid', render: r => r.valid ? chip('Valid', '--growth', false) : chip('Short', '--muted', false)}, {k: 'vw', label: 'Viewers', num: true, fmt: N},
+        {k: 'er', label: 'Entering', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'od', label: 'Orders', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
+        RM.map(r => ({...r, day: r.d * 100 + r.hr, h: D.creators[r.c].handle, brand: D.brands[r.b].name, er: ratio(r.en, r.vw) * 100, _open: () => openCreator(r.c)})), {sortKey: 'gr', pageSize: 12})))];
+  }
+  const st = ui.tab.cls || 'all', SpAll = stats(P.pa, P.pb), keep = {all: () => true, active: s => s.lAct, hit: s => hitB(s, P), dormant: s => dormant(s, P.b, true)}[st];
+  return [...head, row(card('LIVE creators', 'Click a creator for the full profile.', table([
+    {k: 'h', label: 'Creator', render: s => person(s.c.handle, s.c.city)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)}, {k: 'stt', label: 'Status', render: s => chip(...lStatus(s, P), false)},
+    {k: 'ses', label: 'Sessions', num: true}, {k: 'val', label: 'Valid', num: true}, {k: 'hrs', label: 'Hours', num: true, fmt: v => v.toFixed(1)}, {k: 'vwr', label: 'Viewers', num: true, fmt: N}, {k: 'er', label: 'Entering', num: true, fmt: v => v.toFixed(1) + '%'},
+    {k: 'pr', label: 'Purchase', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'lgr', label: 'LIVE GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: s => dd(s.lgr, SpAll[s.c.i].lgr)},
+    {k: 'gvs', label: 'GMV / valid', num: true, fmt: Rp}, {k: 'lastL', label: 'Last LIVE', num: true, render: s => h('span', {class: 'small'}, s.lastL < 0 ? 'None in 3 months' : ago(s.lastL, P.b))}],
+    S.filter(keep).map(s => ({...s, h: s.c.handle, stt: lStatus(s, P)[0], hrs: s.sec / 3600, er: ratio(s.en, s.vwr) * 100, pr: ratio(s.lod, s.en) * 100, chg: ratio(s.lgr, SpAll[s.c.i].lgr), gvs: ratio(s.lgr, s.val), _open: () => openCreator(s.c.i)})),
+    {sortKey: 'lgr', pageSize: 15, state: ui.tab.clState ||= {}, tools: seg([['all', 'All'], ['active', 'Active'], ['hit', 'Hit benchmark'], ['dormant', 'No LIVE 14+ days']], st, v => { ui.tab.cls = v; render(); }, 'Status')})))];
+};
+
+// ================= Merchant · Video =================
+PAGES['Merchant · Video'] = () => {
+  const P = period(), ind = ui.tab.mvi || '', tab = ui.tab.mvt || 'level', keepM = x => (!ind || x.m.ind === ind) && cityOk(x.m.city);
+  const M = mstats(P.a, P.b).filter(keepM), Mp = mstats(P.pa, P.pb).filter(keepM), g = sum(M, x => x.gr), gp = sum(Mp, x => x.gr);
+  const sold = M.filter(x => x.gr > 0), posted = M.filter(x => x.np > 0), prom = M.filter(x => x.m.promoted), promCov = prom.filter(x => x.np > 0).length;
+  const head = [h('div', {class: 'tools'}, seg([['', 'All industries'], ...IND.map(i => [i, i === 'Dining' ? 'Dining (SV)' : i])], ind, v => { ui.tab.mvi = v; render(); }, 'Industry'),
+      tabs([['level', 'Level'], ['act', 'Activation'], ['list', 'Merchants']], 'mvt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, 'Places that video creators sell at · our creators only')),
+    h('div', {class: 'grid'}, kpi('Merchant video GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`, c: '--ops'}), kpi('Merchants with sales', N(sold.length), {d: delta(sold.length, Mp.filter(x => x.gr > 0).length), sub: `of ${N(M.length)} places`}),
+      kpi('Merchants with new posts', N(posted.length)), kpi('Promoted places covered', pct(promCov, prom.length) + '%', {sub: `${N(promCov)} of ${N(prom.length)} have a new post`}), kpi('GMV per selling merchant', Rp(ratio(g, sold.length))),
+      kpi('Active creators per merchant', ratio(sum(posted, x => x.act), posted.length).toFixed(1)), kpi('Orders', N(sum(M, x => x.od))), kpi('New posts', N(sum(M, x => x.np))))];
+  if (tab === 'level') {
+    const rows = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({l, reach: M.filter(x => x.reach.has(l)).length, np: sum(M, x => x.npL[l]), g: sum(M, x => x.byL[l]), gp: sum(Mp, x => x.byL[l])}));
+    const top = [...sold].sort((a, b) => b.gr - a.gr).slice(0, 15);
+    return [...head,
+      row(card('Merchant GMV by creator level', 'Which creator levels bring the GMV for these places. A merchant counts once per level that sold or posted there.', h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Creator level', 'Merchants reached', 'New posts', 'Redemption GMV', 'Share', 'GMV / merchant reached', `vs ${P.plabel}`].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
+        h('tbody', {}, rows.map(r => h('tr', {}, h('td', {}, levelChip(r.l)), h('td', {class: 'n'}, N(r.reach)), h('td', {class: 'n'}, N(r.np)), h('td', {class: 'n'}, h('b', {}, Rp(r.g))), h('td', {class: 'n'}, pct(r.g, g) + '%'), h('td', {class: 'n'}, Rp(ratio(r.g, r.reach))), h('td', {class: 'n'}, dd(r.g, r.gp)))),
+          h('tr', {class: 'tot-row'}, h('td', {}, h('b', {}, 'Total')), h('td', {class: 'n'}, N(posted.length + sold.filter(x => !x.np).length)), h('td', {class: 'n'}, N(sum(rows, r => r.np))), h('td', {class: 'n'}, Rp(g)), h('td', {class: 'n'}, '100%'), h('td', {class: 'n'}, Rp(ratio(g, sold.length))), h('td', {class: 'n'}, dd(g, gp)))))))),
+      row(card('Top merchants and their level mix', 'Bar = share of the merchant’s GMV made by each creator level.', h('div', {}, table([{k: 'name', label: 'Merchant', render: x => person(x.m.name, `${x.m.ind} · ${x.m.city}`)}, {k: 'promoted', label: 'Promoted', render: x => x.m.promoted ? chip('Promoted', '--ops', false) : h('span', {class: 'muted small'}, 'No')},
+        {k: 'act', label: 'Creators', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'mix', label: 'Level mix', fixed: true, render: x => mixBar(x.byL)}], top.map(x => ({...x, name: x.m.name, promoted: x.m.promoted ? 1 : 0, _open: () => openMerchant(x.m.i)})), {search: false, sortKey: 'gr', pageSize: 15}), mixLegend())))];
+  }
+  if (tab === 'act') {
+    const three = prom.filter(x => x.gr > 0 && x.act >= 3).length, cities = [...CORE, 'Other'].map(cy => { const x = M.filter(y => cy === 'Other' ? !CORE.includes(y.m.city) : y.m.city === cy), pr = x.filter(y => y.m.promoted);
+      return {city: cy, n: x.length, prom: pr.length, cov: pr.filter(y => y.np > 0).length, sold: x.filter(y => y.gr > 0).length, g: sum(x, y => y.gr)}; });
+    const gap = prom.filter(x => !x.np), off = sold.filter(x => !x.m.promoted).sort((a, b) => b.gr - a.gr);
+    const crCity = cy => D.creators.filter(c => c.city === cy && c.links.some(([mi]) => D.merchants[mi].ind === (ind || D.merchants[mi].ind))).length;
+    return [...head,
+      h('div', {class: 'grid g12 mt'}, card('Promoted places', `From the promoted list (product strategy). Each step is part of the one before. With a new post: ${N(promCov)}.`, funnel([['Promoted places', prom.length], ['Active (new post or sale)', prom.filter(x => x.act > 0).length], ['Made a sale', prom.filter(x => x.gr > 0).length], ['Sold with 3+ creators', three]], '--ops')),
+        card('Coverage by city', 'Covered = a promoted place with at least one new post in these dates.', table([{k: 'city', label: 'City'}, {k: 'prom', label: 'Promoted', num: true}, {k: 'cp', label: 'Covered', num: true, render: r => meterRow(pct(r.cov, r.prom), pct(r.cov, r.prom) >= 70 ? '--growth' : '--ops', `${pct(r.cov, r.prom)}%`, 60)},
+          {k: 'sold', label: 'Selling places', num: true}, {k: 'g', label: 'GMV', num: true, fmt: Rp}], cities.map(r => ({...r, cp: pct(r.cov, r.prom)})), {search: false, sortKey: 'g', pageSize: 6}))),
+      row(card(`Promoted, no new post yet · ${N(gap.length)}`, 'Places worth sending creators to. Creators nearby = linked creators in that city and industry.', table([{k: 'name', label: 'Place', render: x => person(x.m.name, x.m.ind)}, {k: 'city', label: 'City'},
+        {k: 'near', label: 'Creators nearby', num: true}, {k: 'gp', label: 'GMV same days last month', num: true, fmt: Rp}], gap.map(x => ({...x, name: x.m.name, city: x.m.city, near: crCity(x.m.city), gp: Mp[M.indexOf(x)]?.gr || 0, _open: () => openMerchant(x.m.i)})), {sortKey: 'near', pageSize: 8}))),
+      row(card('Selling well but not promoted', 'Candidates for next month’s promoted list.', table([{k: 'name', label: 'Place', render: x => person(x.m.name, `${x.m.ind} · ${x.m.city}`)}, {k: 'act', label: 'Creators', num: true}, {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
+        off.slice(0, 30).map(x => ({...x, name: x.m.name, _open: () => openMerchant(x.m.i)})), {sortKey: 'gr', pageSize: 8, search: false})))];
+  }
+  const st = ui.tab.mvs || 'all', keep = {all: () => true, prom: x => x.m.promoted, notprom: x => !x.m.promoted, nosale: x => !x.gr}[st];
+  return [...head, row(card('Merchants', 'Our creators’ results per place. Click a row for the merchant.', table([
+    {k: 'name', label: 'Merchant', render: x => person(x.m.name, `${x.m.ind} · ${x.m.city}`)}, {k: 'promoted', label: 'Promoted', render: x => x.m.promoted ? chip('Promoted', '--ops', false) : h('span', {class: 'muted small'}, 'No')},
+    {k: 'act', label: 'Active creators', num: true}, {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'vw', label: 'Views', num: true, fmt: N}, {k: 'ctr', label: 'CTR', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'cvr', label: 'CVR', num: true, fmt: v => v.toFixed(1) + '%'},
+    {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: x => dd(x.gr, x.gp)}, {k: 'gpp', label: 'GMV / post', num: true, fmt: Rp}, {k: 'mix', label: 'Level mix', fixed: true, render: x => mixBar(x.byL)}],
+    M.filter(keep).map(x => { const gpv = Mp[M.indexOf(x)]?.gr || 0; return {...x, name: x.m.name, promoted: x.m.promoted ? 1 : 0, ctr: ratio(x.ck, x.vw) * 100, cvr: ratio(x.od, x.ck) * 100, gp: gpv, chg: ratio(x.gr, gpv), gpp: ratio(x.gr, x.np), _open: () => openMerchant(x.m.i)}; }),
+    {sortKey: 'gr', pageSize: 15, state: ui.tab.mvState ||= {}, tools: seg([['all', 'All'], ['prom', 'Promoted'], ['notprom', 'Not promoted'], ['nosale', 'No sales']], st, v => { ui.tab.mvs = v; render(); }, 'Show')})))];
+};
+
+// ================= Merchant · LIVE =================
+PAGES['Merchant · LIVE'] = () => {
+  const P = period(), tab = ui.tab.mlt || 'level', B = bstats(P.a, P.b), Bp = bstats(P.pa, P.pb), g = sum(B, x => x.gr), gp = sum(Bp, x => x.gr);
+  const sold = B.filter(x => x.gr > 0), prom = B.filter(x => x.br.promoted), ses = sum(B, x => x.ses);
+  const head = [h('div', {class: 'tools'}, h('b', {}, 'Dining · LIVE brands'), tabs([['level', 'Level'], ['act', 'Activation'], ['brands', 'Brands'], ['products', 'Products']], 'mlt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `Sold in our creators’ LIVE rooms · vs ${P.plabel}`)),
+    h('div', {class: 'grid'}, kpi('LIVE brand GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`, c: '--rev'}), kpi('Brands with sales', N(sold.length), {sub: `of ${N(B.length)} brands`}), kpi('Promoted brands LIVE', pct(prom.filter(x => x.ses).length, prom.length) + '%', {sub: `${N(prom.filter(x => x.ses).length)} of ${N(prom.length)}`}),
+      kpi('Sessions', N(ses), {d: delta(ses, sum(Bp, x => x.ses))}), kpi('GMV per session', Rp(ratio(g, ses))), kpi('Orders', N(sum(B, x => x.od))), kpi('AOV', Rp(ratio(sum(B, x => x.gs), sum(B, x => x.od)))))];
+  if (tab === 'level') {
+    const rows = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({l, brands: B.filter(x => x.sesL[l] > 0).length, ses: sum(B, x => x.sesL[l]), g: sum(B, x => x.byL[l]), gp: sum(Bp, x => x.byL[l])}));
+    return [...head,
+      row(card('Brand GMV by creator level', 'Which creator levels sell these brands in LIVE.', h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Creator level', 'Brands sold', 'Sessions', 'Redemption GMV', 'Share', 'GMV / session', `vs ${P.plabel}`].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
+        h('tbody', {}, rows.map(r => h('tr', {}, h('td', {}, levelChip(r.l)), h('td', {class: 'n'}, N(r.brands)), h('td', {class: 'n'}, N(r.ses)), h('td', {class: 'n'}, h('b', {}, Rp(r.g))), h('td', {class: 'n'}, pct(r.g, g) + '%'), h('td', {class: 'n'}, Rp(ratio(r.g, r.ses))), h('td', {class: 'n'}, dd(r.g, r.gp)))),
+          h('tr', {class: 'tot-row'}, h('td', {}, h('b', {}, 'Total')), h('td', {class: 'n'}, N(sold.length)), h('td', {class: 'n'}, N(ses)), h('td', {class: 'n'}, Rp(g)), h('td', {class: 'n'}, '100%'), h('td', {class: 'n'}, Rp(ratio(g, ses))), h('td', {class: 'n'}, dd(g, gp)))))))),
+      row(card('Top brands and their level mix', 'Bar = share of the brand’s LIVE GMV made by each creator level.', h('div', {}, table([{k: 'name', label: 'Brand', render: x => person(x.br.name, x.br.promoted ? 'Promoted' : 'Not promoted')}, {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true},
+        {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'mix', label: 'Level mix', fixed: true, render: x => mixBar(x.byL)}], sold.map(x => ({...x, name: x.br.name, cr: x.crs.size, _open: () => openBrand(x.br.i)})), {search: false, sortKey: 'gr', pageSize: 12}), mixLegend())))];
+  }
+  if (tab === 'act') {
+    const gap = prom.filter(x => !x.ses), off = sold.filter(x => !x.br.promoted);
+    return [...head,
+      row(card('Promoted brands', 'From the promoted LIVE list (product strategy). Each step is part of the one before.', funnel([['Promoted brands', prom.length], ['Went LIVE', prom.filter(x => x.ses).length], ['Made a sale', prom.filter(x => x.gr > 0).length], ['Sold with 3+ creators', prom.filter(x => x.gr > 0 && x.crs.size >= 3).length]], '--rev'))),
+      row(card(`Promoted, no LIVE yet · ${N(gap.length)}`, 'Brands worth pairing with a LIVE creator.', gap.length ? table([{k: 'name', label: 'Brand'}, {k: 'gp', label: 'GMV same days last month', num: true, fmt: Rp}, {k: 'np', label: 'Products', num: true}],
+          gap.map(x => ({name: x.br.name, gp: Bp[x.br.i].gr, np: x.br.products.length, _open: () => openBrand(x.br.i)})), {search: false, sortKey: 'gp', pageSize: 8}) : h('div', {class: 'muted small'}, 'Every promoted brand went LIVE in these dates.'))),
+      row(card('Selling in LIVE but not promoted', 'Candidates for the promoted list.', table([{k: 'name', label: 'Brand'}, {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
+        off.map(x => ({...x, name: x.br.name, cr: x.crs.size, _open: () => openBrand(x.br.i)})), {search: false, sortKey: 'gr', pageSize: 8})))];
+  }
+  if (tab === 'products') {
+    const P2 = B.flatMap(x => x.prod.map(pp => ({...pp, brand: x.br.name, bi: x.br.i, bg: x.gr})));
+    return [...head, row(card('Products', 'LIVE products of each brand. Product GMV = room GMV × the product’s share of the room’s sales.', table([{k: 'name', label: 'Product', render: r => person(r.p.name, r.brand)}, {k: 'price', label: 'Price', num: true, fmt: Rp},
+      {k: 'rooms', label: 'Rooms with a sale', num: true}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share of brand', num: true, fmt: v => v + '%'}],
+      P2.map(r => ({...r, name: r.p.name, price: r.p.price, sh: pct(r.gr, r.bg), _open: () => openBrand(r.bi)})), {sortKey: 'gr', pageSize: 15})))];
+  }
+  return [...head, row(card('Brands', 'Click a brand for its products and creators.', table([{k: 'name', label: 'Brand', render: x => person(x.br.name, `${x.br.products.length} products`)}, {k: 'promoted', label: 'Promoted', render: x => x.br.promoted ? chip('Promoted', '--rev', false) : h('span', {class: 'muted small'}, 'No')},
+    {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true}, {k: 'val', label: 'Valid', num: true}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp}, {k: 'gr', label: 'GMV', num: true, fmt: Rp},
+    {k: 'chg', label: 'vs last month', num: true, render: x => dd(x.gr, Bp[x.br.i].gr)}, {k: 'top', label: 'Top product'}],
+    B.map(x => ({...x, name: x.br.name, promoted: x.br.promoted ? 1 : 0, cr: x.crs.size, aov: ratio(x.gs, x.od), chg: ratio(x.gr, Bp[x.br.i].gr), top: [...x.prod].sort((a, b) => b.gr - a.gr)[0]?.p.name || '-', _open: () => openBrand(x.br.i)})), {sortKey: 'gr', pageSize: 15})))];
+};
+
+// ================= Metric guide =================
+PAGES['Metric guide'] = () => {
+  const G = [['Redemption GMV', 'Money from vouchers that were actually used. The main GMV in this app.', 'Sum of redeemed amounts', 'creator_performance_video.total_redemption_amount, creator_performance_livestream.total_redemption_amount'],
+    ['Sales GMV', 'Money from all orders, used or not yet.', 'Sum of sales', 'total_sales'], ['Orders', 'Vouchers bought.', 'Sum of orders', 'total_orders'], ['AOV', 'Average order value.', 'Sales GMV ÷ orders', 'avg_aov'],
+    ['New posts', 'Videos posted inside the dates picked.', 'Sum of new posts', 'creator_performance_video.total_new_post'], ['Views', 'Video views in the dates picked, new and older videos.', 'Sum of views', 'total_views'],
+    ['CTR', 'Share of views that clicked the product.', 'Clicks ÷ views', 'avg_ctr (weighted by views)'], ['CVR', 'Share of clicks that bought.', 'Orders ÷ clicks', 'avg_cvr (weighted by clicks)'],
+    ['Sold posts', 'Posts with at least one order.', 'Sum of sold posts', 'total_sold_post'], ['GMV from new posts', 'Share of video GMV made by videos posted this month. Older videos keep selling, but they are not new work.', 'GMV of new posts ÷ video GMV', 'total_sales_new_post vs total_sales'],
+    ['Completion, like, comment rate, duration', 'How well people watch and react.', 'Weighted by views', 'avg_video_completion_rate, avg_like_rate, avg_comment_rate, avg_duration'],
+    ['Sessions, valid sessions', 'LIVE rooms; valid = 60 minutes or more (sample rule).', 'Count of rooms', 'creator_performance_livestream.total_sessions, total_valid_sessions'],
+    ['LIVE hours', 'Time on LIVE.', 'Seconds ÷ 3,600', 'total_live_duration_seconds'], ['Viewers, entering rate, purchase rate', 'People who saw the room, entered it, and bought.', 'Entered ÷ viewers, orders ÷ entered', 'total_viewers, avg_room_entering_rate, avg_purchase_rate'],
+    ['GPM', 'Sales per 1,000 viewers.', 'Sales ÷ viewers × 1,000', 'avg_sales_value_per_mille'], ['Linked creators', 'Creators linked to us in the dates picked.', 'Link status = Linked', 'creator_link_status, binding_status'],
+    ['Level', 'The creator’s level at the end of the dates picked.', 'Latest entry on or before that day', 'creator_level_log.new_level'],
+    ['Active creator', 'Posted a new video or sold something in the dates picked (LIVE page: went LIVE or sold).', 'New posts > 0 or orders > 0', 'Same rule as the TTLS Creator Active count'],
+    ['Hit level benchmark', 'Made at least the GMV their level needs, prorated to the days picked.', 'GMV ≥ benchmark × days ÷ 30', 'Benchmarks in the table below'],
+    ['Dormant 14+ days', 'Linked but no new video (or no LIVE) for 14 days or more.', 'Days since last post ≥ 14', 'first_new_post_time / last_live_end_time'],
+    ['Merchant (place)', 'A place creators tag in videos: hotel, attraction, restaurant outlet.', 'Our creators only', 'merchant_performance_video.poi_key, poi_name, location_city'],
+    ['Promoted', 'On this month’s promoted list.', 'Match by place id or brand', 'product_strategy (poi_id for video, sku / brand for LIVE)'],
+    ['LIVE brand and product', 'What was sold in the LIVE rooms.', 'Product share of room sales', 'merchant_performance_livestream, live_product.prop_of_sales_value'],
+    ['Level moves', 'Level up or down this month.', 'Previous vs new level', 'creator_level_log.previous_level, new_level']];
+  return [h('div', {class: 'grid g12'}, card('How to read this app', null, h('ul', {class: 'report'},
+      h('li', {}, h('b', {}, 'Pick the dates at the top. '), 'Every number compares with the same days of the month before.'),
+      h('li', {}, h('b', {}, 'Creator or Merchant, then Video or LIVE. '), 'LIVE exists for Dining only, like the flowchart.'),
+      h('li', {}, h('b', {}, 'Level tab: '), 'who brings the GMV. ', h('b', {}, 'Activation tab: '), 'who is working and who went quiet.'),
+      h('li', {}, h('b', {}, 'Click any row '), 'for the full profile of a creator, place or brand.'),
+      h('li', {}, h('b', {}, 'Linked creators only, '), 'and every name and number here is made up.'))),
+      card('Level benchmarks (sample rule)', 'GMV a month to keep the level. Reaching the next one moves the creator up on the 2nd of the month; making under 35% can move them down.', table([{k: 'l', label: 'Level', render: r => levelChip(r.l)}, {k: 'b', label: 'Keep level (a month)', num: true, fmt: Rp}, {k: 'nx', label: 'To move up', num: true, render: r => r.nx ? Rp(r.nx) : '-'}],
+        LV.map((l, i) => ({l, b: BENCH[l], nx: BENCH[LV[i + 1]] || 0})), {search: false, pageSize: 5}))),
+    row(card('Metric guide', 'What each number means and where it comes from in the TTLS Ops database (schema ttgo).', table([{k: 'm', label: 'Metric', render: r => h('b', {style: 'font-weight:600'}, r.m)}, {k: 'what', label: 'What it means', render: r => h('span', {style: 'white-space:normal;display:block;min-width:220px'}, r.what)},
+      {k: 'how', label: 'How it is counted'}, {k: 'src', label: 'Source', render: r => h('code', {class: 'small'}, r.src)}], G.map(([m, what, how, src]) => ({m, what, how, src})), {pageSize: 30})))];
+};
+
+// ================= profiles =================
+function openCreator(i) {
+  const c = D.creators[i], P = period(), s = stats(P.a, P.b)[i], p = stats(P.pa, P.pb)[i], pm = stats(P.pm.s, P.pm.s + P.pm.n - 1)[i];
+  const tr = {now: Array.from({length: P.n}, (_, k) => gmvDay(c, P.m.s + k)), prev: Array.from({length: Math.min(P.n, P.pm.n)}, (_, k) => gmvDay(c, P.pm.s + k))};
+  const x = LV.indexOf(s.lvl), next = LV[x + 1], monthG = (() => { let g = 0; for (let d = P.m.s; d <= P.b; d++) g += gmvDay(c, d); return g; })(), pace = monthG / (P.b - P.m.s + 1) * P.m.n;
+  const links = c.links.map(([mi, w]) => ({m: D.merchants[mi], w, g: s.gr * w, np: s.np * w})).sort((a, b) => b.g - a.g);
+  const rooms = c.L ? D.rooms.filter(r => r.c === i && r.d <= P.b).slice(-8).reverse() : [];
+  drawer([avatar(c.handle), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, c.handle), h('div', {class: 'muted small'}, `${c.ind} · ${c.city} · ${c.join ? `linked ${dLab(c.join)}` : 'linked before August'}`),
+    h('div', {class: 'chips'}, levelChip(s.lvl), chip(...vStatus(s, P), false), c.L ? chip('Does LIVE', '--rev', false) : null))],
+  [h('div', {class: 'grid'}, mini('Redemption GMV', Rp(s.gmv), dd(s.gmv, p.gmv)), mini('Orders', N(s.od + s.lod), dd(s.od + s.lod, p.od + p.lod)), mini('New posts', N(s.np), dd(s.np, p.np)), mini('Views', N(s.vw)), mini('CTR', rt(s.ck, s.vw)), mini('CVR', rt(s.od, s.ck))),
+    c.L ? h('div', {class: 'grid mt'}, mini('LIVE GMV', Rp(s.lgr), dd(s.lgr, p.lgr)), mini('Sessions', N(s.ses)), mini('Valid', N(s.val)), mini('Hours', (s.sec / 3600).toFixed(1)), mini('Entering', rt(s.en, s.vwr)), mini('Purchase', rt(s.lod, s.en))) : null,
+    sec(`GMV by day · ${P.m.label}`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], Array.from({length: P.n}, (_, k) => String(k + 1)), {fmt: short, height: 170})),
+    sec('Level', next ? progressLine(`On pace for ${P.m.label} vs ${next} (${Rp(BENCH[next])})`, pace, BENCH[next]) : h('div', {class: 'muted small'}, 'Top level.'),
+      h('div', {class: 'small muted', style: 'margin-top:6px'}, `Keeps ${s.lvl} at ${Rp(BENCH[s.lvl])} a month. ${P.pm.label}: ${Rp(pm.gmv)}.`),
+      h('div', {class: 'timeline', style: 'margin-top:8px'}, [...c.hist].reverse().map(([d, l], k, arr) => h('div', {class: 'ev', style: `--c:var(${LVC[l]})`}, h('i'), h('div', {}, k === arr.length - 1 ? `Started at ${l}` : `Moved to ${l}`, h('small', {}, k === arr.length - 1 ? 'first level we have' : 'level log')), h('time', {}, d ? dLab(d) : 'Before Aug'))))),
+    sec('Where they sell (video)', table([{k: 'name', label: 'Place', render: r => person(r.m.name, `${r.m.city}${r.m.promoted ? ' · promoted' : ''}`)}, {k: 'w', label: 'Share', num: true, fmt: v => Math.round(v * 100) + '%'}, {k: 'np', label: 'New posts', num: true, fmt: v => v.toFixed(1)}, {k: 'g', label: 'GMV', num: true, fmt: Rp}],
+      links.map(r => ({...r, name: r.m.name, _open: () => openMerchant(r.m.i)})), {search: false, sortKey: 'g', pageSize: 6})),
+    rooms.length ? sec('Last LIVE sessions', table([{k: 'd', label: 'Day', render: r => `${dLab(r.d)} · ${r.hr}:00`}, {k: 'b', label: 'Brand', render: r => D.brands[r.b].name}, {k: 'dur', label: 'Minutes', num: true}, {k: 'vw', label: 'Viewers', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}], rooms, {search: false, pageSize: 8})) : null,
+    sec('Content quality', props([['Avg duration', c.cq.dur + ' s'], ['Completion', c.cq.comp.toFixed(1) + '%'], ['Like rate', c.cq.like.toFixed(1) + '%'], ['Comment rate', c.cq.com.toFixed(2) + '%'], ['Last new post', ago(s.last, P.b)], ['Industry', c.ind]]))],
+  [h('span', {class: 'muted small'}, `${P.label} vs ${P.plabel} · sample creator`)]);
+}
+function openMerchant(i) {
+  const m = D.merchants[i], P = period(), x = mstats(P.a, P.b)[i], xp = mstats(P.pa, P.pb)[i];
+  const tr = Array.from({length: P.n}, (_, k) => { const d = P.m.s + k; return sum(D.creators.filter(c => c.links.some(([mi]) => mi === i)), c => c.V.gr[d] * c.links.find(([mi]) => mi === i)[1]); });
+  drawer([avatar(m.name), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, m.name), h('div', {class: 'muted small'}, `${m.ind} · ${m.city}`), h('div', {class: 'chips'}, m.promoted ? chip('Promoted', '--ops', false) : chip('Not promoted', '--muted', false)))],
+  [h('div', {class: 'grid'}, mini('Redemption GMV', Rp(x.gr), dd(x.gr, xp.gr)), mini('Orders', N(x.od)), mini('New posts', N(x.np)), mini('Active creators', N(x.act)), mini('CTR', rt(x.ck, x.vw)), mini('CVR', rt(x.od, x.ck))),
+    sec(`GMV by day · ${P.m.label}`, area([{name: 'GMV', values: tr, c: '--ops'}], Array.from({length: P.n}, (_, k) => String(k + 1)), {fmt: short, height: 160})),
+    sec('By creator level', hbars(LV.map(l => ({label: l, value: x.byL[l], c: LVC[l]})), {fmt: short, share: true})),
+    sec('Creators selling here', table([{k: 'h', label: 'Creator', render: r => person(r.s.c.handle, r.s.c.city)}, {k: 'lvl', label: 'Level', render: r => levelChip(r.s.lvl)}, {k: 'np', label: 'New posts', num: true, fmt: v => v.toFixed(1)}, {k: 'gr', label: 'GMV here', num: true, fmt: Rp}],
+      x.crs.map(r => ({...r, h: r.s.c.handle, lvl: r.s.lvl, _open: () => openCreator(r.s.c.i)})), {search: false, sortKey: 'gr', pageSize: 8}))],
+  [h('span', {class: 'muted small'}, `${P.label} vs ${P.plabel} · sample place`)]);
+}
+function openBrand(i) {
+  const br = D.brands[i], P = period(), x = bstats(P.a, P.b)[i], xp = bstats(P.pa, P.pb)[i];
+  const tr = Array.from({length: P.n}, (_, k) => sum(D.rooms.filter(r => r.b === i && r.d === P.m.s + k), r => r.gr));
+  drawer([avatar(br.name), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, br.name), h('div', {class: 'muted small'}, 'Dining LIVE brand'), h('div', {class: 'chips'}, br.promoted ? chip('Promoted', '--rev', false) : chip('Not promoted', '--muted', false)))],
+  [h('div', {class: 'grid'}, mini('Redemption GMV', Rp(x.gr), dd(x.gr, xp.gr)), mini('Sessions', N(x.ses)), mini('Valid', N(x.val)), mini('Creators', N(x.crs.size)), mini('Orders', N(x.od)), mini('AOV', Rp(ratio(x.gs, x.od)))),
+    sec(`GMV by day · ${P.m.label}`, area([{name: 'GMV', values: tr, c: '--rev'}], Array.from({length: P.n}, (_, k) => String(k + 1)), {fmt: short, height: 160})),
+    sec('Products', table([{k: 'name', label: 'Product'}, {k: 'price', label: 'Price', num: true, fmt: Rp}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'}],
+      x.prod.map(pp => ({name: pp.p.name, price: pp.p.price, od: pp.od, gr: pp.gr, sh: pct(pp.gr, x.gr)})), {search: false, sortKey: 'gr', pageSize: 6})),
+    sec('By creator level', hbars(LV.map(l => ({label: l, value: x.byL[l], c: LVC[l]})), {fmt: short, share: true})),
+    sec('Creators selling it', table([{k: 'h', label: 'Creator', render: r => person(r.h, r.lvl)}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
+      [...x.crs].map(([ci, g]) => ({h: D.creators[ci].handle, lvl: levelAt(D.creators[ci], P.b), gr: g, _open: () => openCreator(ci)})), {search: false, sortKey: 'gr', pageSize: 8}))],
+  [h('span', {class: 'muted small'}, `${P.label} vs ${P.plabel} · sample brand`)]);
+}
+
+// ================= shell =================
+const GROUPS = [['Overview', '--growth', ['Overview']], ['Creator', '--base', ['Creator · Video', 'Creator · LIVE']], ['Merchant', '--ops', ['Merchant · Video', 'Merchant · LIVE']], ['Guide', '--muted', ['Metric guide']]];
+const PAGES_ALL = GROUPS.flatMap(g => g[2]);
+function rangeBox(fg) {
+  const P = period(), iso = d => `2026-${String(MONTHS.indexOf(P.m) + 8).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const day = (k2, label) => h('input', {type: 'date', class: 'date-in', min: iso(1), max: iso(P.n), value: iso(k2 === 'd0' ? P.d0 : P.d1), 'aria-label': label, onchange: e => {
+    const v = e.target.value; if (v.slice(0, 7) !== iso(1).slice(0, 7)) { toast(`Pick a day in ${P.m.label}.`); return render(); }
+    const n = {...ui.range, k: 'custom', [k2]: Math.min(+v.slice(8), P.n)}; if (n.d0 > n.d1) [n.d0, n.d1] = [n.d1, n.d0]; ui.range = n; render(); }});
+  return [fg('Month', h('select', {'aria-label': 'Month', onchange: e => { ui.month = e.target.value; setRange('mtd'); render(); }}, MONTHS.slice(1).map(m => h('option', {value: m.k, selected: m.k === ui.month}, m.k === 'Nov' ? `${m.label} (to ${dLab(LAST)})` : m.label)))),
+    fg('Dates', h('select', {'aria-label': 'Date range', onchange: e => { setRange(e.target.value); render(); }}, [...RANGES.filter(([k2]) => k2 !== 'month' || P.n === P.m.n), ['custom', 'Custom']].map(([k2, l]) => h('option', {value: k2, selected: ui.range.k === k2, disabled: k2 === 'custom'}, l))), day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To')),
+    h('span', {class: 'muted small'}, `vs ${P.plabel}`)];
+}
+function render() {
+  try { localStorage.setItem('perf-sim1', JSON.stringify({page: ui.page, theme: ui.theme})); } catch {}
+  document.documentElement.dataset.theme = ui.theme;
+  $('#theme').textContent = ui.theme === 'dark' ? 'Light mode' : 'Dark mode';
+  if (!PAGES_ALL.includes(ui.page)) ui.page = 'Overview';
+  const group = GROUPS.find(g => g[2].includes(ui.page));
+  put($('#nav'), GROUPS.map(([g, c, list]) => h('div', {class: 'navgroup'}, h('div', {class: 'navgroup-title'}, h('i', {style: `background:var(${c})`}), g),
+    list.map(p => h('button', {class: 'navitem' + (ui.page === p ? ' on' : ''), style: `--c:var(${c})`, onclick: () => { ui.page = p; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p)))));
+  put($('#crumbs'), h('span', {}, 'Performance Analytics'), '/', h('span', {}, group[0]), '/', h('b', {}, ui.page));
+  put($('#as'), h('span', {class: 'as-chip'}, 'Data to ', h('b', {}, `${dLab(LAST)} 2026`), ' · loaded daily from TikTok exports'));
+  const fg = (label, ...kids) => h('div', {class: 'fgroup'}, h('span', {class: 'flabel'}, label), ...kids);
+  put($('#filters'), ...rangeBox(fg), fg('Level', seg([['', 'All'], ...LV.map(l => [l, l])], ui.f.lvl, v => { ui.f.lvl = v; render(); }, 'Level')),
+    fg('City', h('select', {'aria-label': 'City', onchange: e => { ui.f.city = e.target.value; render(); }}, [['', 'All cities'], ...CORE.map(c => [c, c]), ['Other', 'Other regions']].map(([v, l]) => h('option', {value: v, selected: ui.f.city === v}, l)))));
+  const y = $('main').scrollTop; put($('#page'), PAGES[ui.page]()); $('main').scrollTop = y;
+}
+$('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
+$('#menu').onclick = () => document.body.classList.toggle('nav-open');
+$('#drawer').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.close(); };
+setRange('mtd');
+render();
+
+</script>
+</body>
+</html>
