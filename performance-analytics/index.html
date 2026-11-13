@@ -9,24 +9,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Design notes (why):
-   - Dark by default to match the team's own CRM mind map; a light theme is one click away.
-   - The four group colors from that map (Growth, Operations, Revenue, Base) are the only accents.
-   - Work-tool density: 13px text, KPI strips instead of one big card per number, tight tables,
-     so a whole module fits on one screen. Every creator or merchant row opens its full profile. */
-:root{--font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--r-lg:12px;--r-md:9px;--r-sm:7px}
+   - Light by default, dark one click away. The four group colors (Growth, Operations, Revenue, Base) are the only accents.
+   - Every page opens with its title and the question it answers, then at most four headline numbers,
+     then cards. Detail sits in tabs, tables and "Numbers" toggles so non-data readers see the point first. */
+:root{--font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--r-lg:14px;--r-md:10px;--r-sm:8px;--pad:20px}
 :root[data-theme="dark"]{
-  --bg:#0a0c10;--side:#0d1015;--panel:#12151c;--panel2:#191d26;--hover:#1f2430;--line:rgba(255,255,255,.065);--line2:rgba(255,255,255,.11);
+  --bg:#0b0d12;--side:#0e1117;--panel:#14171f;--panel2:#1b1f29;--hover:#212633;--line:rgba(255,255,255,.065);--line2:rgba(255,255,255,.11);
   --text:#e9ecf2;--muted:#8a92a5;--faint:#5a6275;
   --growth:#34c759;--ops:#ff9f0a;--rev:#ff6961;--base:#4da3ff;--good:#34c759;--warn:#ff9f0a;--bad:#ff6961;
-  --tint:.15;--shadow:none;color-scheme:dark}
+  --tint:.15;--shadow:0 1px 0 rgba(255,255,255,.02) inset;--lift:0 1px 3px rgba(0,0,0,.5);color-scheme:dark}
 :root[data-theme="light"]{
-  --bg:#f6f7f9;--side:#ffffff;--panel:#ffffff;--panel2:#f1f3f6;--hover:#e9ecf1;--line:rgba(16,24,40,.08);--line2:rgba(16,24,40,.14);
+  --bg:#f4f6f9;--side:#ffffff;--panel:#ffffff;--panel2:#f1f3f7;--hover:#eaedf2;--line:rgba(16,24,40,.075);--line2:rgba(16,24,40,.14);
   --text:#161a22;--muted:#626a7b;--faint:#a0a6b3;
   --growth:#1f8a3b;--ops:#b35c00;--rev:#cc2f26;--base:#0066d6;--good:#1f8a3b;--warn:#b35c00;--bad:#cc2f26;
-  --tint:.1;--shadow:0 1px 2px rgba(16,24,40,.04);color-scheme:light}
+  --tint:.1;--shadow:0 1px 2px rgba(16,24,40,.04),0 2px 6px -2px rgba(16,24,40,.05);--lift:0 1px 3px rgba(16,24,40,.14);color-scheme:light}
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;font:13px/1.45 var(--font);font-feature-settings:"cv11","ss01";color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;display:flex}
+*{scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+body{margin:0;font:13px/1.5 var(--font);font-feature-settings:"cv11","ss01";color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;display:flex}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none;border-radius:var(--r-sm);padding:6px 10px}
 input,select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px;min-width:0;height:30px}
@@ -42,23 +42,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--base);bo
 .btn:disabled{opacity:.45;cursor:default}
 .btn.tag.on{background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-color:var(--ops);color:var(--ops)}
 
-aside{width:236px;flex-shrink:0;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
-.brand{display:flex;align-items:center;gap:9px;padding:14px 14px 4px;font-weight:700;font-size:13.5px;letter-spacing:-.01em}
+aside{width:240px;flex-shrink:0;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px 6px;font-weight:700;font-size:13.5px;letter-spacing:-.01em}
 .brand small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
-.demo{margin:8px 14px 4px;font-size:11px;color:var(--ops);background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-radius:6px;padding:4px 8px}
-.navscroll{flex:1;overflow:auto;padding:2px 8px 12px}
-.navgroup{margin-top:12px}
+.demo{margin:10px 16px 6px;font-size:11px;color:var(--ops);background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),transparent);border-radius:6px;padding:4px 8px}
+.navscroll{flex:1;overflow:auto;padding:2px 10px 14px}
+.navgroup{margin-top:16px}
 .navgroup-title{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 8px 4px}
 .navgroup-title i{width:6px;height:6px;border-radius:50%}
-.navitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:5px 8px;border-radius:7px;color:var(--muted);font-weight:500;font-size:13px;white-space:nowrap}
+.navitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;color:var(--muted);font-weight:500;font-size:13px;white-space:nowrap}
 .navitem:hover{background:var(--hover);color:var(--text)}
-.navitem.on{background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--text)}
+.navitem.on{background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--text);font-weight:600;box-shadow:inset 3px 0 0 var(--c)}
 .navitem.on span:first-child{color:var(--c)}
 .navitem .chev{margin-left:auto;display:inline-flex;color:var(--faint);transition:transform .15s}
 .navmod.open > .navitem .chev{transform:rotate(90deg)}
-.subnav{display:flex;flex-direction:column;gap:1px;margin:1px 0 6px 16px;padding-left:9px;border-left:1px solid var(--line2)}
-.subitem{text-align:left;padding:4px 8px;font-size:12.5px;color:var(--muted);border-radius:6px;position:relative}
-.subitem:hover{color:var(--text);background:var(--hover)}
 .subitem.on{color:var(--text);font-weight:600;background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent)}
 .subitem.on::before{content:"";position:absolute;left:-10px;top:5px;bottom:5px;width:2px;border-radius:2px;background:var(--c)}
 .chartbox{width:100%;position:relative;overflow:hidden}
@@ -67,7 +64,7 @@ aside{width:236px;flex-shrink:0;background:var(--side);border-right:1px solid va
 .side-foot label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 
 .wrap{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh}
-.top{display:flex;align-items:center;gap:10px;padding:0 20px;height:50px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(12px);position:sticky;top:0;z-index:10}
+.top{display:flex;align-items:center;gap:10px;padding:0 28px;height:52px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(12px);position:sticky;top:0;z-index:10}
 .crumbs{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
 .crumbs b{color:var(--text);font-weight:600}
 .spacer{flex:1}
@@ -81,17 +78,17 @@ aside{width:236px;flex-shrink:0;background:var(--side);border-right:1px solid va
 .results button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:7px 9px}
 .results button:hover{background:var(--hover)}
 .results span:last-child{color:var(--muted);font-size:12px}
-.seg{display:inline-flex;background:var(--panel2);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
-.seg button{padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted)}
+.seg{display:inline-flex;background:var(--panel2);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{padding:4px 12px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--muted)}
 .seg button:hover{color:var(--text)}
-.seg button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.25)}
-main{flex:1;overflow:auto;padding:0 20px 48px}
-.page{max-width:1640px;margin:0 auto;padding-top:16px}
+.seg button.on{background:var(--panel);color:var(--text);font-weight:600;box-shadow:var(--lift)}
+main{flex:1;overflow:auto;padding:0 28px 56px}
+.page{max-width:1560px;margin:0 auto}
 
-.ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 12px}
+.ph{display:flex;align-items:flex-end;gap:12px 16px;flex-wrap:wrap;padding:24px 0 18px}
 .ph-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent);color:var(--c);flex-shrink:0}
-h1{font-size:19px;line-height:1.2;letter-spacing:-.02em;margin:0;font-weight:650}
-.sub{color:var(--muted);margin:1px 0 0;font-size:12.5px}
+h1{font-size:23px;line-height:1.2;letter-spacing:-.025em;margin:0;font-weight:700}
+.sub{color:var(--muted);margin:5px 0 0;font-size:13.5px}
 .scope{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:7px;padding:4px 9px;white-space:nowrap}
 .scope b{color:var(--text);font-weight:600}
 .tabs{display:flex;gap:2px;margin:0 0 16px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
@@ -99,62 +96,62 @@ h1{font-size:19px;line-height:1.2;letter-spacing:-.02em;margin:0;font-weight:650
 .tabs button:hover{color:var(--text)}
 .tabs button.on{color:var(--text);border-bottom-color:var(--c,var(--text))}
 
-.grid{display:grid;gap:12px}
+.grid{display:grid;gap:16px}
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(6,minmax(0,1fr))}.g3>*{grid-column:span 2}.g3>:nth-child(3n+1):last-child{grid-column:span 6}.g3>:nth-child(3n+1):nth-last-child(2),.g3>:nth-child(3n+2):last-child{grid-column:span 3}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.g12{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px var(--pad);box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column}
 /* Cards in one row share a height; the chart or list inside grows to use it, so no empty band under a short card. */
 .card > .viz,.card > .chartbox{flex:1}
 .viz{display:flex;flex-direction:column}
 .viz > .chartbox{flex:1}
-.card > .hbars,.card > .funnel{flex:1;justify-content:space-evenly}
+.card > .hbars{flex:1;justify-content:space-evenly}
+.card > .funnel{gap:14px;margin-top:4px}
 .card > .donut-wrap{flex:1;justify-content:center}
 .card > .stack{flex:1}
 .card > .timeline{flex:1;justify-content:space-between}
-.fillv{flex:1;display:flex;flex-direction:column;justify-content:space-between}
 .donut-wrap.stack{flex-direction:column;align-items:stretch;justify-content:space-evenly;flex-wrap:nowrap}
 .donut-wrap.stack > div:first-child{align-self:center}
 .card{container-type:inline-size}
 @container (max-width:460px){.donut-wrap:not(.stack){flex-wrap:nowrap;gap:14px}.donut-wrap svg{width:118px;height:118px}.donut-list{min-width:0;gap:4px}.donut-list div{font-size:12px}}
-.card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:24px;flex-wrap:wrap}
-.card-h h3{margin:0;font-size:13px;font-weight:600}
-.card-h p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
+.card-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;min-height:24px;flex-wrap:wrap}
+.card-h h3{margin:0;font-size:14.5px;font-weight:650;letter-spacing:-.01em}
+.card-h p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
 .stack{display:flex;flex-direction:column;gap:12px}
-.mt{margin-top:12px}
+.mt{margin-top:16px}
 /* KPI strip: any grid of KPIs becomes one bordered bar with hairline dividers */
 .grid:has(> .kpi){display:flex;flex-wrap:wrap;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
 .grid:has(> .kpi) > .kpi{flex:1 1 128px;min-width:0}
 .grid:has(> .kpi:nth-child(8)) > .kpi{flex-basis:22%}
 .grid:has(> .kpi:nth-child(9)) > .kpi{flex-basis:18%}
-.kpi{display:flex;flex-direction:column;gap:2px;border:none;border-radius:0;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);padding:12px 14px;position:relative;container-type:inline-size}
-.kpi .l{font-size:11.5px;color:var(--muted);font-weight:500;line-height:1.3}
+.kpi{display:flex;flex-direction:column;gap:3px;border:none;border-radius:0;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);padding:16px var(--pad) 17px;position:relative;container-type:inline-size}
+.kpi .l{font-size:12.5px;color:var(--muted);font-weight:500;line-height:1.3}
 .card .kpi .l{white-space:normal}
-.kpi .v{font-size:20px;font-weight:650;letter-spacing:-.02em;line-height:1.25;font-variant-numeric:tabular-nums;white-space:nowrap}
-.kpi .s{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.kpi .spark{position:absolute;top:14px;right:14px;width:36%;max-width:120px;height:30px;opacity:.9}
+.kpi .v{font-size:25px;font-weight:700;letter-spacing:-.03em;line-height:1.25;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .s{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kpi .spark{position:absolute;top:18px;right:var(--pad);width:36%;max-width:130px;height:34px;opacity:.95}
 .kpi:has(.spark) .l{padding-right:38%}
 @container (max-width:150px){.kpi .spark{display:none}.kpi:has(.spark) .l{padding-right:0}}
-.delta{font-weight:600;font-size:11px;border-radius:5px;padding:0 5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.delta{font-weight:650;font-size:11.5px;border-radius:6px;padding:1px 6px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .delta.up{color:var(--good);background:color-mix(in srgb,var(--good) calc(var(--tint)*100%),transparent)}
 .delta.down{color:var(--bad);background:color-mix(in srgb,var(--bad) calc(var(--tint)*100%),transparent)}
-.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:550;border-radius:5px;padding:1px 7px;white-space:nowrap;color:var(--tc,var(--muted));background:color-mix(in srgb,var(--tc,var(--muted)) calc(var(--tint)*100%),transparent)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap;color:var(--tc,var(--muted));background:color-mix(in srgb,var(--tc,var(--muted)) calc(var(--tint)*100%),transparent)}
 .chip i{width:5px;height:5px;border-radius:50%;background:currentColor}
 
-.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .tools .count{font-size:11.5px;color:var(--muted);margin-left:auto}
-.tbl{overflow:auto;margin:0 -16px -14px;border-top:1px solid var(--line)}
+.tbl{overflow:auto;margin:0 calc(var(--pad) * -1) -18px;border-top:1px solid var(--line)}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{font-size:11px;font-weight:550;color:var(--muted);text-align:left;padding:7px 10px;white-space:nowrap;position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);z-index:1}
+th{font-size:11.5px;font-weight:600;color:var(--muted);text-align:left;padding:10px 12px;white-space:nowrap;position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);z-index:1}
 th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
-td{padding:6px 10px;border-top:1px solid var(--line);white-space:nowrap;height:38px}
+td{padding:7px 12px;border-top:1px solid var(--line);white-space:nowrap;height:44px}
 tbody tr:first-child td{border-top:none}
-th:first-child,td:first-child{padding-left:16px}th:last-child,td:last-child{padding-right:16px}
+th:first-child,td:first-child{padding-left:var(--pad)}th:last-child,td:last-child{padding-right:var(--pad)}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tbody tr:hover td{background:color-mix(in srgb,var(--hover) 55%,transparent)}
 tr.open{cursor:pointer}
 .who{display:flex;align-items:center;gap:8px;min-width:0}
 .ava{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
 .who small{display:block;color:var(--muted);font-size:11px;line-height:1.3}
-.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:7px 16px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:9px var(--pad);font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
 .tspark{width:84px;height:22px;display:block}
 
 .hbars{display:flex;flex-direction:column;gap:12px}
@@ -199,110 +196,49 @@ svg text{font-family:var(--font)}
 .status-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
 .status-row:first-child{border-top:none}
 .status-row .grow{flex:1;min-width:0}
-.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.col{background:var(--panel2);border-radius:var(--r-md);padding:8px}
-.col h4{margin:2px 4px 8px;font-size:12px;color:var(--muted);font-weight:600;display:flex;gap:8px;align-items:center}
-.task{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:6px;display:flex;flex-direction:column;gap:6px}
-.task b{font-size:12.5px;font-weight:600}
 .task .row{display:flex;align-items:center;gap:8px}
-.preview{aspect-ratio:16/9;border-radius:10px;background:var(--panel2);display:grid;place-items:center;color:var(--muted);text-align:center}
-.pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
-.tile{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) 38%;gap:12px;align-items:end;box-shadow:var(--shadow);transition:border-color .15s}
-.tile-t{display:flex;flex-direction:column;gap:2px;min-width:0}
-.tile-p{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
 .tile-x .muted{text-align:right;margin-bottom:5px}
-.tile:hover{border-color:color-mix(in srgb,var(--c) 55%,transparent)}
-.tile-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--c);margin-bottom:4px}
-.tile-v{font-size:19px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.tile-l{font-size:12px}.tile-s{font-size:11.5px;color:var(--muted)}
-.tile-x{min-width:0}
 .section-t{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:18px 0 8px}
-.task-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
 .task-row:first-child{border-top:none}.task-row .grow{flex:1;min-width:0}
 .tick{width:18px;height:18px;padding:0;border-radius:50%;border:1.5px solid var(--line2);flex-shrink:0}
 .tick:hover{border-color:var(--good);background:color-mix(in srgb,var(--good) 20%,transparent)}
-.link{padding:0;color:var(--base);font-size:11.5px}.link:hover{text-decoration:underline}
 .bench{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:7px 10px;font-size:12.5px;font-variant-numeric:tabular-nums}
 .bench b{font-size:11px;color:var(--faint);font-weight:600}
 .fresh{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
 .fresh i{width:6px;height:6px;border-radius:50%;background:var(--good)}
-.hint{font-size:11px;color:var(--faint);font-weight:400}
-.verdict{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:var(--r-lg);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),var(--panel))}
+.verdict{display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:var(--r-lg);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),var(--panel))}
 .verdict > div:first-child{flex:1;min-width:0}
-.verdict-v{font-size:20px;font-weight:650;color:var(--c);letter-spacing:-.02em;margin:2px 0}
-.verdict-n{text-align:right}.verdict-n b{display:block;font-size:26px;font-weight:650;color:var(--c);font-variant-numeric:tabular-nums}
-.splitbar{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:2px}
-.sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.verdict-v{font-size:24px;font-weight:650;color:var(--c);letter-spacing:-.02em;margin:2px 0}
+.verdict-n{text-align:right}.verdict-n b{display:block;font-size:30px;font-weight:650;color:var(--c);font-variant-numeric:tabular-nums}
 .offer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end}
 .offer b{display:block;font-size:19px;font-weight:650;margin:2px 0;font-variant-numeric:tabular-nums}
 .camp{gap:10px}.camp .card-h{margin-bottom:0}
-.camp-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px}
-.camp-n div{display:flex;flex-direction:column}.camp-n b{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
-.camp-f{display:flex;align-items:center;gap:6px;margin-top:auto}
 .formula{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
-.term{display:flex;flex-direction:column;gap:2px;padding:8px 11px;border-radius:9px;background:var(--panel2);min-width:110px}
-.term small{font-size:11px;color:var(--muted)}.term b{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
 .term .delta{align-self:flex-start}
 .term.bad{outline:1.5px solid var(--bad)}.term.res{background:color-mix(in srgb,var(--ops) calc(var(--tint)*100%),var(--panel2))}
-.op{align-self:center;color:var(--faint);font-size:16px;font-weight:600}
-.lens-read p{margin:2px 0 12px;font-size:13px;line-height:1.5}
-.callout{padding:9px 11px;border-radius:8px;background:color-mix(in srgb,var(--bad) calc(var(--tint)*100%),transparent);color:var(--text);font-size:12.5px}
-.callout.good{background:color-mix(in srgb,var(--good) calc(var(--tint)*100%),transparent)}
-tr.sel td{background:color-mix(in srgb,var(--ops) 10%,transparent)}
 .split{display:inline-flex;flex-direction:column;gap:1px;width:15px;height:17px;border-radius:4px;overflow:hidden;vertical-align:middle}
 .split i{flex:1;background:var(--panel2)}
 .split .v1{background:color-mix(in srgb,var(--base) 60%,transparent)}.split .v2{background:var(--good)}
 .split .l1{background:color-mix(in srgb,#bf5af2 75%,transparent)}.split .l2{background:color-mix(in srgb,var(--bad) 60%,transparent)}
-.filters{display:flex;align-items:center;gap:16px;padding:8px 20px;border-bottom:1px solid var(--line);background:var(--side);flex-wrap:wrap}
+.filters{display:flex;align-items:center;gap:16px;padding:10px 28px;border-bottom:1px solid var(--line);background:var(--side);flex-wrap:wrap}
 .fgroup{display:flex;align-items:center;gap:7px}
 .fgroup + .fgroup{padding-left:14px;border-left:1px solid var(--line)}
 .filters .seg button{padding:3px 9px}
-.freset{margin-left:auto}
 @media (max-width:1360px){.flabel{display:none}.filters{gap:12px}.fgroup + .fgroup{padding-left:12px}}
 .flabel{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
 .filters .seg button.on{background:color-mix(in srgb,var(--base) 22%,var(--panel));color:var(--text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--base) 45%,transparent)}
 .dates{display:inline-flex;align-items:center;gap:6px}.dates input{height:26px;padding:2px 6px;font-size:12px}
-.fsum{font-size:11.5px;color:var(--muted)}
-.rchart{display:flex;flex-direction:column;gap:14px;justify-content:center;flex:1}
-.rrow{display:grid;grid-template-columns:110px 1fr 150px;gap:14px;align-items:center}
 .rrow .nm b{display:block;font-size:12.5px}.rrow .nm small{color:var(--muted);font-size:11px}
-.rtrack{position:relative;height:22px;border-radius:6px;background:repeating-linear-gradient(90deg,var(--panel2) 0 calc(20% - 1px),var(--line) calc(20% - 1px) 20%)}
 .rtrack .band{position:absolute;top:4px;bottom:4px;border-radius:5px;background:color-mix(in srgb,var(--c) 45%,transparent);border:1px solid var(--c)}
-.rtrack .med{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--text);box-shadow:0 0 0 3px var(--panel)}
-.rtrack .p90{position:absolute;top:1px;bottom:1px;width:2px;margin-left:-1px;background:var(--good)}
 .rrow .vl{text-align:right;font-variant-numeric:tabular-nums}.rrow .vl b{display:block}.rrow .vl small{color:var(--muted);font-size:11px}
-.lg-band,.lg-med,.lg-p90{display:inline-block;width:14px;height:8px;border-radius:3px}
-.lg-band{background:color-mix(in srgb,var(--base) 45%,transparent);border:1px solid var(--base)}.lg-med{width:9px;height:9px;border-radius:50%;background:var(--text)}.lg-p90{width:2px;height:12px;background:var(--good)}
-.ladder{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}.ladder > .rung{flex:1 1 170px}
-.rung{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
-.rung::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--base)}
-.rung-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.rung-v{font-size:21px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.rung-r{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
-.rung-r small{display:block;font-size:11px;color:var(--muted)}.rung-r b{font-size:13px;font-variant-numeric:tabular-nums}
-.rung-f{font-size:11.5px;color:var(--base);margin-top:8px}
-.tlist{display:flex;flex-direction:column}
-.trow{display:grid;grid-template-columns:minmax(170px,1.3fr) minmax(220px,1.3fr) minmax(110px,.8fr) minmax(150px,1fr) minmax(170px,1.1fr) minmax(130px,.9fr);gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:12.5px}
 .trow.th{font-size:11px;color:var(--muted);font-weight:550;padding:4px 0 8px;border-top:none}
-.trow:nth-child(2){border-top:none}
-.tset{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.tset select{max-width:170px}
-.tbig{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
-.radio{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0;cursor:pointer}.radio input{height:auto;accent-color:var(--base)}
 .prog{gap:10px}.prog .card-h{margin-bottom:0}
-.pfacts{display:grid;grid-template-columns:86px 1fr;gap:6px 10px;margin:0;font-size:12.5px}.pfacts dt{color:var(--muted)}.pfacts dd{margin:0}
-.pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
-.pstats small{display:block;font-size:11px;color:var(--muted)}.pstats b{font-variant-numeric:tabular-nums}
 .labels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px 8px}
 .labels .navitem{border:1px solid var(--line)}
-.inbox button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 6px;border-radius:7px;border-top:1px solid var(--line)}
-.inbox button:first-child{border-top:none}
-.inbox button:hover{background:var(--hover)}
 .inbox .num{min-width:38px;font-size:16px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--c)}
 .inbox .go{color:var(--faint);font-size:12px}
 dialog{border:none;border-radius:14px;padding:0;width:min(600px,94vw);background:var(--panel);color:var(--text);box-shadow:0 24px 64px rgba(0,0,0,.45)}
 dialog::backdrop{background:rgba(5,7,10,.5);backdrop-filter:blur(2px)}
-.dlg{padding:20px;display:flex;flex-direction:column;gap:12px}
-.dlg h2{margin:0;font-size:18px;letter-spacing:-.02em}
 .foot{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 /* Record drawer: the full profile of one creator or merchant */
 dialog.drawer{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(680px,100vw);border-radius:0;border-left:1px solid var(--line2)}
@@ -335,7 +271,6 @@ dialog.drawer{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(680px,10
   .g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g3>*{grid-column:auto!important}.g3>:last-child:nth-child(odd){grid-column:1/-1!important}.pulse>:last-child:nth-child(odd){grid-column:1/-1}}
 @media (max-width:1180px){.trow{grid-template-columns:1fr 1fr}.trow.th{display:none}.pulse{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media (max-width:820px){
-  .pulse{grid-template-columns:minmax(0,1fr)!important}
   body{display:block}aside{position:fixed;inset:0 auto 0 0;z-index:40;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.4)}
   body.nav-open aside{transform:none}.menu-btn{display:inline-flex}
   .wrap{height:auto;min-height:100vh}.top{padding:8px 12px;height:auto;flex-wrap:wrap}.search{order:9;width:100%}main{padding:0 12px 40px}#scope{display:none}
@@ -345,106 +280,36 @@ dialog.drawer{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(680px,10
 
 /* Acquisition Hub simulation additions */
 .heat{display:inline-grid;place-items:center;min-width:22px;height:20px;border-radius:5px;font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums;background:var(--panel2)}
-.mining-res{min-height:28px;display:flex;align-items:center}
-.checks{display:flex;flex-wrap:wrap;gap:2px 14px}
-.who-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-.who-btn{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2)}
-.who-btn:hover{border-color:var(--growth)}
 .as-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
 .as-chip b{color:var(--text)}
-.journey-mini{display:flex;flex-wrap:wrap;gap:4px}
-.journey-mini span{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--panel2);color:var(--faint)}
 .journey-mini span.done{color:var(--growth);background:color-mix(in srgb,var(--growth) 14%,transparent)}
 .journey-mini span.now{color:#fff;background:var(--growth);font-weight:600}
-.callout{border-radius:8px;padding:10px 12px;background:color-mix(in srgb,var(--bad) 12%,transparent);font-size:12.5px}
-.callout.good{background:color-mix(in srgb,var(--good) 12%,transparent)}
-.wide-dlg{gap:14px}
-dialog:has(.wide-dlg){width:min(820px,96vw)}
-.auto{font-size:12px;color:var(--base);padding:8px 0;word-break:break-all}
-.gmv-box{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.gmv-box label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);font-weight:500}
-.pick-list{display:flex;flex-direction:column;gap:2px;position:absolute;z-index:5;top:100%;left:0;right:0;background:var(--panel);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.pick-list:empty{display:none}
-.field{position:relative}
 .pick{text-align:left;padding:8px 10px;border-radius:6px;font-size:12.5px}
 .pick:hover{background:var(--panel2)}
-.term-row{display:grid;grid-template-columns:90px 80px 150px 1fr auto;gap:8px;align-items:center}
-.term-row input[type=number]{width:56px}
 .report{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.45}
-.paste{white-space:pre-wrap;font-size:12px;margin:0;padding:12px;border-radius:8px;background:var(--panel2);user-select:all}
 @media (max-width:640px){.term-row{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}}
-.st-sel{appearance:none;-webkit-appearance:none;border:none;border-radius:6px;height:24px;padding:0 22px 0 9px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--tc);background:color-mix(in srgb,var(--tc) 16%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23889' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 7px center}
-.st-sel:disabled{cursor:default;opacity:1;background-image:none;padding-right:9px}
-.cell-sel,.cell-in{border:1px solid transparent;background:transparent;font-size:12.5px;height:26px;padding:0 6px;border-radius:6px;color:var(--text);max-width:100%}
-.cell-sel:hover:not(:disabled),.cell-in:hover:not(:disabled),.cell-sel:focus,.cell-in:focus{border-color:var(--line);background:var(--panel2)}
-.cell-in[type=date]{width:130px}
-.note-line{font-size:11.5px;color:var(--muted);margin:3px 0 0 34px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
-.pipe button{text-align:left;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:9px 12px;background:var(--panel);display:flex;flex-direction:column;gap:1px;box-shadow:var(--shadow)}
-.pipe button:hover{background:var(--hover)}
 .pipe button.on{background:color-mix(in srgb,var(--c) 12%,var(--panel));border-color:var(--c)}
-.pipe b{font-size:20px;letter-spacing:-.02em}
-.pipe span{font-size:11.5px;color:var(--muted)}
-.bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--base) 12%,transparent);margin-bottom:10px;font-size:12.5px}
-.pl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:2px 10px;align-items:center;font-size:12.5px}
-.pl>span{color:var(--muted)}
-.pl .cell-in,.pl .cell-sel{width:100%}
-.comment-box{display:flex;gap:8px;align-items:flex-start}
-.comment-box textarea{flex:1;min-height:60px;resize:vertical;font:inherit;font-size:12.5px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
-.fu-list{display:flex;flex-direction:column}
-.fu{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(160px,2fr) auto auto auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
-.fu:first-child{border-top:none}
-.fu-name{font-size:13px;font-weight:600;text-align:left;color:var(--text)}
-.fu-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media (max-width:760px){.fu{grid-template-columns:1fr auto}.fu-sub{grid-column:1/-1}}
-.myday{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-.myday-i{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);border-left:3px solid var(--c);background:var(--panel2)}
-.myday-i:hover{background:var(--hover)}
-.myday-i b{font-size:20px}
-.myday-i span{font-size:12px;color:var(--muted)}
 .lvl table{font-size:12.5px}
 .lvl th.n,.lvl td.n{min-width:64px}
 .lvl td:first-child{color:var(--muted);white-space:nowrap}
 .lvl .l0{color:var(--faint)}
 .lvl td.tot{font-weight:650;background:var(--panel2)}
 .date-in{height:28px;font-size:12px;padding:0 6px;width:128px}
-.num-in{width:110px;text-align:right}
 .form.f3{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:760px){.form.f3{grid-template-columns:1fr}}
-.intern-chip{border:none;cursor:pointer}
-.intern-chip:hover{filter:brightness(1.1)}
-.intern-chip:disabled{cursor:default}
 .fee-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .fee-grid label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);font-weight:600}
 @media (max-width:640px){.fee-grid{grid-template-columns:repeat(3,1fr)}}
 a{color:var(--base)}
 a.btn{color:inherit}
-.pick-inline{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .pick-inline .pick{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border-radius:0;border-top:1px solid var(--line);padding:7px 10px}
 .pick-inline .pick:first-child{border-top:none}
-.pick-chosen{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--growth) 10%,transparent);border:1px solid color-mix(in srgb,var(--growth) 40%,transparent)}
-.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.flow>div{display:grid;grid-template-columns:24px 1fr;gap:0 8px;padding:9px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
-.flow i{grid-row:span 2;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--base)}
-.flow b{font-size:12.5px}
-.flow span{font-size:11.5px;color:var(--muted)}
-.partner-tabs{display:flex;gap:8px;flex-wrap:wrap}
-.partner-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);text-align:left}
-.partner-tabs button span{font-size:11.5px;color:var(--muted)}
 .partner-tabs button.on{border-color:var(--base);background:color-mix(in srgb,var(--base) 10%,var(--panel))}
 .partner-tabs button.add{justify-content:center;color:var(--base);font-weight:600;border-style:dashed}
 .status-row.total{border-top:1px solid var(--line);padding-top:6px}
-@media (max-width:760px){.flow{grid-template-columns:1fr 1fr}}
-.pick-h{display:flex;align-items:center;gap:8px}
-.pick-chips{display:flex;flex-wrap:wrap;gap:5px}
-.pick-chips button{padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);font-size:12px;color:var(--muted)}
 .pick-chips button.on{border-color:var(--base);background:color-mix(in srgb,var(--base) 14%,transparent);color:var(--text);font-weight:600}
-.tgt-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:10px 12px;border-radius:10px;background:var(--panel2);font-size:13px}
 .form .form{min-width:0}
 .form input[type=date]{width:100%;min-width:0}
-.link.cnt{font-size:13px;font-weight:600}
-.check-line{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;font-size:12.5px;color:var(--text)!important}
-.check-line input{width:auto;height:auto}
 .tot-row td{font-weight:650;background:var(--panel2)}
 .kpi.pick{cursor:pointer;transition:background .15s}
 .kpi.pick:hover{background:var(--hover)}
@@ -482,10 +347,6 @@ code.small{font-size:11px;white-space:normal;word-break:break-word;color:var(--m
 .tkpi{text-align:left;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow)!important;gap:4px!important;cursor:pointer;background:var(--panel)}
 .tkpi.on{border-color:var(--base)!important;background:color-mix(in srgb,var(--base) 8%,var(--panel))}
 .tkpi .meter{margin-top:2px}
-.tstat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tstat div{border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--c) 12%,transparent);display:flex;flex-direction:column}
-.tstat b{font-size:22px;color:var(--c)}
-.tstat span{font-size:11.5px;color:var(--muted)}
 .mtx th,.mtx td{white-space:nowrap}
 .mcell,.xcell,.hcell{display:inline-flex;flex-direction:column;align-items:flex-end;min-width:64px;padding:4px 8px;border-radius:6px;font-weight:600;font-variant-numeric:tabular-nums}
 .mcell{background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
@@ -502,21 +363,28 @@ code.small{font-size:11px;white-space:normal;word-break:break-word;color:var(--m
 .tsum:hover{background:var(--hover)}
 @media (max-width:1100px){.tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:640px){.tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.mixrow{grid-template-columns:100px 1fr}}
-.simrow{display:grid;grid-template-columns:170px 1fr 52px;gap:10px;align-items:center;font-size:12.5px}
-.simrow input{width:100%;height:auto;padding:0}
-.simrow b{text-align:right;font-variant-numeric:tabular-nums}
-.wrow{display:grid;grid-template-columns:190px 1fr 52px;gap:10px;align-items:center;font-size:12.5px}
-.wbar{position:relative;height:10px;border-radius:99px;background:var(--panel2)}
-.wbar::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line2)}
-.wbar i{position:absolute;top:0;bottom:0;border-radius:99px}
-.wrow b{text-align:right;font-variant-numeric:tabular-nums}
-@media (max-width:640px){.simrow{grid-template-columns:110px 1fr 44px}.wrow{grid-template-columns:120px 1fr 44px}}
 .fgroup{flex-wrap:wrap}
 .crumbs{min-width:0;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:420px){.as-chip{white-space:normal}.date-in{width:118px}}
 .tgrid4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .tedit tr.derived td{background:var(--panel2);font-size:12px}
 @media (max-width:760px){.tgrid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Share list: name, value and change on one line, share bar under it */
+.slist{display:flex;flex-direction:column;gap:2px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:8px 10px;margin:0 -10px;border-radius:var(--r-md);text-align:left;color:inherit}
+button.srow:hover{background:var(--hover)}
+.srow-n{display:flex;align-items:center;gap:8px;font-weight:550;min-width:0}
+.srow-n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow-v{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.srow-v b{font-weight:650;min-width:58px;text-align:right}
+.srow-b{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.srow-b i{display:block;height:100%;border-radius:99px}
+.srow-s{font-size:11.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;min-width:58px}
+.page > .section-t{font-size:16px;font-weight:700;letter-spacing:-.015em;text-transform:none;color:var(--text);margin:32px 0 6px}
+.page > .section-t + p{font-size:13px!important;margin:0 0 14px!important}
+.fbar{border-radius:8px;height:32px}
+.mix{height:8px}
+@media (max-width:820px){:root{--pad:16px}main{padding:0 14px 40px}.top,.filters{padding-left:14px;padding-right:14px}.ph{padding:18px 0 14px}h1{font-size:20px}.kpi .v{font-size:21px}}
 </style>
 </head>
 <body>
@@ -621,18 +489,20 @@ function donut(items, {center, fmt = N, stack} = {}) {
   return h('div', {class: 'donut-wrap' + (stack ? ' stack' : '')}, h('div', {html: `<svg width="150" height="150" viewBox="0 0 120 120" role="img" aria-label="Share chart"><circle r="${R0}" cx="60" cy="60" fill="none" stroke="var(--panel2)" stroke-width="13"/>${arcs}<text x="60" y="61" text-anchor="middle" font-size="16" font-weight="650" fill="var(--text)">${center ?? N(total)}</text><text x="60" y="75" text-anchor="middle" font-size="9" fill="var(--muted)">total</text></svg>`}),
     h('div', {class: 'donut-list'}, items.map(i => h('div', {}, h('i', {style: `background:var(${i.c})`}), h('span', {class: 'dl', title: i.label}, i.label), h('b', {}, fmt(i.value)), h('span', {class: 'muted', style: 'width:36px;text-align:right'}, pct(i.value, total) + '%')))));
 }
+let areaN = 0;
 function area(series, labels, {fmt = N, height = 220, zero = true} = {}) {
   const vals = series.flatMap(s => s.values), top = Math.max(1, ...vals), bot = zero ? 0 : Math.min(...vals);
   const cu = (fmt === short || fmt === Rp) && ui.cur === 'USD' ? D.fx : 1, step = nice(((top - bot) / 4 || top / 4) / cu) * cu, lo = zero ? 0 : Math.max(0, Math.floor(bot / step) * step), hi = Math.max(lo + step, Math.ceil(top / step) * step);
+  const gid = 'ag' + (++areaN); // gradient ids must be unique on the page
   return h('div', {class: 'viz'}, chart((W, H) => {
     const L = 54, R = 14, T = 10, B = 22, n = labels.length, x = i => L + i * (W - L - R) / Math.max(1, n - 1), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
     let s = '';
-    for (let t = lo; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 8}" y="${y(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${fmt(t)}</text>`;
+    for (let t = lo; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line${t > lo ? '' : '2'})" ${t > lo ? 'stroke-dasharray="3 4"' : ''}/><text x="${L - 8}" y="${y(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${fmt(t)}</text>`;
     const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - L - R) / 46))));
     s += labels.map((l, i) => i === n - 1 || (i % every === 0 && n - 1 - i >= every) ? `<text x="${x(i)}" y="${H - 6}" font-size="10.5" fill="var(--muted)" text-anchor="${i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'}">${esc(l)}</text>` : '').join('');
-    for (const se of series) {
-      const pts = se.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-      if (se.fill !== false) s += `<polygon points="${x(0)},${y(lo)} ${pts} ${x(n - 1)},${y(lo)}" fill="var(${se.c})" opacity=".09"/>`;
+    for (const [k, se] of series.entries()) {
+      const pts = se.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' '), id = `${gid}-${k}`;
+      if (se.fill !== false) s += `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(${se.c})" stop-opacity=".2"/><stop offset="1" stop-color="var(${se.c})" stop-opacity="0"/></linearGradient></defs><polygon points="${x(0)},${y(lo)} ${pts} ${x(n - 1)},${y(lo)}" fill="url(#${id})"/>`;
       s += `<polyline points="${pts}" fill="none" stroke="var(${se.c})" stroke-width="${se.dash ? 1.5 : 2}" ${se.dash ? 'stroke-dasharray="4 4"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
       if (!se.dash) s += `<circle cx="${x(n - 1)}" cy="${y(se.values.at(-1))}" r="3.5" fill="var(${se.c})" stroke="var(--panel)" stroke-width="2"/>` +
         se.values.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="9" fill="transparent"><title>${esc(labels[i])} · ${esc(se.name)}: ${fmt(v)}</title></circle>`).join('');
@@ -931,45 +801,53 @@ const levelChip = l => chip(l, LVC[l], false);
 
 // ================= Overview =================
 const PAGES = {};
+// Share list: one row per group with its value, change and a bar for its share. Rows with open() are clickable.
+function shareList(rows, {fmt = Rp, c = '--base', total, barMax} = {}) {
+  const T = total || sum(rows, r => r.v) || 1, BT = barMax ? Math.max(1, ...rows.map(r => r.v)) : T; // barMax: bars against the biggest row when every share is small
+  if (!rows.length) return h('p', {class: 'muted small'}, 'Nothing here for this filter.');
+  return h('div', {class: 'slist'}, rows.map(r => h(r.open ? 'button' : 'div', {class: 'srow', type: r.open ? 'button' : null, onclick: r.open || null},
+    h('span', {class: 'srow-n'}, r.dot ? h('i', {class: 'dot-c', style: `background:var(${r.dot})`}) : null, h('span', {}, r.label)),
+    h('span', {class: 'srow-v'}, r.p != null ? dd(r.v, r.p) : null, h('b', {}, fmt(r.v))),
+    h('span', {class: 'srow-b'}, h('i', {style: `width:${Math.max(r.v > 0 ? 1 : 0, Math.min(100, r.v / BT * 100))}%;background:var(${r.c || r.dot || c})`})),
+    h('span', {class: 'srow-s'}, r.note ?? pct(r.v, T) + '%'))));
+}
+const promoChip = (on, c = '--ops') => on ? chip('Promoted', c, false) : h('span', {class: 'faint small'}, 'No');
+function overviewData() {
+  const P = period(), S = stats(P.a, P.b).filter(F), Sp = stats(P.pa, P.pb).filter(F), t = tot(S), tp = tot(Sp), on = s => s.vAct || s.lAct;
+  const M = mstats(P.a, P.b), Mp = mstats(P.pa, P.pb), B = bstats(P.a, P.b), Bp = bstats(P.pa, P.pb), keepM = x => cityOk(x.m.city);
+  const sellers = (m, b) => m.filter(x => keepM(x) && x.gr > 0).length + b.filter(x => x.gr > 0).length;
+  const grp = (keep, live) => { const a = tot(S.filter(keep)), b = tot(Sp.filter(keep)), cu = S.filter(keep);
+    return {v: live == null ? a.gr + a.lgr : live ? a.lgr : a.gr, p: live == null ? b.gr + b.lgr : live ? b.lgr : b.gr, ac: cu.filter(on).length, n: cu.length}; };
+  const streams = STREAMS.map(st => ({label: st.label, dot: st.c, ...grp(s => inStream(s, st), st.live), open: () => { ui.page = st.live ? 'Creator · LIVE' : 'Creator · Video'; if (!st.live) ui.tab.cvi = st.ind; render(); }}));
+  const regions = REGIONS.map(r => ({label: r, ...grp(s => REGION[s.c.city] === r), open: () => { ui.f.area = 'r:' + r; render(); }})).filter(x => x.v || x.p).sort((a, b) => b.v - a.v);
+  const levels = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({label: l, dot: LVC[l], ...grp(s => s.lvl === l), open: () => { ui.f.lvl = l; render(); }}));
+  const topM = [...M.filter(x => keepM(x) && x.gr > 0).map(x => ({name: x.m.name, sub: `${x.m.ind} · ${x.m.city}`, kind: 'Video', g: x.gr, gp: Mp[x.m.i].gr, _open: () => openMerchant(x.m.i)})),
+    ...B.filter(x => x.gr > 0).map(x => ({name: x.br.name, sub: 'Dining LIVE brand', kind: 'LIVE', g: x.gr, gp: Bp[x.br.i].gr, _open: () => openBrand(x.br.i)}))].sort((a, b) => b.g - a.g).slice(0, 10);
+  return {P, S, Sp, t, tp, act: S.filter(on).length, actP: Sp.filter(on).length, mAct: sellers(M, B), mActP: sellers(Mp, Bp), streams, regions, levels, topM};
+}
 PAGES['Overview'] = () => {
-  const P = period(), all = stats(P.a, P.b), allP = stats(P.pa, P.pb), S = all.filter(F), Sp = allP.filter(F), t = tot(S), tp = tot(Sp);
-  const act = S.filter(s => s.vAct || s.lAct).length, actP = Sp.filter(s => s.vAct || s.lAct).length;
-  const M = mstats(P.a, P.b).filter(x => cityOk(x.m.city)), B = bstats(P.a, P.b), mAct = M.filter(x => x.gr > 0).length + B.filter(x => x.gr > 0).length;
-  const tr = trend(S, Sp, gmvDay, P), byStream = trendStreams(S, P);
-  const streams = STREAMS.map(st => { const cu = S.filter(s => st.live ? s.c.L : s.c.ind === st.ind), pr = Sp.filter(s => st.live ? s.c.L : s.c.ind === st.ind), a = tot(cu), b = tot(pr);
-    const g = st.live ? a.lgr : a.gr, gp = st.live ? b.lgr : b.gr, ac = cu.filter(s => st.live ? s.lAct : s.vAct).length;
-    return {...st, g, gp, ac, n: cu.length, od: st.live ? a.lod : a.od, gs: st.live ? a.lgs : a.gs, places: st.live ? B.filter(x => x.gr > 0).length : M.filter(x => x.m.ind === st.ind && x.gr > 0).length,
-      _open: () => { ui.page = st.live ? 'Creator · LIVE' : 'Creator · Video'; if (!st.live) ui.tab.cvi = st.ind; render(); }}; });
-  const gTot = sum(streams, x => x.g) || 1;
-  const cities = REGIONS.map(cy => { const inC = s => REGION[s.c.city] === cy, cu = S.filter(inC), pr = Sp.filter(inC);
-    return {city: cy, g: tot(cu).gr + tot(cu).lgr, gp: tot(pr).gr + tot(pr).lgr, ac: cu.filter(s => s.vAct || s.lAct).length, n: cu.length}; });
-  const topM = [...M.filter(x => x.gr > 0).map(x => ({name: x.m.name, sub: `${x.m.ind} · ${x.m.city}`, kind: 'Video', g: x.gr, _open: () => openMerchant(x.m.i)})),
-    ...B.filter(x => x.gr > 0).map(x => ({name: x.br.name, sub: 'Dining LIVE brand', kind: 'LIVE', g: x.gr, _open: () => openBrand(x.br.i)}))].sort((a, b) => b.g - a.g).slice(0, 10);
-  const R = lvlRows(S, Sp);
-  return [h('div', {class: 'tools'}, h('b', {}, `TTLS performance · ${P.label}`), h('span', {class: 'muted small'}, `Compared with ${P.plabel}. Linked creators only. Every number follows the filters at the top.`), h('span', {class: 'spacer'}),
-      h('button', {class: 'btn sm primary', onclick: () => overviewPack(P, S, streams, R, cities, topM)}, 'Download all (.xlsx)')),
-    h('div', {class: 'grid'}, kpi('Redemption GMV', Rp(t.gr + t.lgr), {d: delta(t.gr + t.lgr, tp.gr + tp.lgr), sub: `vs ${P.plabel}`, c: '--growth', spark: tr.now}),
-      kpi('Orders', N(t.od + t.lod), {d: delta(t.od + t.lod, tp.od + tp.lod)}), kpi('AOV', Rp(ratio(t.gs + t.lgs, t.od + t.lod))), kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}),
-      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} linked · ${pct(act, S.length)}%`}), kpi('Merchants with sales', N(mAct), {sub: 'places and LIVE brands'})),
-    h('div', {class: 'grid g2 mt'}, card('Signals', 'Plain rules on this data, checked every time the page opens. Click Open to see the detail.', signals(P, S, Sp, streams, cities, M, B)), targetSummary(P)),
-    h('div', {class: 'grid g2 mt'}, card('Redemption GMV by day', `${P.m.label} next to the same days of ${P.pm.label}.`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 210})),
-      card('By industry and format', 'Each line by day this month.', area(byStream, tr.labels, {fmt: short, height: 210}))),
-    row(card('By industry and format', 'Click a line to open it.', table([{k: 'label', label: 'Industry · format', render: r => h('div', {class: 'who'}, h('i', {class: 'dot-c', style: `background:var(${r.c})`}), h('b', {style: 'font-weight:600'}, r.label))},
-      {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: r => dd(r.g, r.gp)},
-      {k: 'ac', label: 'Active creators', num: true, render: r => `${N(r.ac)} of ${N(r.n)}`}, {k: 'gpa', label: 'GMV / active creator', num: true, fmt: Rp}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp},
-      {k: 'places', label: 'Merchants with sales', num: true, fmt: N}], streams.map(x => ({...x, sh: pct(x.g, gTot), chg: ratio(x.g, x.gp), gpa: ratio(x.g, x.ac), aov: ratio(x.gs, x.od)})), {search: false, sortKey: 'g', pageSize: 6}))),
-    row(card(`By level · ${P.label}`, 'Level = the creator’s level at the end of the dates picked. L0 is shown in full here.', ltable([
-      {label: 'Linked', v: r => N(r.cur.length)}, {label: 'Active', v: r => N(r.cur.filter(s => s.vAct || s.lAct).length)}, {label: 'Active %', v: r => pct(r.cur.filter(s => s.vAct || s.lAct).length, r.cur.length) + '%'},
-      {label: 'Hit benchmark', v: r => N(r.cur.filter(s => hitB(s, P)).length)}, {label: 'New posts', v: r => N(r.t.np)}, {label: 'Valid LIVE', v: r => N(r.t.val)}, {label: 'Orders', v: r => N(r.t.od + r.t.lod)},
-      {label: 'Redemption GMV', v: r => h('b', {}, Rp(r.t.gr + r.t.lgr))}, {label: 'Share', v: r => pct(r.t.gr + r.t.lgr, t.gr + t.lgr) + '%'},
-      {label: 'GMV / active creator', v: r => Rp(ratio(r.t.gr + r.t.lgr, r.cur.filter(s => s.vAct || s.lAct).length))}, {label: `vs ${P.plabel}`, v: r => dd(r.t.gr + r.t.lgr, r.p.gr + r.p.lgr)}], R))),
-    h('div', {class: 'grid g2 mt'}, card('GMV by region', 'Where creators are from. Share of redemption GMV.', hbars(cities.map(x => ({label: x.city, value: x.g, c: '--growth'})), {fmt: short, share: true})),
-      card('By region', 'Open Area & Origin for provinces, cities and where they sell.', table([{k: 'city', label: 'Region'}, {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'},
-        {k: 'chg', label: 'vs last month', num: true, render: r => dd(r.g, r.gp)}, {k: 'ac', label: 'Active creators', num: true, render: r => `${N(r.ac)} of ${N(r.n)}`}],
-        cities.map(x => ({...x, sh: pct(x.g, t.gr + t.lgr), chg: ratio(x.g, x.gp)})), {search: false, sortKey: 'g', pageSize: 8}))),
-    row(card('Top merchants', 'Places (video) and LIVE brands, by redemption GMV.', table([{k: 'name', label: 'Merchant', render: r => person(r.name, r.sub)}, {k: 'kind', label: 'Format', render: r => chip(r.kind, r.kind === 'LIVE' ? '--rev' : '--base', false)},
-        {k: 'g', label: 'GMV', num: true, fmt: Rp}], topM, {search: false, sortKey: 'g', pageSize: 10})))];
+  const {P, S, Sp, t, tp, act, actP, mAct, mActP, streams, regions, levels, topM} = overviewData(), tr = trend(S, Sp, gmvDay, P), g = t.gr + t.lgr, gp = tp.gr + tp.lgr;
+  return [h('div', {class: 'grid'}, kpi('Redemption GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`, c: '--growth', spark: tr.now}),
+      kpi('Orders', N(t.od + t.lod), {d: delta(t.od + t.lod, tp.od + tp.lod), sub: `AOV ${Rp(ratio(t.gs + t.lgs, t.od + t.lod))}`}),
+      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} linked`}), kpi('Merchants with sales', N(mAct), {d: delta(mAct, mActP), sub: 'places and LIVE brands'})),
+    h('div', {class: 'grid g21 mt'}, card('Redemption GMV by day', `${P.m.label} (solid) next to the same days of ${P.pm.label} (dashed).`,
+      area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 240})), targetSummary(P)),
+    h('div', {class: 'grid g3 mt'}, card('By industry and format', 'Click one to open it.', shareList(streams)),
+      card('By region', 'Where creators are from. Click to filter.', shareList(regions)),
+      card('By creator level', 'Click a level to filter.', shareList(levels))),
+    row(card('Top merchants', 'Places (video) and LIVE brands with the most GMV. Click one for its detail.', table([{k: 'name', label: 'Merchant', render: r => person(r.name, r.sub)},
+      {k: 'kind', label: 'Format', render: r => chip(r.kind, r.kind === 'LIVE' ? '--rev' : '--base', false)}, {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: r => dd(r.g, r.gp)}],
+      topM.map(r => ({...r, chg: ratio(r.g, r.gp)})), {search: false, sortKey: 'g', pageSize: 10})))];
 };
+function overviewPack() {
+  const {P, S, act, streams, regions, levels, topM} = overviewData(), money = `(${CUR()})`;
+  const sheet = (head, list) => list.map(x => ({[head]: x.label, [`Redemption GMV ${money}`]: Math.round(toCur(x.v)), [`Same days last month ${money}`]: Math.round(toCur(x.p)), 'Active creators': x.ac, 'Linked creators': x.n}));
+  sheetsDownload(`TTLS-performance-${P.label.replace(/ /g, '-')}.xlsx`, [
+    ['Summary', [['Dates', P.label], ['Compared with', P.plabel], ['Filters', [ui.f.lvl, ui.f.area.slice(2)].filter(Boolean).join(', ') || 'none'], [`Redemption GMV ${money}`, Math.round(toCur(tot(S).gr + tot(S).lgr))], ['Linked creators', S.length], ['Active creators', act]].map(([Metric, Value]) => ({Metric, Value}))],
+    ['By industry and format', sheet('Industry · format', streams)], ['By region', sheet('Region', regions)], ['By level', sheet('Creator level', levels)],
+    ['Top merchants', topM.map(x => ({Merchant: x.name, Format: x.kind, Where: x.sub, [`Redemption GMV ${money}`]: Math.round(toCur(x.g)), [`Same days last month ${money}`]: Math.round(toCur(x.gp))}))]]);
+  toast('Downloaded: summary, industry and format, region, level, top merchants.');
+}
 // ================= Summary: current situation and where the problem is =================
 // Business view: the GMV growth formulas from the TTLS diagnostic framework, each split into its factors.
 // Individual creators appear only in Biggest drops / gains.
@@ -1099,39 +977,6 @@ PAGES['Summary'] = () => {
       {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp}], rows.map(r => ({...r, sh: r.g})), {search: false, sortKey: 'g', pageSize: 10}),
       seg([['st', 'Industry · format'], ['reg', 'Region'], ['lvl', 'Creator level']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
 };
-function trendStreams(S, P) {
-  const n = P.n, labels = Array.from({length: n}, (_, i) => i);
-  return STREAMS.map(st => ({name: st.label, c: st.c, fill: false, values: daily(S.filter(s => st.live ? s.c.L : s.c.ind === st.ind), P.m.s, P.m.s + n - 1, st.live ? (c, d) => c.L.lgr[d] : (c, d) => c.V.gr[d]), labels}));
-}
-// Rule-based signals only (no AI): biggest moves, weakest activation, dormant pockets, coverage gaps.
-function signals(P, S, Sp, streams, cities, M, B) {
-  const out = [], push = (c, text, go) => out.push({c, text, go});
-  const mv = streams.filter(x => x.gp).map(x => ({...x, d: (x.g - x.gp) / x.gp * 100})).sort((a, b) => a.d - b.d);
-  if (mv.length) { const lo = mv[0], hi = mv.at(-1);
-    if (lo.d < -3) push('--rev', `${lo.label} is down ${Math.abs(Math.round(lo.d))}% vs ${P.plabel}.`, () => { ui.page = lo.live ? 'Creator · LIVE' : 'Creator · Video'; if (!lo.live) ui.tab.cvi = lo.ind; render(); });
-    if (hi.d > 3) push('--growth', `${hi.label} grew ${Math.round(hi.d)}% vs ${P.plabel}.`, () => { ui.page = hi.live ? 'Creator · LIVE' : 'Creator · Video'; if (!hi.live) ui.tab.cvi = hi.ind; render(); }); }
-  const lv = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => { const x = S.filter(s => s.lvl === l); return {l, n: x.length, a: pct(x.filter(s => s.vAct || s.lAct).length, x.length)}; }).filter(x => x.n >= 5).sort((a, b) => a.a - b.a);
-  if (lv.length) push('--ops', `${lv[0].l} has the lowest active rate: ${lv[0].a}% of ${N(lv[0].n)} creators.`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'act'; render(); });
-  const dorm = S.filter(s => dormant(s, P.b) && !s.lAct), byL = LV.map(l => [l, dorm.filter(s => s.lvl === l).length]).sort((a, b) => b[1] - a[1]);
-  if (dorm.length) push('--rev', `${N(dorm.length)} linked creators have not posted for 14+ days, most of them ${byL[0][0]} (${N(byL[0][1])}).`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'act'; render(); });
-  const cs = cities.filter(x => x.gp).map(x => ({...x, d: (x.g - x.gp) / x.gp * 100})).sort((a, b) => b.d - a.d);
-  if (cs.length > 1) push(cs[0].d >= 0 ? '--growth' : '--ops', `${cs[0].city} moved most: ${cs[0].d >= 0 ? '+' : ''}${Math.round(cs[0].d)}%. ${cs.at(-1).city} moved least: ${cs.at(-1).d >= 0 ? '+' : ''}${Math.round(cs.at(-1).d)}%.`, null);
-  const prom = M.filter(x => x.m.promoted), cov = prom.filter(x => x.np > 0).length;
-  if (prom.length && cov < prom.length) push(pct(cov, prom.length) < 60 ? '--ops' : '--growth', `${pct(prom.length - cov, prom.length)}% of promoted places (${N(prom.length - cov)}) have no new post in these dates.`, () => { ui.page = 'Merchant · Video'; ui.tab.mvt = 'act'; render(); });
-  const t = tot(S); if (t.ses) push(ratio(t.val, t.ses) < 0.6 ? '--ops' : '--base', `${rt(t.val, t.ses, 0)} of LIVE rooms were valid (2 hours or more).`, () => { ui.page = 'Creator · LIVE'; ui.tab.clt = 'ses'; render(); });
-  const l2 = S.filter(s => ['L2', 'L3', 'L4'].includes(s.lvl)); if (l2.length) push('--base', `${pct(l2.filter(s => hitB(s, P)).length, l2.length)}% of L2 to L4 creators are on track for their level benchmark.`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'level'; render(); });
-  return h('div', {class: 'signals'}, out.map(x => h('div', {class: 'signal', style: `--c:var(${x.c})`}, h('i'), h('span', {class: 'grow'}, x.text), x.go ? h('button', {class: 'btn sm', onclick: x.go}, 'Open') : null)));
-}
-function overviewPack(P, S, streams, R, cities, topM) {
-  const lvlSheet = R.map(r => ({Level: r.total ? 'Total' : r.lvl, Linked: r.cur.length, Active: r.cur.filter(s => s.vAct || s.lAct).length, 'New posts': r.t.np, 'Valid LIVE': r.t.val, Orders: r.t.od + r.t.lod, [`Redemption GMV (${CUR()})`]: Math.round(toCur(r.t.gr + r.t.lgr)), [`Last month same days (${CUR()})`]: Math.round(toCur(r.p.gr + r.p.lgr))}));
-  sheetsDownload(`TTLS-performance-${P.label.replace(/ /g, '-')}.xlsx`, [
-    ['Summary', [['Dates', P.label], ['Compared with', P.plabel], ['Filters', [ui.f.lvl, ui.f.area.slice(2)].filter(Boolean).join(', ') || 'none'], [`Redemption GMV (${CUR()})`, Math.round(toCur(tot(S).gr + tot(S).lgr))], ['Linked creators', S.length], ['Active creators', S.filter(s => s.vAct || s.lAct).length]].map(([Metric, Value]) => ({Metric, Value}))],
-    ['By industry and format', streams.map(x => ({'Industry · format': x.label, [`Redemption GMV (${CUR()})`]: Math.round(toCur(x.g)), [`Last month same days (${CUR()})`]: Math.round(toCur(x.gp)), 'Active creators': x.ac, 'Linked creators': x.n, Orders: x.od, 'Merchants with sales': x.places}))],
-    ['By level', lvlSheet], ['By region', cities.map(x => ({Region: x.city, [`Redemption GMV (${CUR()})`]: Math.round(toCur(x.g)), [`Last month same days (${CUR()})`]: Math.round(toCur(x.gp)), 'Active creators': x.ac, 'Linked creators': x.n}))],
-    ['Top merchants', topM.map(x => ({Merchant: x.name, Format: x.kind, Where: x.sub, [`Redemption GMV (${CUR()})`]: Math.round(toCur(x.g))}))]]);
-  toast('Downloaded: summary, industry and format, level, region, top merchants.');
-}
-
 // ================= Creator · Video =================
 PAGES['Creator · Video'] = () => {
   const P = period(), ind = ui.tab.cvi || '', tab = ui.tab.cvt || 'level', inI = s => !ind || s.c.ind === ind;
@@ -1235,82 +1080,74 @@ PAGES['Creator · LIVE'] = () => {
 
 // ================= Merchant · Video =================
 PAGES['Merchant · Video'] = () => {
-  const P = period(), ind = ui.tab.mvi || '', tab = ui.tab.mvt || 'level', keepM = x => (!ind || x.m.ind === ind) && cityOk(x.m.city);
-  const M = mstats(P.a, P.b).filter(keepM), Mp = mstats(P.pa, P.pb).filter(keepM), g = sum(M, x => x.gr), gp = sum(Mp, x => x.gr);
-  const sold = M.filter(x => x.gr > 0), posted = M.filter(x => x.np > 0), prom = M.filter(x => x.m.promoted), promCov = prom.filter(x => x.np > 0).length;
-  const head = [h('div', {class: 'tools'}, seg([['', 'All industries'], ...IND.map(i => [i, i === 'Dining' ? 'Dining (SV)' : i])], ind, v => { ui.tab.mvi = v; render(); }, 'Industry'),
-      tabs([['level', 'Level'], ['act', 'Activation'], ['list', 'Merchants']], 'mvt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, 'Places that video creators sell at · our creators only')),
-    h('div', {class: 'grid'}, kpi('Merchant video GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`, c: '--ops'}), kpi('Merchants with sales', N(sold.length), {d: delta(sold.length, Mp.filter(x => x.gr > 0).length), sub: `of ${N(M.length)} places`}),
-      kpi('Merchants with new posts', N(posted.length)), kpi('Promoted places covered', pct(promCov, prom.length) + '%', {sub: `${N(promCov)} of ${N(prom.length)} have a new post`}), kpi('GMV per selling merchant', Rp(ratio(g, sold.length))),
-      kpi('Active creators per merchant', ratio(sum(posted, x => x.act), posted.length).toFixed(1)), kpi('Orders', N(sum(M, x => x.od))), kpi('New posts', N(sum(M, x => x.np))))];
-  if (tab === 'level') {
-    const rows = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({l, reach: M.filter(x => x.reach.has(l)).length, np: sum(M, x => x.npL[l]), g: sum(M, x => x.byL[l]), gp: sum(Mp, x => x.byL[l])}));
-    const top = [...sold].sort((a, b) => b.gr - a.gr).slice(0, 15);
-    return [...head,
-      row(card('Merchant GMV by creator level', 'Which creator levels bring the GMV for these places. A merchant counts once per level that sold or posted there.', h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Creator level', 'Merchants reached', 'New posts', 'Redemption GMV', 'Share', 'GMV / merchant reached', `vs ${P.plabel}`].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
-        h('tbody', {}, rows.map(r => h('tr', {}, h('td', {}, levelChip(r.l)), h('td', {class: 'n'}, N(r.reach)), h('td', {class: 'n'}, N(r.np)), h('td', {class: 'n'}, h('b', {}, Rp(r.g))), h('td', {class: 'n'}, pct(r.g, g) + '%'), h('td', {class: 'n'}, Rp(ratio(r.g, r.reach))), h('td', {class: 'n'}, dd(r.g, r.gp)))),
-          h('tr', {class: 'tot-row'}, h('td', {}, h('b', {}, 'Total')), h('td', {class: 'n'}, N(posted.length + sold.filter(x => !x.np).length)), h('td', {class: 'n'}, N(sum(rows, r => r.np))), h('td', {class: 'n'}, Rp(g)), h('td', {class: 'n'}, '100%'), h('td', {class: 'n'}, Rp(ratio(g, sold.length))), h('td', {class: 'n'}, dd(g, gp)))))))),
-      row(card('Top merchants and their level mix', 'Bar = share of the merchant’s GMV made by each creator level.', h('div', {}, table([{k: 'name', label: 'Merchant', render: x => person(x.m.name, `${x.m.ind} · ${x.m.city}`)}, {k: 'promoted', label: 'Promoted', render: x => x.m.promoted ? chip('Promoted', '--ops', false) : h('span', {class: 'muted small'}, 'No')},
-        {k: 'act', label: 'Creators', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'mix', label: 'Level mix', fixed: true, render: x => mixBar(x.byL)}], top.map(x => ({...x, name: x.m.name, promoted: x.m.promoted ? 1 : 0, _open: () => openMerchant(x.m.i)})), {search: false, sortKey: 'gr', pageSize: 15}), mixLegend())))];
-  }
+  const P = period(), ind = ui.tab.mvi || '', tab = ui.tab.mvt || 'ov', keepM = x => (!ind || x.m.ind === ind) && cityOk(x.m.city);
+  const MpAll = mstats(P.pa, P.pb), M = mstats(P.a, P.b).filter(keepM), Mp = MpAll.filter(keepM), g = sum(M, x => x.gr), gp = sum(Mp, x => x.gr), gpOf = x => MpAll[x.m.i].gr;
+  const sold = M.filter(x => x.gr > 0), soldP = Mp.filter(x => x.gr > 0).length, prom = M.filter(x => x.m.promoted), promCov = prom.filter(x => x.np > 0).length;
+  const name = x => person(x.m.name, `${x.m.ind} · ${x.m.city}`), row0 = x => ({...x, name: x.m.name, promoted: x.m.promoted ? 1 : 0, gp: gpOf(x), chg: ratio(x.gr, gpOf(x)), _open: () => openMerchant(x.m.i)});
+  const head = [h('div', {class: 'tools'}, seg([['', 'All industries'], ...IND.map(i => [i, i === 'Dining' ? 'Dining (SV)' : i])], ind, v => { ui.tab.mvi = v; render(); }, 'Industry'), h('span', {class: 'spacer'}),
+      tabs([['ov', 'Overview'], ['act', 'To act on'], ['list', 'All merchants']], 'mvt', 'ov')),
+    h('div', {class: 'grid'}, kpi('Merchant video GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`}), kpi('Merchants with sales', N(sold.length), {d: delta(sold.length, soldP), sub: `of ${N(M.length)} places`}),
+      kpi('Promoted places covered', pct(promCov, prom.length) + '%', {sub: `${N(promCov)} of ${N(prom.length)} have a new post`}), kpi('GMV per selling merchant', Rp(ratio(g, sold.length)), {d: delta(ratio(g, sold.length), ratio(gp, soldP))}))];
   if (tab === 'act') {
-    const three = prom.filter(x => x.gr > 0 && x.act >= 3).length, cities = REGIONS.map(cy => { const x = M.filter(y => REGION[y.m.city] === cy), pr = x.filter(y => y.m.promoted);
-      return {city: cy, n: x.length, prom: pr.length, cov: pr.filter(y => y.np > 0).length, sold: x.filter(y => y.gr > 0).length, g: sum(x, y => y.gr)}; });
     const gap = prom.filter(x => !x.np), off = sold.filter(x => !x.m.promoted).sort((a, b) => b.gr - a.gr);
-    const crCity = cy => D.creators.filter(c => c.city === cy && c.links.some(([mi]) => D.merchants[mi].ind === (ind || D.merchants[mi].ind))).length;
-    return [...head,
-      h('div', {class: 'grid g12 mt'}, card('Promoted places', `From the promoted list (product strategy). Each step is part of the one before. With a new post: ${N(promCov)}.`, funnel([['Promoted places', prom.length], ['Active (new post or sale)', prom.filter(x => x.act > 0).length], ['Made a sale', prom.filter(x => x.gr > 0).length], ['Sold with 3+ creators', three]], '--ops')),
-        card('Coverage by region', 'Covered = a promoted place with at least one new post in these dates.', table([{k: 'city', label: 'Region'}, {k: 'prom', label: 'Promoted', num: true}, {k: 'cp', label: 'Covered', num: true, render: r => meterRow(pct(r.cov, r.prom), pct(r.cov, r.prom) >= 70 ? '--growth' : '--ops', `${pct(r.cov, r.prom)}%`, 60)},
-          {k: 'sold', label: 'Selling places', num: true}, {k: 'g', label: 'GMV', num: true, fmt: Rp}], cities.map(r => ({...r, cp: pct(r.cov, r.prom)})), {search: false, sortKey: 'g', pageSize: 6}))),
-      row(card(`Promoted, no new post yet · ${N(gap.length)}`, 'Places worth sending creators to. Creators nearby = linked creators in that city and industry.', table([{k: 'name', label: 'Place', render: x => person(x.m.name, x.m.ind)}, {k: 'city', label: 'City'},
-        {k: 'near', label: 'Creators nearby', num: true}, {k: 'gp', label: 'GMV same days last month', num: true, fmt: Rp}], gap.map(x => ({...x, name: x.m.name, city: x.m.city, near: crCity(x.m.city), gp: Mp[M.indexOf(x)]?.gr || 0, _open: () => openMerchant(x.m.i)})), {sortKey: 'near', pageSize: 8}))),
-      row(card('Selling well but not promoted', 'Candidates for next month’s promoted list.', table([{k: 'name', label: 'Place', render: x => person(x.m.name, `${x.m.ind} · ${x.m.city}`)}, {k: 'act', label: 'Creators', num: true}, {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
-        off.slice(0, 30).map(x => ({...x, name: x.m.name, _open: () => openMerchant(x.m.i)})), {sortKey: 'gr', pageSize: 8, search: false})))];
+    const near = cy => D.creators.filter(c => c.city === cy && c.links.some(([mi]) => D.merchants[mi].ind === (ind || D.merchants[mi].ind))).length;
+    return [...head, h('div', {class: 'grid g2 mt'},
+      card(`Promoted, no new post yet · ${N(gap.length)}`, 'Send creators here first. Creators nearby = linked creators in that city.', table([{k: 'name', label: 'Place', render: name}, {k: 'near', label: 'Creators nearby', num: true}],
+        gap.map(x => ({...row0(x), near: near(x.m.city)})), {search: false, sortKey: 'near', pageSize: 8})),
+      card('Selling well but not promoted', 'Candidates for next month’s promoted list.', table([{k: 'name', label: 'Place', render: name}, {k: 'act', label: 'Creators', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
+        off.slice(0, 30).map(row0), {search: false, sortKey: 'gr', pageSize: 8})))];
   }
-  const st = ui.tab.mvs || 'all', keep = {all: () => true, prom: x => x.m.promoted, notprom: x => !x.m.promoted, nosale: x => !x.gr}[st];
-  return [...head, row(card('Merchants', 'Our creators’ results per place. Click a row for the merchant.', table([
-    {k: 'name', label: 'Merchant', render: x => person(x.m.name, `${x.m.ind} · ${x.m.city}`)}, {k: 'promoted', label: 'Promoted', render: x => x.m.promoted ? chip('Promoted', '--ops', false) : h('span', {class: 'muted small'}, 'No')},
-    {k: 'act', label: 'Active creators', num: true}, {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'vw', label: 'Views', num: true, fmt: N}, {k: 'ctr', label: 'CTR', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'cvr', label: 'CVR', num: true, fmt: v => v.toFixed(1) + '%'},
-    {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: x => dd(x.gr, x.gp)}, {k: 'gpp', label: 'GMV / post', num: true, fmt: Rp}, {k: 'mix', label: 'Level mix', fixed: true, render: x => mixBar(x.byL)}],
-    M.filter(keep).map(x => { const gpv = Mp[M.indexOf(x)]?.gr || 0; return {...x, name: x.m.name, promoted: x.m.promoted ? 1 : 0, ctr: ratio(x.ck, x.vw) * 100, cvr: ratio(x.od, x.ck) * 100, gp: gpv, chg: ratio(x.gr, gpv), gpp: ratio(x.gr, x.np), _open: () => openMerchant(x.m.i)}; }),
-    {sortKey: 'gr', pageSize: 15, state: ui.tab.mvState ||= {}, tools: seg([['all', 'All'], ['prom', 'Promoted'], ['notprom', 'Not promoted'], ['nosale', 'No sales']], st, v => { ui.tab.mvs = v; render(); }, 'Show')})))];
+  if (tab === 'list') {
+    const st = ui.tab.mvs || 'all', keep = {all: () => true, prom: x => x.m.promoted, notprom: x => !x.m.promoted, nosale: x => !x.gr}[st];
+    return [...head, row(card('All merchants', 'Our creators’ results per place. Click a row for the detail.', table([{k: 'name', label: 'Merchant', render: name}, {k: 'promoted', label: 'Promoted', render: x => promoChip(x.m.promoted)},
+      {k: 'act', label: 'Creators', num: true}, {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp},
+      {k: 'chg', label: `vs ${P.plabel}`, num: true, render: x => dd(x.gr, x.gp)}, {k: 'gpp', label: 'GMV per post', num: true, fmt: Rp}],
+      M.filter(keep).map(x => ({...row0(x), gpp: ratio(x.gr, x.np)})), {sortKey: 'gr', pageSize: 15, state: ui.tab.mvState ||= {},
+        tools: seg([['all', 'All'], ['prom', 'Promoted'], ['notprom', 'Not promoted'], ['nosale', 'No sales']], st, v => { ui.tab.mvs = v; render(); }, 'Show')})))];
+  }
+  const regions = REGIONS.map(r => { const pr = prom.filter(y => REGION[y.m.city] === r), cov = pr.filter(y => y.np > 0).length, p = pct(cov, pr.length);
+    return {label: r, v: p, n: pr.length, note: `${cov} of ${pr.length}`, c: p >= 70 ? '--growth' : '--ops'}; }).filter(r => r.n).sort((a, b) => a.v - b.v);
+  return [...head,
+    h('div', {class: 'grid g2 mt'}, card('Promoted places', 'From the promoted list. Each step is part of the one before.', funnel([['Promoted', prom.length], ['Active', prom.filter(x => x.act > 0).length], ['Made a sale', prom.filter(x => x.gr > 0).length], ['3+ creators', prom.filter(x => x.gr > 0 && x.act >= 3).length]], '--ops')),
+      card('Promoted places covered, by region', 'Covered = at least one new post in these dates. Lowest first.', shareList(regions, {fmt: v => v + '%', total: 100}))),
+    row(card('Top merchants', 'Bar = which creator levels made the merchant’s GMV.', h('div', {}, table([{k: 'name', label: 'Merchant', render: name}, {k: 'promoted', label: 'Promoted', render: x => promoChip(x.m.promoted)},
+      {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: x => dd(x.gr, x.gp)}, {k: 'mix', label: 'Creator level mix', fixed: true, render: x => mixBar(x.byL)}],
+      [...sold].sort((a, b) => b.gr - a.gr).slice(0, 10).map(row0), {search: false, sortKey: 'gr', pageSize: 10}), mixLegend())))];
 };
 
 // ================= Merchant · LIVE =================
 PAGES['Merchant · LIVE'] = () => {
-  const P = period(), tab = ui.tab.mlt || 'level', B = bstats(P.a, P.b), Bp = bstats(P.pa, P.pb), g = sum(B, x => x.gr), gp = sum(Bp, x => x.gr);
-  const sold = B.filter(x => x.gr > 0), prom = B.filter(x => x.br.promoted), ses = sum(B, x => x.ses);
-  const head = [h('div', {class: 'tools'}, h('b', {}, 'Dining · LIVE brands'), tabs([['level', 'Level'], ['act', 'Activation'], ['brands', 'Brands'], ['products', 'Products']], 'mlt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `Sold in our creators’ LIVE rooms · vs ${P.plabel}`)),
-    h('div', {class: 'grid'}, kpi('LIVE brand GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`, c: '--rev'}), kpi('Brands with sales', N(sold.length), {sub: `of ${N(B.length)} brands`}), kpi('Promoted brands LIVE', pct(prom.filter(x => x.ses).length, prom.length) + '%', {sub: `${N(prom.filter(x => x.ses).length)} of ${N(prom.length)}`}),
-      kpi('Sessions', N(ses), {d: delta(ses, sum(Bp, x => x.ses))}), kpi('GMV per session', Rp(ratio(g, ses))), kpi('Orders', N(sum(B, x => x.od))), kpi('AOV', Rp(ratio(sum(B, x => x.gs), sum(B, x => x.od)))))];
-  if (tab === 'level') {
-    const rows = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({l, brands: B.filter(x => x.sesL[l] > 0).length, ses: sum(B, x => x.sesL[l]), g: sum(B, x => x.byL[l]), gp: sum(Bp, x => x.byL[l])}));
-    return [...head,
-      row(card('Brand GMV by creator level', 'Which creator levels sell these brands in LIVE.', h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Creator level', 'Brands sold', 'Sessions', 'Redemption GMV', 'Share', 'GMV / session', `vs ${P.plabel}`].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
-        h('tbody', {}, rows.map(r => h('tr', {}, h('td', {}, levelChip(r.l)), h('td', {class: 'n'}, N(r.brands)), h('td', {class: 'n'}, N(r.ses)), h('td', {class: 'n'}, h('b', {}, Rp(r.g))), h('td', {class: 'n'}, pct(r.g, g) + '%'), h('td', {class: 'n'}, Rp(ratio(r.g, r.ses))), h('td', {class: 'n'}, dd(r.g, r.gp)))),
-          h('tr', {class: 'tot-row'}, h('td', {}, h('b', {}, 'Total')), h('td', {class: 'n'}, N(sold.length)), h('td', {class: 'n'}, N(ses)), h('td', {class: 'n'}, Rp(g)), h('td', {class: 'n'}, '100%'), h('td', {class: 'n'}, Rp(ratio(g, ses))), h('td', {class: 'n'}, dd(g, gp)))))))),
-      row(card('Top brands and their level mix', 'Bar = share of the brand’s LIVE GMV made by each creator level.', h('div', {}, table([{k: 'name', label: 'Brand', render: x => person(x.br.name, x.br.promoted ? 'Promoted' : 'Not promoted')}, {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true},
-        {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'mix', label: 'Level mix', fixed: true, render: x => mixBar(x.byL)}], sold.map(x => ({...x, name: x.br.name, cr: x.crs.size, _open: () => openBrand(x.br.i)})), {search: false, sortKey: 'gr', pageSize: 12}), mixLegend())))];
-  }
+  const P = period(), tab = ui.tab.mlt || 'ov', B = bstats(P.a, P.b), Bp = bstats(P.pa, P.pb), g = sum(B, x => x.gr), gp = sum(Bp, x => x.gr);
+  const sold = B.filter(x => x.gr > 0), soldP = Bp.filter(x => x.gr > 0).length, prom = B.filter(x => x.br.promoted), ses = sum(B, x => x.ses), sesP = sum(Bp, x => x.ses), promL = prom.filter(x => x.ses).length;
+  const row0 = x => ({...x, name: x.br.name, promoted: x.br.promoted ? 1 : 0, cr: x.crs.size, gp: Bp[x.br.i].gr, chg: ratio(x.gr, Bp[x.br.i].gr), _open: () => openBrand(x.br.i)});
+  const head = [h('div', {class: 'tools'}, h('b', {}, 'Dining · LIVE brands'), h('span', {class: 'spacer'}), tabs([['ov', 'Overview'], ['act', 'To act on'], ['brands', 'All brands'], ['products', 'Products']], 'mlt', 'ov')),
+    h('div', {class: 'grid'}, kpi('LIVE brand GMV', Rp(g), {d: delta(g, gp), sub: `vs ${P.plabel}`}), kpi('Brands with sales', N(sold.length), {d: delta(sold.length, soldP), sub: `of ${N(B.length)} brands`}),
+      kpi('Promoted brands LIVE', pct(promL, prom.length) + '%', {sub: `${N(promL)} of ${N(prom.length)} went LIVE`}), kpi('GMV per session', Rp(ratio(g, ses)), {d: delta(ratio(g, ses), ratio(gp, sesP)), sub: `${N(ses)} sessions`}))];
   if (tab === 'act') {
     const gap = prom.filter(x => !x.ses), off = sold.filter(x => !x.br.promoted);
-    return [...head,
-      row(card('Promoted brands', 'From the promoted LIVE list (product strategy). Each step is part of the one before.', funnel([['Promoted brands', prom.length], ['Went LIVE', prom.filter(x => x.ses).length], ['Made a sale', prom.filter(x => x.gr > 0).length], ['Sold with 3+ creators', prom.filter(x => x.gr > 0 && x.crs.size >= 3).length]], '--rev'))),
-      row(card(`Promoted, no LIVE yet · ${N(gap.length)}`, 'Brands worth pairing with a LIVE creator.', gap.length ? table([{k: 'name', label: 'Brand'}, {k: 'gp', label: 'GMV same days last month', num: true, fmt: Rp}, {k: 'np', label: 'Products', num: true}],
-          gap.map(x => ({name: x.br.name, gp: Bp[x.br.i].gr, np: x.br.products.length, _open: () => openBrand(x.br.i)})), {search: false, sortKey: 'gp', pageSize: 8}) : h('div', {class: 'muted small'}, 'Every promoted brand went LIVE in these dates.'))),
-      row(card('Selling in LIVE but not promoted', 'Candidates for the promoted list.', table([{k: 'name', label: 'Brand'}, {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
-        off.map(x => ({...x, name: x.br.name, cr: x.crs.size, _open: () => openBrand(x.br.i)})), {search: false, sortKey: 'gr', pageSize: 8})))];
+    return [...head, h('div', {class: 'grid g2 mt'},
+      card(`Promoted, no LIVE yet · ${N(gap.length)}`, 'Pair these brands with a LIVE creator.', gap.length ? table([{k: 'name', label: 'Brand'}, {k: 'np', label: 'Products', num: true}, {k: 'gp', label: 'GMV last month, same days', num: true, fmt: Rp}],
+        gap.map(x => ({...row0(x), np: x.br.products.length})), {search: false, sortKey: 'gp', pageSize: 8}) : h('p', {class: 'muted small'}, 'Every promoted brand went LIVE in these dates.')),
+      card('Selling in LIVE but not promoted', 'Candidates for the promoted list.', table([{k: 'name', label: 'Brand'}, {k: 'cr', label: 'Creators', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
+        off.map(row0), {search: false, sortKey: 'gr', pageSize: 8})))];
   }
   if (tab === 'products') {
     const P2 = B.flatMap(x => x.prod.map(pp => ({...pp, brand: x.br.name, bi: x.br.i, bg: x.gr})));
-    return [...head, row(card('Products', 'LIVE products of each brand. Product GMV = room GMV × the product’s share of the room’s sales.', table([{k: 'name', label: 'Product', render: r => person(r.p.name, r.brand)}, {k: 'price', label: 'Price', num: true, fmt: Rp},
-      {k: 'rooms', label: 'Rooms with a sale', num: true}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share of brand', num: true, fmt: v => v + '%'}],
+    return [...head, row(card('Products', 'Product GMV = room GMV × the product’s share of the room’s sales.', table([{k: 'name', label: 'Product', render: r => person(r.p.name, r.brand)}, {k: 'price', label: 'Price', num: true, fmt: Rp},
+      {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share of brand', num: true, fmt: v => v + '%'}],
       P2.map(r => ({...r, name: r.p.name, price: r.p.price, sh: pct(r.gr, r.bg), _open: () => openBrand(r.bi)})), {sortKey: 'gr', pageSize: 15})))];
   }
-  return [...head, row(card('Brands', 'Click a brand for its products and creators.', table([{k: 'name', label: 'Brand', render: x => person(x.br.name, `${x.br.products.length} products`)}, {k: 'promoted', label: 'Promoted', render: x => x.br.promoted ? chip('Promoted', '--rev', false) : h('span', {class: 'muted small'}, 'No')},
-    {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true}, {k: 'val', label: 'Valid', num: true}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp}, {k: 'gr', label: 'GMV', num: true, fmt: Rp},
-    {k: 'chg', label: 'vs last month', num: true, render: x => dd(x.gr, Bp[x.br.i].gr)}, {k: 'top', label: 'Top product'}],
-    B.map(x => ({...x, name: x.br.name, promoted: x.br.promoted ? 1 : 0, cr: x.crs.size, aov: ratio(x.gs, x.od), chg: ratio(x.gr, Bp[x.br.i].gr), top: [...x.prod].sort((a, b) => b.gr - a.gr)[0]?.p.name || '-', _open: () => openBrand(x.br.i)})), {sortKey: 'gr', pageSize: 15})))];
+  if (tab === 'brands') return [...head, row(card('All brands', 'Click a brand for its products.', table([{k: 'name', label: 'Brand', render: x => person(x.br.name, `${x.br.products.length} products`)}, {k: 'promoted', label: 'Promoted', render: x => promoChip(x.br.promoted, '--rev')},
+    {k: 'cr', label: 'Creators', num: true}, {k: 'ses', label: 'Sessions', num: true}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp},
+    {k: 'chg', label: `vs ${P.plabel}`, num: true, render: x => dd(x.gr, x.gp)}, {k: 'top', label: 'Top product'}],
+    B.map(x => ({...row0(x), top: [...x.prod].sort((a, b) => b.gr - a.gr)[0]?.p.name || '-'})), {sortKey: 'gr', pageSize: 15})))];
+  const prods = B.flatMap(x => x.prod.map((pp, j) => ({label: pp.p.name, v: pp.gr, p: Bp[x.br.i].prod[j].gr, open: () => openBrand(x.br.i)}))).sort((a, b) => b.v - a.v);
+  return [...head,
+    h('div', {class: 'grid g2 mt'}, card('Promoted brands', 'From the promoted LIVE list. Each step is part of the one before.', funnel([['Promoted', prom.length], ['Went LIVE', promL], ['Made a sale', prom.filter(x => x.gr > 0).length], ['3+ creators', prom.filter(x => x.gr > 0 && x.crs.size >= 3).length]], '--rev')),
+      card('Top products', 'Share of all LIVE product GMV. Click one for its brand.', shareList(prods.slice(0, 6), {c: '--rev', total: sum(prods, x => x.v), barMax: true}))),
+    row(card('Top brands', 'Bar = which creator levels made the brand’s LIVE GMV.', h('div', {}, table([{k: 'name', label: 'Brand', render: x => person(x.br.name, `${x.br.products.length} products`)}, {k: 'promoted', label: 'Promoted', render: x => promoChip(x.br.promoted, '--rev')},
+      {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: x => dd(x.gr, x.gp)}, {k: 'mix', label: 'Creator level mix', fixed: true, render: x => mixBar(x.byL)}],
+      [...sold].sort((a, b) => b.gr - a.gr).slice(0, 10).map(row0), {search: false, sortKey: 'gr', pageSize: 10}), mixLegend())))];
 };
 
 // ================= Metric guide =================
@@ -1349,7 +1186,7 @@ PAGES['Metric guide'] = () => {
       h('li', {}, h('b', {}, 'Start at Summary: '), 'the current situation, then which growth formula has the problem and what to focus on.'),
       h('li', {}, h('b', {}, 'Pick the dates at the top. '), 'Every number compares with the same days of the month before.'),
       h('li', {}, h('b', {}, 'Creator or Merchant, then Video or LIVE. '), 'LIVE exists for Dining only, like the flowchart.'),
-      h('li', {}, h('b', {}, 'Level tab: '), 'which levels bring the GMV. ', h('b', {}, 'Activation tab: '), 'how many creators are working and how many went quiet.'),
+      h('li', {}, h('b', {}, 'Creator pages: '), 'the Level tab shows which levels bring the GMV, Activation how many creators are working. ', h('b', {}, 'Merchant pages: '), 'Overview first, then To act on for the places and brands that need creators.'),
       h('li', {}, h('b', {}, 'Business view: '), 'creators show up as totals. Single creators appear only in Biggest drops and gains on Summary. Click a place or brand for its detail.'),
       h('li', {}, h('b', {}, 'Target Achievement '), 'shows every target line; ', h('b', {}, 'Explorer '), 'puts any breakdown against any other (level, industry, region, city, where they sell, status).'),
       h('li', {}, h('b', {}, 'Linked creators only, '), 'and every name and number here is made up.'))),
@@ -1889,6 +1726,11 @@ function openBrand(i) {
 // ================= shell =================
 const GROUPS = [['Overview', '--growth', ['Summary', 'Overview', 'Target Achievement']], ['Creator', '--base', ['Creator · Video', 'Creator · LIVE']], ['Merchant', '--ops', ['Merchant · Video', 'Merchant · LIVE']], ['Breakdown', '--rev', ['Area & Origin', 'Explorer']], ['Settings', '--ops', ['Set Targets']], ['Guide', '--muted', ['Metric guide']]];
 const PAGES_ALL = GROUPS.flatMap(g => g[2]);
+// The one question each page answers, shown under its title.
+const PAGE_SUB = {'Summary': 'What is happening to GMV right now, and where the problem is.', 'Overview': 'Where GMV comes from, and how the month tracks against target.',
+  'Target Achievement': 'Are we on pace for this month’s targets?', 'Creator · Video': 'How video creators perform, level by level.', 'Creator · LIVE': 'How LIVE creators perform, level by level.',
+  'Merchant · Video': 'Which places sell, and which promoted places still need creators.', 'Merchant · LIVE': 'Which Dining brands sell in LIVE, and which promoted brands still need a session.',
+  'Area & Origin': 'Where creators come from, and where they sell.', 'Explorer': 'Cut the numbers any way you like.', 'Set Targets': 'Enter, copy or upload each month’s targets.', 'Metric guide': 'What every number means and how it is counted.'};
 function rangeBox(fg) {
   const P = period(), iso = d => `2026-${String(MONTHS.indexOf(P.m) + 8).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   const day = (k2, label) => h('input', {type: 'date', class: 'date-in', min: iso(1), max: iso(P.n), value: iso(k2 === 'd0' ? P.d0 : P.d1), 'aria-label': label, onchange: e => {
@@ -1912,7 +1754,9 @@ function render() {
   put($('#filters'), ...rangeBox(fg), fg('Money', seg([['USD', 'USD'], ['IDR', 'IDR']], ui.cur, v => { ui.cur = v; render(); }, 'Money')), fg('Level', seg([['', 'All'], ...LV.map(l => [l, l])], ui.f.lvl, v => { ui.f.lvl = v; render(); }, 'Level')),
     fg('Area', h('select', {'aria-label': 'Area', onchange: e => { ui.f.area = e.target.value; render(); }}, h('option', {value: ''}, 'All areas'),
       [['Region', 'r', REGIONS], ['Province', 'p', PROVINCES], ['City', 'c', CITIES]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v)))))));
-  const y = $('main').scrollTop; put($('#page'), PAGES[ui.page]()); $('main').scrollTop = y;
+  const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])),
+    ui.page === 'Overview' ? h('button', {class: 'btn primary', onclick: overviewPack}, 'Download (.xlsx)') : null);
+  const y = $('main').scrollTop; put($('#page'), head, PAGES[ui.page]()); $('main').scrollTop = y;
 }
 $('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
 $('#menu').onclick = () => document.body.classList.toggle('nav-open');
