@@ -450,16 +450,16 @@ a.btn{color:inherit}
 .kpi.pick:hover{background:var(--hover)}
 .kpi.pick.on{box-shadow:inset 0 0 0 2px var(--base);background:color-mix(in srgb,var(--base) 6%,var(--panel))}
 .kpi.pick.on .v{color:var(--base)}
-.card > .fv{flex:1;justify-content:center}
-.fv{display:flex;flex-direction:column}
-.fv-h{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;margin-bottom:5px}
-.fv-h b{font-weight:600;font-variant-numeric:tabular-nums}
-.fv-bar{height:10px;border-radius:99px;background:var(--panel2);overflow:hidden}
-.fv-bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--base) 70%,transparent),var(--base))}
-.fv-r{margin:6px 0 8px 6px;padding:2px 0 2px 12px;border-left:2px dotted var(--line2);font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.fv-r b{color:var(--text);font-variant-numeric:tabular-nums}
-.statusbar{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:2px}
-.statusbar i{display:block;height:100%;min-width:3px}
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.fx,.fx-g{display:inline-flex;align-items:center;gap:5px;color:var(--text);font-weight:550;white-space:nowrap}
+.fx-g{font-weight:650}
+.lens-t{margin:10px 0 6px;font-size:12.5px;line-height:1.5}
+.lens details{margin-top:auto;padding-top:8px}
+.lens summary{cursor:pointer;font-size:11.5px;color:var(--muted);font-weight:550;padding:4px 0;width:max-content}
+.lens summary:hover{color:var(--text)}
+.lens details[open] .tbl{margin-top:6px}
+.odd{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+@media (max-width:640px){.verdict{flex-direction:column-reverse;align-items:flex-start;gap:6px}.verdict-n{text-align:left}}
 .legend b{color:var(--text);font-weight:600}.faint{color:var(--faint)}
 .movers{display:flex;flex-direction:column}
 .mover{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid var(--line);border-radius:0;text-align:left;width:100%;color:inherit;font:inherit}
@@ -933,7 +933,7 @@ const levelChip = l => chip(l, LVC[l], false);
 const PAGES = {};
 PAGES['Overview'] = () => {
   const P = period(), all = stats(P.a, P.b), allP = stats(P.pa, P.pb), S = all.filter(F), Sp = allP.filter(F), t = tot(S), tp = tot(Sp);
-  const act = S.filter(s => s.vAct || s.lAct).length, actP = Sp.filter(s => s.vAct || s.lAct).length, hit = S.filter(s => hitB(s, P)).length;
+  const act = S.filter(s => s.vAct || s.lAct).length, actP = Sp.filter(s => s.vAct || s.lAct).length;
   const M = mstats(P.a, P.b).filter(x => cityOk(x.m.city)), B = bstats(P.a, P.b), mAct = M.filter(x => x.gr > 0).length + B.filter(x => x.gr > 0).length;
   const tr = trend(S, Sp, gmvDay, P), byStream = trendStreams(S, P);
   const streams = STREAMS.map(st => { const cu = S.filter(s => st.live ? s.c.L : s.c.ind === st.ind), pr = Sp.filter(s => st.live ? s.c.L : s.c.ind === st.ind), a = tot(cu), b = tot(pr);
@@ -943,15 +943,14 @@ PAGES['Overview'] = () => {
   const gTot = sum(streams, x => x.g) || 1;
   const cities = REGIONS.map(cy => { const inC = s => REGION[s.c.city] === cy, cu = S.filter(inC), pr = Sp.filter(inC);
     return {city: cy, g: tot(cu).gr + tot(cu).lgr, gp: tot(pr).gr + tot(pr).lgr, ac: cu.filter(s => s.vAct || s.lAct).length, n: cu.length}; });
-  const topC = [...S].sort((a, b) => b.gmv - a.gmv).slice(0, 10);
   const topM = [...M.filter(x => x.gr > 0).map(x => ({name: x.m.name, sub: `${x.m.ind} · ${x.m.city}`, kind: 'Video', g: x.gr, _open: () => openMerchant(x.m.i)})),
     ...B.filter(x => x.gr > 0).map(x => ({name: x.br.name, sub: 'Dining LIVE brand', kind: 'LIVE', g: x.gr, _open: () => openBrand(x.br.i)}))].sort((a, b) => b.g - a.g).slice(0, 10);
   const R = lvlRows(S, Sp);
   return [h('div', {class: 'tools'}, h('b', {}, `TTLS performance · ${P.label}`), h('span', {class: 'muted small'}, `Compared with ${P.plabel}. Linked creators only. Every number follows the filters at the top.`), h('span', {class: 'spacer'}),
-      h('button', {class: 'btn sm primary', onclick: () => overviewPack(P, S, streams, R, cities, topC, topM)}, 'Download all (.xlsx)')),
-    h('div', {class: 'grid'}, kpi('Redemption GMV', Rp(t.gr + t.lgr), {d: delta(t.gr + t.lgr, tp.gr + tp.lgr), sub: `vs ${P.plabel}`, c: '--growth', spark: tr.now}), kpi('Sales GMV', Rp(t.gs + t.lgs), {d: delta(t.gs + t.lgs, tp.gs + tp.lgs)}),
-      kpi('Orders', N(t.od + t.lod), {d: delta(t.od + t.lod, tp.od + tp.lod)}), kpi('AOV', Rp(ratio(t.gs + t.lgs, t.od + t.lod))), kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}), kpi('Valid LIVE sessions', N(t.val), {d: delta(t.val, tp.val)}),
-      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} linked · ${pct(act, S.length)}%`}), kpi('Hit level benchmark', N(hit), {sub: `${pct(hit, S.length)}% of linked`}), kpi('Merchants with sales', N(mAct), {sub: 'places and LIVE brands'})),
+      h('button', {class: 'btn sm primary', onclick: () => overviewPack(P, S, streams, R, cities, topM)}, 'Download all (.xlsx)')),
+    h('div', {class: 'grid'}, kpi('Redemption GMV', Rp(t.gr + t.lgr), {d: delta(t.gr + t.lgr, tp.gr + tp.lgr), sub: `vs ${P.plabel}`, c: '--growth', spark: tr.now}),
+      kpi('Orders', N(t.od + t.lod), {d: delta(t.od + t.lod, tp.od + tp.lod)}), kpi('AOV', Rp(ratio(t.gs + t.lgs, t.od + t.lod))), kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}),
+      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} linked · ${pct(act, S.length)}%`}), kpi('Merchants with sales', N(mAct), {sub: 'places and LIVE brands'})),
     h('div', {class: 'grid g2 mt'}, card('Signals', 'Plain rules on this data, checked every time the page opens. Click Open to see the detail.', signals(P, S, Sp, streams, cities, M, B)), targetSummary(P)),
     h('div', {class: 'grid g2 mt'}, card('Redemption GMV by day', `${P.m.label} next to the same days of ${P.pm.label}.`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 210})),
       card('By industry and format', 'Each line by day this month.', area(byStream, tr.labels, {fmt: short, height: 210}))),
@@ -968,97 +967,137 @@ PAGES['Overview'] = () => {
       card('By region', 'Open Area & Origin for provinces, cities and where they sell.', table([{k: 'city', label: 'Region'}, {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'},
         {k: 'chg', label: 'vs last month', num: true, render: r => dd(r.g, r.gp)}, {k: 'ac', label: 'Active creators', num: true, render: r => `${N(r.ac)} of ${N(r.n)}`}],
         cities.map(x => ({...x, sh: pct(x.g, t.gr + t.lgr), chg: ratio(x.g, x.gp)})), {search: false, sortKey: 'g', pageSize: 8}))),
-    h('div', {class: 'grid g2 mt'}, card('Top creators', 'By redemption GMV, video and LIVE together.', table([{k: 'h', label: 'Creator', render: s => person(s.c.handle, `${s.c.ind} · ${s.c.city}`)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)},
-        {k: 'gmv', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: s => dd(s.gmv, allP[s.c.i].gmv)}], topC.map(s => ({...s, h: s.c.handle, chg: ratio(s.gmv, allP[s.c.i].gmv), _open: () => openCreator(s.c.i)})), {search: false, sortKey: 'gmv', pageSize: 10})),
-      card('Top merchants', 'Places (video) and LIVE brands, by redemption GMV.', table([{k: 'name', label: 'Merchant', render: r => person(r.name, r.sub)}, {k: 'kind', label: 'Format', render: r => chip(r.kind, r.kind === 'LIVE' ? '--rev' : '--base', false)},
+    row(card('Top merchants', 'Places (video) and LIVE brands, by redemption GMV.', table([{k: 'name', label: 'Merchant', render: r => person(r.name, r.sub)}, {k: 'kind', label: 'Format', render: r => chip(r.kind, r.kind === 'LIVE' ? '--rev' : '--base', false)},
         {k: 'g', label: 'GMV', num: true, fmt: Rp}], topM, {search: false, sortKey: 'g', pageSize: 10})))];
 };
-// ================= Summary: what changed and why =================
-// Laid out like the live TikTok GO tracker: pick a scorecard to chart it by day, then see what moved it.
-const pc1 = v => (v * 100).toFixed(1) + '%', pc2 = v => (v * 100).toFixed(2) + '%';
-const ptsChip = (a, b) => { const d = (a - b) * 100; return h('span', {class: 'delta ' + (d >= 0 ? 'up' : 'down')}, `${d >= 0 ? '+' : ''}${d.toFixed(1)} pts`); };
-// A function, because vTot, VF and the rest are defined further down the file.
-const SUMF = () => ({
-  video: {has: () => true, gr: 'gr', gs: 'gs', od: 'od', top: 'vw', mid: 'ck', post: 'np', T: vTot, F: VF,
-    w: {top: 'Views', mid: 'Clicks', r1: 'Click-through rate', r2: 'Conversion rate', post: 'Posted', perPost: 'New posts per posting creator'}},
-  live: {has: s => !!s.c.L, gr: 'lgr', gs: 'lgs', od: 'lod', top: 'vwr', mid: 'en', post: 'ses', T: lTot, F: LF,
-    w: {top: 'LIVE viewers', mid: 'Entered the room', r1: 'Entering rate', r2: 'Purchase rate', post: 'Went LIVE', perPost: 'Sessions per LIVE creator'}}});
+// ================= Summary: current situation and where the problem is =================
+// Business view: the GMV growth formulas from the TTLS diagnostic framework, each split into its factors.
+// Individual creators appear only in Biggest drops / gains.
+const pc1 = v => (v * 100).toFixed(1) + '%', pc2 = v => (v * 100).toFixed(2) + '%', d1f = v => v.toFixed(1);
+const dirTxt = x => `${x >= 0 ? 'up' : 'down'} ${Math.abs(Math.round(x * 100))}%`;
+const chgChip = x => chip(`${x >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(x * 100))}%`, Math.abs(x) < 0.005 ? '--muted' : x > 0 ? '--growth' : '--rev', false);
+// One lens = a GMV formula. F: [key, name, value from totals, what to do when it falls, format].
+function lenses(P, S, Sp) {
+  const all = t => ({...t, g: t.gr + t.lgr, od2: t.od + t.lod, gs2: t.gs + t.lgs}), sold = L => L.filter(s => s.od > 0).length;
+  const vid = (L, t = vTot(L)) => ({...t, sold: sold(L), spp: ratio(t.gs, t.np)});
+  const mer = (a, b) => { const M = mstats(a, b).filter(x => cityOk(x.m.city)), on = M.filter(x => x.np > 0 || x.od > 0), g = sum(M, x => x.gr), top = [...M].sort((x, y) => y.gr - x.gr).slice(0, 10);
+    return {poi: on.length, cr: sum(on, x => x.act), np: sum(M, x => x.np), g, top10: ratio(sum(top, x => x.gr), g)}; };
+  const sku = (a, b) => { const pr = bstats(a, b).flatMap(x => x.prod), on = pr.filter(p => p.od > 0), g = sum(pr, p => p.gs), top = [...pr].sort((x, y) => y.gs - x.gs).slice(0, 3);
+    return {n: on.length, od: sum(pr, p => p.od), g, top3: ratio(sum(top, p => p.gs), g)}; };
+  const live = t => ({...t, hrs: t.sec / 3600, g: t.lgr});
+  const t1 = tot(S), t0 = tot(Sp), m1 = mer(P.a, P.b), m0 = mer(P.pa, P.pb), k1 = sku(P.a, P.b), k0 = sku(P.pa, P.pb);
+  return [
+    {name: 'Core GMV', gname: 'GMV', fmt: Rp, t1: all(t1), t0: all(t0), F: [
+      ['od', 'Orders', t => t.od2, 'more traffic and conversion: more posts on strong merchants, sharper offers', N],
+      ['aov', 'AOV', t => ratio(t.gs2, t.od2), 'bundles, upselling, premium SKU mix and minimum-spend promotions', Rp],
+      ['rr', 'Redemption rate', t => ratio(t.g, t.gs2), 'remind buyers to use their vouchers before they expire', pc1]]},
+    {name: 'Creator productivity', gname: 'video GMV', fmt: Rp, t1: vid(S), t0: vid(Sp), F: [
+      ['act', 'Active creators', t => t.act, 'wake up dormant creators and onboard new ones', N],
+      ['ppc', 'Posts per creator', t => ratio(t.np, t.act), 'ask each active creator for more videos a week', d1f],
+      ['gpp', 'GMV per post', t => ratio(t.gr, t.np), 'better content and creator-to-SKU matching', Rp]]},
+    {name: 'Selling creators', gname: 'video GMV', fmt: Rp, t1: vid(S), t0: vid(Sp), F: [
+      ['act', 'Active creators', t => t.act, 'wake up dormant creators and onboard new ones', N],
+      ['sr', 'Share who sell', t => ratio(t.sold, t.act), 'turn active creators into selling ones: coaching, better SKU matching, campaigns', pc1],
+      ['gps', 'GMV per selling creator', t => ratio(t.gr, t.sold), 'push higher-value SKUs and more posts from the sellers', Rp]]},
+    {name: 'Content funnel', gname: 'sales per post', fmt: Rp, t1: {...vid(S), g: vid(S).spp}, t0: {...vid(Sp), g: vid(Sp).spp}, F: [
+      ['vpp', 'Views per post', t => ratio(t.vw, t.np), 'stronger hooks and posting at peak hours', N],
+      ['ctr', 'CTR', t => ratio(t.ck, t.vw), 'fix creative and SKU appeal', pc2],
+      ['cvr', 'CVR', t => ratio(t.od, t.ck), 'fix price, promotion, merchant or offer', pc2],
+      ['aov', 'AOV', t => ratio(t.gs, t.od), 'bundles and premium SKUs', Rp]]},
+    {name: 'Merchant productivity', gname: 'video GMV', fmt: Rp, t1: m1, t0: m0, note: `Top 10 merchants make ${pc1(m1.top10)} of video GMV.`, F: [
+      ['poi', 'Active merchants', t => t.poi, 'expand to high-potential merchants', N],
+      ['cpp', 'Creators per merchant', t => ratio(t.cr, t.poi), 'send more creators to the strong merchants, fewer to crowded ones', d1f],
+      ['ppc', 'Posts per creator', t => ratio(t.np, t.cr), 'more posts per creator at each merchant', d1f],
+      ['gpp', 'GMV per post', t => ratio(t.g, t.np), 'check SKU, offer, content quality and location appeal', Rp]]},
+    {name: 'LIVE commerce', gname: 'LIVE GMV', fmt: Rp, t1: live(t1), t0: live(t0), F: [
+      ['hrs', 'LIVE hours', t => t.hrs, 'more sessions on a fixed LIVE schedule', N],
+      ['gph', 'GMV per hour', t => ratio(t.g, t.hrs), 'better hosts, product selection, traffic, promos and session quality', Rp]]},
+    {name: 'LIVE products (SKU)', gname: 'LIVE sales', fmt: Rp, t1: k1, t0: k0, note: `The top 3 products make ${pc1(k1.top3)} of LIVE sales.`, F: [
+      ['n', 'Selling products', t => t.n, 'add products creators can sell', N],
+      ['ops', 'Orders per product', t => ratio(t.od, t.n), 'put creator traffic on the hero SKUs', d1f],
+      ['aov', 'AOV', t => ratio(t.g, t.od), 'bundles and higher-value packages', Rp]]}
+  ].map(L => { const parts = attribute(L.F.map(f => f.slice(0, 4)), L.t0, L.t1).map((p, i) => ({...p, fmt: L.F[i][4]})), chg = L.t0.g ? L.t1.g / L.t0.g - 1 : 0;
+    const weak = [...parts].sort((a, b) => a.v - b.v)[0], best = [...parts].sort((a, b) => b.v - a.v)[0];
+    const status = !L.t0.g ? ['New', '--muted'] : chg < -0.03 ? ['Problem', '--rev'] : weak.v < 0 && weak.chg <= -0.05 ? ['Watch', '--ops'] : ['Healthy', '--growth'];
+    return {...L, parts, chg, weak, best, status}; });
+}
+function lensCard(L) {
+  const up = L.parts.filter(p => p.chg > 0.005), down = L.parts.filter(p => p.chg < -0.005);
+  const story = !down.length ? `Every part grew, so ${L.gname} is ${dirTxt(L.chg)}.` : !up.length ? `Every part fell, so ${L.gname} is ${dirTxt(L.chg)}. ${L.weak.name} hurt most.`
+    : `${L.best.name} is ${dirTxt(L.best.chg)}, but ${L.weak.name} is ${dirTxt(L.weak.chg)}, so ${L.gname} is ${dirTxt(L.chg)}.`;
+  return h('section', {class: 'card lens'}, h('div', {class: 'card-h'}, h('div', {}, h('h3', {}, L.name)), h('div', {class: 'spacer'}), chip(L.status[0], L.status[1])),
+    h('div', {class: 'formula'}, h('span', {class: 'fx-g'}, L.gname[0].toUpperCase() + L.gname.slice(1), ' ', chgChip(L.chg)), ' = ',
+      L.parts.map((p, i) => [i ? ' × ' : null, h('span', {class: 'fx'}, p.name, ' ', chgChip(p.chg))])),
+    h('p', {class: 'lens-t'}, story, ' ', h('b', {}, down.length ? `Focus: ${L.weak.tip}.` : `Keep it going: ${L.best.tip}.`)),
+    L.note ? h('p', {class: 'muted small', style: 'margin:0'}, L.note) : null,
+    h('details', {}, h('summary', {}, 'Numbers'), h('div', {class: 'tbl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Part', 'Before', 'Now', 'Change', `Effect on ${L.gname}`].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
+      h('tbody', {}, L.parts.map(p => h('tr', {}, h('td', {}, p.name), h('td', {class: 'n'}, p.fmt(p.a)), h('td', {class: 'n'}, h('b', {}, p.fmt(p.b))), h('td', {class: 'n'}, chgChip(p.chg)),
+        h('td', {class: 'n', style: `color:var(${p.v >= 0 ? '--growth' : '--rev'});font-weight:600`}, (p.v >= 0 ? '+' : '−') + L.fmt(Math.abs(p.v))))))))));
+}
+// Unusual days: far from what the same weekday made in the 4 weeks before (robust z-score, median and MAD).
+function unusualDays(y, from, to) {
+  const out = [];
+  for (let d = from; d <= to; d++) { const win = [], all28 = []; for (let w = Math.max(0, d - 28); w < d; w++) { all28.push(y[w]); if (wday(w) === wday(d)) win.push(y[w]); }
+    if (win.length < 2) continue; const exp = median(win), m = median(all28), mad = median(all28.map(v => Math.abs(v - m))) * 1.4826, z = mad ? (y[d] - exp) / mad : 0;
+    if (Math.abs(z) >= 2.5) out.push({d, y: y[d], exp, z}); }
+  return out;
+}
 PAGES['Summary'] = () => {
-  const P = period(), fmt = ui.tab.sfm || 'video', live = fmt === 'live', X = SUMF()[fmt];
-  const stP = stats(P.pa, P.pb), S = stats(P.a, P.b).filter(s => F(s) && X.has(s)), Sp = stP.filter(s => F(s) && X.has(s)), t1 = X.T(S), t0 = X.T(Sp);
-  const mets = [{label: 'Redemption', n: X.gr, fmt: Rp, ax: short}, {label: 'Sales', n: X.gs, fmt: Rp, ax: short}, {label: 'Orders', n: X.od, fmt: N, ax: N},
-    {label: 'Average order value', n: X.gs, d: X.od, fmt: Rp, ax: short}, {label: X.w.r2, n: X.od, d: X.mid, fmt: pc2, ax: pc1, rate: true},
-    {label: X.w.r1, n: X.mid, d: X.top, fmt: pc2, ax: pc1, rate: true}, {label: 'Redemption rate', n: X.gr, d: X.gs, fmt: pc1, ax: pc1, rate: true}];
-  const val = (m, t) => m.d ? ratio(t[m.n], t[m.d]) : t[m.n];
-  // Daily series for the month so far and the same days last month, one per field the scorecards use.
-  const n = P.n, pn = Math.min(n, P.pm.n), day = f => (c, d) => (c.V[f] || c.L[f])[d], fields = [...new Set(mets.flatMap(m => [m.n, m.d]).filter(Boolean))];
-  const now = Object.fromEntries(fields.map(f => [f, daily(S, P.m.s, P.m.s + n - 1, day(f))])), prev = Object.fromEntries(fields.map(f => [f, daily(Sp, P.pm.s, P.pm.s + pn - 1, day(f))]));
-  const series = (m, src) => m.d ? src[m.n].map((v, i) => ratio(v, src[m.d][i])) : src[m.n];
-  const pick = Math.min(ui.tab.skp || 0, mets.length - 1), M0 = mets[pick];
-  const score = (m, i) => { const a = val(m, t1), b = val(m, t0), on = i === pick, go = () => { ui.tab.skp = i; render(); };
-    const k = kpi(m.label, m.fmt(a), {d: m.rate ? ptsChip(a, b) : delta(a, b), sub: `from ${m.fmt(b)}`, spark: n > 1 ? series(m, now) : null, c: on ? '--base' : '--muted'});
+  const P = period(), stP = stats(P.pa, P.pb), S = stats(P.a, P.b).filter(F), Sp = stP.filter(F), t1 = tot(S), t0 = tot(Sp), g1 = t1.gr + t1.lgr, g0 = t0.gr + t0.lgr, chg = g0 ? g1 / g0 - 1 : 0;
+  const L = lenses(P, S, Sp), rel = L.flatMap(l => l.t0.g ? l.parts.map(p => ({l, p, r: p.v / l.t0.g})) : []), worst = [...rel].sort((a, b) => a.r - b.r)[0], bright = [...rel].sort((a, b) => b.r - a.r)[0];
+  // Month end: weekday pattern and damped trend (same model the Target page uses), against the GMV target.
+  const y = daily(S, 0, P.b, gmvDay), fc = fcSeries(y, P.b, P.m.s, P.m.n), T = D.targets[P.m.k], tgt = ui.f.area || ui.f.lvl ? null : tSum(T, 'gmv', STREAMS.map(st => st.k), LV), ch = fc.chance(tgt);
+  // GMV at risk: last month's GMV from creators with no post and no LIVE for 14+ days.
+  const pmAll = stats(P.pm.s, P.pm.s + P.pm.n - 1), pmG = sum(S, s => pmAll[s.c.i].gmv), quiet = S.filter(s => dormant(s, P.b) && (!s.c.L || dormant(s, P.b, true))), quietG = sum(quiet, s => pmAll[s.c.i].gmv);
+  const status = chg > 0.03 ? ['Growing', '--growth'] : chg < -0.03 ? ['Declining', '--rev'] : ['Flat', '--ops'];
+  const line = (c, label, ...txt) => h('div', {class: 'signal', style: `--c:var(${c})`}, h('i'), h('span', {class: 'grow'}, h('b', {}, label + ' '), ...txt));
+  const situation = h('section', {class: 'card'}, h('div', {class: 'verdict', style: `--c:var(${status[1]})`}, h('div', {}, h('div', {class: 'muted small'}, `Current situation · ${P.label} vs ${P.plabel}`),
+      h('div', {class: 'verdict-v'}, `${status[0]}: GMV ${dirTxt(chg)}`), h('div', {class: 'small'}, `Redemption GMV went from ${Rp(g0)} to ${Rp(g1)}. Linked creators, filters at the top apply.`)),
+      h('div', {class: 'verdict-n'}, h('span', {class: 'muted small'}, 'Redemption GMV'), h('b', {}, Rp(g1)))),
+    h('div', {class: 'signals', style: 'margin-top:8px'},
+      worst && worst.p.v < 0 ? line('--rev', 'Main problem:', `${worst.p.name} ${dirTxt(worst.p.chg)} (${worst.l.name}). Focus: ${worst.p.tip}.`) : line('--growth', 'No big problem:', 'every growth formula is holding up.'),
+      bright && bright.p.v > 0 ? line('--growth', 'Bright spot:', `${bright.p.name} ${dirTxt(bright.p.chg)} (${bright.l.name}).`) : null,
+      fc.rem ? line('--base', 'Month end:', `on course for ${Rp(fc.mu)} (likely ${Rp(fc.lo)} to ${Rp(fc.hi)})`, tgt ? ` against a ${Rp(tgt)} target: ${Math.round(ch * 100)}% chance to reach it.` : '.')
+        : line('--base', 'Month end:', `${P.m.label} closed at ${Rp(fc.mtd)}${tgt ? `, ${pct(fc.mtd, tgt)}% of the ${Rp(tgt)} target` : ''}.`),
+      quietG > 0 ? line('--ops', 'GMV at risk:', `${Rp(quietG)} (${pct(quietG, pmG)}%) of ${P.pm.k}'s GMV came from creators who have gone quiet, with no post or LIVE for 14+ days.`) : null));
+  // Four scorecards; click one to chart it.
+  const day = {g: gmvDay, od: (c, d) => c.V.od[d] + (c.L ? c.L.lod[d] : 0), gs: (c, d) => c.V.gs[d] + (c.L ? c.L.lgs[d] : 0), np: (c, d) => c.V.np[d]};
+  const mets = [{label: 'Redemption GMV', n: 'g', v: t => t.gr + t.lgr, fmt: Rp, ax: short}, {label: 'Orders', n: 'od', v: t => t.od + t.lod, fmt: N, ax: N},
+    {label: 'AOV', n: 'gs', d: 'od', v: t => ratio(t.gs + t.lgs, t.od + t.lod), fmt: Rp, ax: short}, {label: 'New posts', n: 'np', v: t => t.np, fmt: N, ax: N}];
+  const pick = Math.min(ui.tab.skp || 0, mets.length - 1), M0 = mets[pick], pn = Math.min(P.n, P.pm.n);
+  const full = f => daily(S, 0, P.b, day[f]), prevArr = f => daily(Sp, P.pm.s, P.pm.s + pn - 1, day[f]);
+  const yN = M0.d ? (a => full(M0.d).map((v, i) => ratio(a[i], v)))(full(M0.n)) : full(M0.n), yP = M0.d ? (a => prevArr(M0.d).map((v, i) => ratio(a[i], v)))(prevArr(M0.n)) : prevArr(M0.n);
+  const odd = unusualDays(yN, P.m.s, P.b), nowM = yN.slice(P.m.s);
+  const score = (m, i) => { const on = i === pick, go = () => { ui.tab.skp = i; render(); }, k = kpi(m.label, m.fmt(m.v(t1)), {d: delta(m.v(t1), m.v(t0)), sub: `from ${m.fmt(m.v(t0))}`});
     k.classList.add('pick'); if (on) k.classList.add('on'); k.tabIndex = 0; k.setAttribute('role', 'button'); k.setAttribute('aria-pressed', String(on));
     k.onclick = go; k.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; return k; };
-  // Key insights: the two headline moves, then the factors that pushed or dragged redemption (log-change split, adds up).
-  const chg = (a, b) => b ? Math.round((a - b) / b * 100) : 0, upDown = (a, b) => b ? `${a >= b ? 'up' : 'down'} ${Math.abs(chg(a, b))}%` : 'new';
-  const line = (tag, c, ...txt) => h('div', {class: 'signal', style: `--c:var(${c})`}, tag ? chip(tag, c, false) : h('i'), h('span', {class: 'grow'}, ...txt));
-  const parts = attribute(X.F, t0, t1), drivers = [...parts].filter(p => p.v).sort((a, b) => Math.abs(b.v) - Math.abs(a.v)).slice(0, 4);
-  const g = L => { const act = L.filter(s => s[X.post] > 0 || s[X.od] > 0).length, posted = L.filter(s => s[X.post] > 0).length, sold = L.filter(s => s[X.od] > 0).length, both = L.filter(s => s[X.post] > 0 && s[X.od] > 0).length;
-    return {n: L.length, act, posted, sold, both}; };
-  const c1 = g(S), c0 = g(Sp);
-  const insights = h('div', {class: 'stack'}, h('div', {class: 'signals'},
-    line(null, t1[X.gr] >= t0[X.gr] ? '--growth' : '--rev', h('b', {}, `Redemption ${upDown(t1[X.gr], t0[X.gr])}`), ` vs ${P.plabel}: ${Rp(t0[X.gr])} to ${Rp(t1[X.gr])}.`),
-    line(null, t1[X.gs] >= t0[X.gs] ? '--growth' : '--rev', h('b', {}, `Sales ${upDown(t1[X.gs], t0[X.gs])}`), `: ${Rp(t0[X.gs])} to ${Rp(t1[X.gs])}. ${rt(t1[X.gr], t1[X.gs])} of sales was redeemed.`),
-    drivers.map(p => line(p.v > 0 ? 'PUSH' : 'DRAG', p.v > 0 ? '--growth' : '--rev', h('b', {}, p.name), ` ${p.chg >= 0 ? 'up' : 'down'} ${Math.abs(Math.round(p.chg * 100))}%, ${p.v > 0 ? 'adding' : 'taking away'} ${short(Math.abs(p.v))}.`)),
-    line(null, '--base', h('b', {}, `${N(c1.act)} active creators`), `, ${upDown(c1.act, c0.act)} vs ${P.plabel}.`)),
-    h('div', {class: 'muted small'}, 'PUSH helped redemption, DRAG held it back. ', h('button', {class: 'link', onclick: () => { ui.page = 'Drivers & Levers'; ui.tab.dfm = fmt; ui.tab.dlt = 'tree'; render(); }}, 'Full split in Drivers & Levers')));
-  // Funnel: each stage vs last month, with the rate between stages.
-  const red = t => ratio(t[X.gr], t[X.gs]) * t[X.od];
-  const stages = [[X.w.top, t1[X.top], t0[X.top]], [X.w.mid, t1[X.mid], t0[X.mid]], ['Orders', t1[X.od], t0[X.od]], ['Redeemed orders (est.)', red(t1), red(t0)]];
-  const rates = [[X.w.r1, ratio(t1[X.mid], t1[X.top]), ratio(t0[X.mid], t0[X.top])], [X.w.r2, ratio(t1[X.od], t1[X.mid]), ratio(t0[X.od], t0[X.mid])], ['Orders redeemed', ratio(t1[X.gr], t1[X.gs]), ratio(t0[X.gr], t0[X.gs])]];
-  const top = Math.max(1, ...stages.map(s => s[1])), w = v => v > 0 ? Math.max(3, Math.log10(v + 1) / Math.log10(top + 1) * 100) : 0;
-  const funnelV = h('div', {class: 'fv'}, stages.map(([l, a, b], i) => [h('div', {}, h('div', {class: 'fv-h'}, h('span', {}, l), h('span', {}, h('b', {}, N(a)), ' ', dd(a, b))), h('div', {class: 'fv-bar'}, h('span', {style: `width:${w(a)}%`}))),
-    rates[i] ? h('div', {class: 'fv-r'}, rates[i][0], h('b', {}, pc2(rates[i][1])), ptsChip(rates[i][1], rates[i][2])) : null]),
-    h('p', {class: 'muted small', style: 'margin:8px 0 0'}, 'Bars use a log scale so every stage stays visible. Redeemed orders = orders × redemption rate, an estimate.'));
-  // Creators: who posted, who sold, who did neither.
-  const segs = [['Posted and sold', c1.both, '--growth'], [live ? 'Sold, no LIVE' : 'Sold, no new post', c1.sold - c1.both, '--base'], [live ? 'LIVE, no sale' : 'Posted, no sale', c1.posted - c1.both, '--ops'], ['Not active', c1.n - c1.act, '--faint']].filter(x => x[1] > 0);
-  const per = [['Sales per selling creator', t => ratio(t[X.gs], t.sold)], ['Redemption per selling creator', t => ratio(t[X.gr], t.sold)], ['Orders per selling creator', t => ratio(t[X.od], t.sold), true],
-    [X.w.perPost, t => ratio(t[X.post], t.posted), true], ['Sell rate', t => ratio(t.sold, t.act), 0, true], ['Post rate', t => ratio(t.posted, t.act), 0, true]];
-  const tc1 = {...t1, ...c1}, tc0 = {...t0, ...c0};
-  const creators = h('div', {class: 'stack'},
-    h('div', {class: 'grid'}, kpi('Active creators', N(c1.act), {d: delta(c1.act, c0.act), sub: `${pct(c1.act, c1.n)}% of ${N(c1.n)}`}), kpi(X.w.post, N(c1.posted), {d: delta(c1.posted, c0.posted), sub: `${pct(c1.posted, c1.n)}% of all`}),
-      kpi('Sold', N(c1.sold), {d: delta(c1.sold, c0.sold), sub: `${pct(c1.sold, c1.n)}% of all`}), kpi('Not active', N(c1.n - c1.act), {sub: `${pct(c1.n - c1.act, c1.n)}% of all · was ${N(c0.n - c0.act)}`})),
-    h('div', {}, h('div', {class: 'statusbar', role: 'img', 'aria-label': segs.map(x => `${x[0]} ${x[1]}`).join(', ')}, segs.map(([l, v, c]) => h('i', {style: `flex:${v};background:var(${c})`, title: `${l}: ${N(v)}`}))),
-      h('div', {class: 'legend'}, segs.map(([l, v, c]) => h('span', {}, h('i', {style: `background:var(${c})`}), `${l} `, h('b', {}, N(v)), h('span', {class: 'faint'}, ` ${pct(v, c1.n)}%`))))),
-    h('div', {class: 'section-t', style: 'margin:4px 0 -4px'}, 'Per creator'),
-    h('div', {class: 'grid'}, per.map(([l, f, count, isRate]) => { const a = f(tc1), b = f(tc0); return kpi(l, isRate ? pc1(a) : count ? a.toFixed(1) : Rp(a), {d: isRate ? ptsChip(a, b) : delta(a, b), sub: `from ${isRate ? pc1(b) : count ? b.toFixed(1) : Rp(b)}`}); })));
-  // Who is moving: biggest drops and gains in redemption against the same days last month.
-  const moves = S.map(s => ({s, now: s[X.gr], was: stP[s.c.i][X.gr]})).map(x => ({...x, d: x.now - x.was}));
+  // Biggest impact creators: the only place single creators show up.
+  const moves = S.map(s => ({s, now: s.gmv, was: stP[s.c.i].gmv})).map(x => ({...x, d: x.now - x.was}));
   const moverList = list => list.length ? h('div', {class: 'movers'}, list.map(x => h('button', {class: 'mover', onclick: () => openCreator(x.s.c.i)}, person(x.s.c.handle, `${x.s.lvl} · ${x.s.c.ind} · ${x.s.c.city}`),
     h('span', {class: 'mv-v'}, h('b', {style: `color:var(${x.d >= 0 ? '--growth' : '--rev'})`}, (x.d >= 0 ? '+' : '−') + short(Math.abs(x.d))), h('small', {}, `${short(x.was)} to ${short(x.now)}`))))) : h('p', {class: 'muted small'}, 'Nobody moved in these dates.');
-  // Breakdown by level, region or industry; click a row to filter the whole dashboard to it.
-  const bd = live && ui.tab.sbd === 'ind' ? 'lvl' : ui.tab.sbd || 'lvl';
+  // Where GMV comes from; click a row to look closer.
+  const bd = ui.tab.sbd || 'st', gOf = (t, st) => st ? (st.live ? {g: t.lgr, od: t.lod, gs: t.lgs} : {g: t.gr, od: t.od, gs: t.gs}) : {g: t.gr + t.lgr, od: t.od + t.lod, gs: t.gs + t.lgs};
   const groups = bd === 'reg' ? REGIONS.map(r => ({name: r, keep: s => REGION[s.c.city] === r, open: () => { ui.f.area = 'r:' + r; render(); }}))
-    : bd === 'ind' ? IND.map(i => ({name: i, keep: s => s.c.ind === i, open: () => { ui.page = 'Creator · Video'; ui.tab.cvi = i; render(); }}))
-    : LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({name: l, lvl: true, keep: s => s.lvl === l, open: () => { ui.f.lvl = l; render(); }}));
-  const bdRows = groups.map(gr => { const a = X.T(S.filter(gr.keep)), b = X.T(Sp.filter(gr.keep));
-    return {name: gr.name, lvl: gr.lvl, gs: a[X.gs], gsp: b[X.gs], chg: ratio(a[X.gs], b[X.gs]), sh: pct(a[X.gs], t1[X.gs]), gr: a[X.gr], rr: ratio(a[X.gr], a[X.gs]), od: a[X.od], aov: ratio(a[X.gs], a[X.od]), act: a.act, _open: gr.open}; }).filter(r => r.gs || r.gsp);
-  return [h('div', {class: 'tools'}, seg([['video', 'Video'], ['live', 'LIVE (Dining)']], fmt, v => { ui.tab.sfm = v; render(); }, 'Format'),
-      h('span', {class: 'muted small'}, `What changed and why · ${P.label} vs ${P.plabel} · linked creators, filters at the top apply.`)),
-    h('div', {class: 'grid'}, mets.map(score)),
-    h('div', {class: 'grid g21 mt'}, card(`${M0.label} by day`, `${P.m.label} so far (solid) next to the same days of ${P.pm.label} (dashed). Click a scorecard to switch.`,
-      area([{name: P.m.k, values: series(M0, now), c: '--base'}, {name: P.pm.k, values: series(M0, prev), c: '--muted', dash: true, fill: false}], Array.from({length: n}, (_, i) => dLab(P.m.s + i)), {fmt: M0.ax, height: 240, zero: !M0.d})),
-      card('Key insights', `What to know about ${P.label}`, insights)),
-    h('div', {class: 'grid g2 mt'}, card('Redemption bridge', `How redemption moved from ${P.plabel} to ${P.label}: orders × order value × redemption rate.`,
-      bridgeChart(t0.g, t1.g, attribute([['od', 'Orders', t => t[X.od]], ['aov', 'Order value', t => ratio(t[X.gs], t[X.od])], ['rr', 'Redemption rate', t => ratio(t[X.gr], t[X.gs])]], t0, t1))),
-      card('Funnel', `Each stage and the rate between stages, vs ${P.plabel}`, funnelV)),
-    row(card('Creators', `Out of ${N(c1.n)} linked creators${live ? ' with LIVE' : ''}. Active = ${X.w.post.toLowerCase()} or sold.`, creators)),
-    h('div', {class: 'grid g2 mt'}, card('Biggest drops', `Redemption lost vs ${P.plabel} · click to open`, moverList(moves.filter(x => x.d < 0).sort((a, b) => a.d - b.d).slice(0, 6))),
-      card('Biggest gains', `Redemption gained vs ${P.plabel} · click to open`, moverList(moves.filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 6)))),
-    row(card('Breakdown', 'Click a row to look closer: level and region rows set the filter at the top.', table([{k: 'name', label: bd === 'lvl' ? 'Level' : bd === 'reg' ? 'Region' : 'Industry', render: r => r.lvl ? levelChip(r.name) : h('b', {style: 'font-weight:600'}, r.name)},
-      {k: 'gs', label: 'Sales', num: true, fmt: Rp}, {k: 'gsp', label: 'Sales before', num: true, fmt: Rp}, {k: 'chg', label: 'Change', num: true, render: r => dd(r.gs, r.gsp)}, {k: 'sh', label: 'Share', num: true, render: r => meterRow(r.sh, '--base', `${r.sh}%`, 60)},
-      {k: 'gr', label: 'Redemption', num: true, fmt: Rp}, {k: 'rr', label: 'Redemption rate', num: true, fmt: pc1}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp}, {k: 'act', label: 'Active creators', num: true, fmt: N}],
-      bdRows, {search: false, sortKey: 'gs', pageSize: 10}), seg([['lvl', 'Creator level'], ['reg', 'Region'], ...(live ? [] : [['ind', 'Industry']])], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
+    : bd === 'lvl' ? LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({name: l, lvl: true, keep: s => s.lvl === l, open: () => { ui.f.lvl = l; render(); }}))
+    : STREAMS.map(st => ({name: st.label, st, c: st.c, keep: s => inStream(s, st), open: () => { ui.page = st.live ? 'Creator · LIVE' : 'Creator · Video'; if (!st.live) ui.tab.cvi = st.ind; render(); }}));
+  const rows = groups.map(gr => { const a = gOf(tot(S.filter(gr.keep)), gr.st), b = gOf(tot(Sp.filter(gr.keep)), gr.st); return {...gr, g: a.g, gp: b.g, chg: ratio(a.g, b.g), od: a.od, aov: ratio(a.gs, a.od), _open: gr.open}; }).filter(r => r.g || r.gp);
+  const gT = sum(rows, r => r.g) || 1;
+  return [situation,
+    h('div', {class: 'grid mt'}, mets.map(score)),
+    row(card(`${M0.label} by day`, `${P.m.label} so far (solid) next to the same days of ${P.pm.label} (dashed). Click a number above to switch.`,
+      area([{name: P.m.k, values: nowM, c: '--base'}, {name: P.pm.k, values: yP, c: '--muted', dash: true, fill: false}], nowM.map((_, i) => dLab(P.m.s + i)), {fmt: M0.ax, height: 220, zero: !M0.d}),
+      h('div', {class: 'odd'}, odd.length ? [h('span', {class: 'muted small'}, 'Unusual days:'), odd.map(x => chip(`${dLab(x.d)} ${x.z > 0 ? 'spike' : 'drop'} ${x.exp ? (x.y >= x.exp ? '+' : '') + Math.round((x.y / x.exp - 1) * 100) + '%' : ''}`, x.z > 0 ? '--growth' : '--rev', true))]
+        : h('span', {class: 'muted small'}, 'No unusual days: every day was close to what the same weekday usually makes.')))),
+    h('div', {class: 'section-t'}, 'Where is the problem? GMV growth formulas'),
+    h('p', {class: 'muted small', style: 'margin:-4px 0 10px'}, 'Each card splits GMV into parts that multiply together. The weakest part is where to act. Open Numbers for the detail.'),
+    h('div', {class: 'grid g2'}, L.map(lensCard)),
+    h('div', {class: 'grid g2 mt'}, card('Biggest drops', `Creators whose GMV fell most vs ${P.plabel}`, moverList(moves.filter(x => x.d < 0).sort((a, b) => a.d - b.d).slice(0, 5))),
+      card('Biggest gains', `Creators whose GMV grew most vs ${P.plabel}`, moverList(moves.filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 5)))),
+    row(card('Where GMV comes from', 'Click a row to look closer.', table([{k: 'name', label: bd === 'lvl' ? 'Creator level' : bd === 'reg' ? 'Region' : 'Industry · format',
+        render: r => r.lvl ? levelChip(r.name) : h('div', {class: 'who'}, r.c ? h('i', {class: 'dot-c', style: `background:var(${r.c})`}) : null, h('b', {style: 'font-weight:600'}, r.name))},
+      {k: 'g', label: 'Redemption GMV', num: true, fmt: Rp}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: r => dd(r.g, r.gp)}, {k: 'sh', label: 'Share', num: true, render: r => meterRow(pct(r.g, gT), '--base', `${pct(r.g, gT)}%`, 60)},
+      {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'aov', label: 'AOV', num: true, fmt: Rp}], rows.map(r => ({...r, sh: r.g})), {search: false, sortKey: 'g', pageSize: 10}),
+      seg([['st', 'Industry · format'], ['reg', 'Region'], ['lvl', 'Creator level']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
 };
 function trendStreams(S, P) {
   const n = P.n, labels = Array.from({length: n}, (_, i) => i);
@@ -1083,15 +1122,14 @@ function signals(P, S, Sp, streams, cities, M, B) {
   const l2 = S.filter(s => ['L2', 'L3', 'L4'].includes(s.lvl)); if (l2.length) push('--base', `${pct(l2.filter(s => hitB(s, P)).length, l2.length)}% of L2 to L4 creators are on track for their level benchmark.`, () => { ui.page = 'Creator · Video'; ui.tab.cvt = 'level'; render(); });
   return h('div', {class: 'signals'}, out.map(x => h('div', {class: 'signal', style: `--c:var(${x.c})`}, h('i'), h('span', {class: 'grow'}, x.text), x.go ? h('button', {class: 'btn sm', onclick: x.go}, 'Open') : null)));
 }
-function overviewPack(P, S, streams, R, cities, topC, topM) {
+function overviewPack(P, S, streams, R, cities, topM) {
   const lvlSheet = R.map(r => ({Level: r.total ? 'Total' : r.lvl, Linked: r.cur.length, Active: r.cur.filter(s => s.vAct || s.lAct).length, 'New posts': r.t.np, 'Valid LIVE': r.t.val, Orders: r.t.od + r.t.lod, [`Redemption GMV (${CUR()})`]: Math.round(toCur(r.t.gr + r.t.lgr)), [`Last month same days (${CUR()})`]: Math.round(toCur(r.p.gr + r.p.lgr))}));
   sheetsDownload(`TTLS-performance-${P.label.replace(/ /g, '-')}.xlsx`, [
     ['Summary', [['Dates', P.label], ['Compared with', P.plabel], ['Filters', [ui.f.lvl, ui.f.area.slice(2)].filter(Boolean).join(', ') || 'none'], [`Redemption GMV (${CUR()})`, Math.round(toCur(tot(S).gr + tot(S).lgr))], ['Linked creators', S.length], ['Active creators', S.filter(s => s.vAct || s.lAct).length]].map(([Metric, Value]) => ({Metric, Value}))],
     ['By industry and format', streams.map(x => ({'Industry · format': x.label, [`Redemption GMV (${CUR()})`]: Math.round(toCur(x.g)), [`Last month same days (${CUR()})`]: Math.round(toCur(x.gp)), 'Active creators': x.ac, 'Linked creators': x.n, Orders: x.od, 'Merchants with sales': x.places}))],
     ['By level', lvlSheet], ['By region', cities.map(x => ({Region: x.city, [`Redemption GMV (${CUR()})`]: Math.round(toCur(x.g)), [`Last month same days (${CUR()})`]: Math.round(toCur(x.gp)), 'Active creators': x.ac, 'Linked creators': x.n}))],
-    ['Top creators', topC.map(s => ({Creator: s.c.handle, Level: s.lvl, Industry: s.c.ind, City: s.c.city, [`Redemption GMV (${CUR()})`]: Math.round(toCur(s.gmv))}))],
     ['Top merchants', topM.map(x => ({Merchant: x.name, Format: x.kind, Where: x.sub, [`Redemption GMV (${CUR()})`]: Math.round(toCur(x.g))}))]]);
-  toast('Downloaded: summary, industry and format, level, city, top creators, top merchants.');
+  toast('Downloaded: summary, industry and format, level, region, top merchants.');
 }
 
 // ================= Creator · Video =================
@@ -1100,10 +1138,9 @@ PAGES['Creator · Video'] = () => {
   const all = stats(P.a, P.b), S = all.filter(s => F(s) && inI(s)), Sp = stats(P.pa, P.pb).filter(s => F(s) && inI(s)), t = tot(S), tp = tot(Sp);
   const act = S.filter(s => s.vAct).length, actP = Sp.filter(s => s.vAct).length, tr = trend(S, Sp, (c, d) => c.V.gr[d], P);
   const head = [h('div', {class: 'tools'}, seg([['', 'All industries'], ...IND.map(i => [i, i === 'Dining' ? 'Dining (SV)' : i])], ind, v => { ui.tab.cvi = v; render(); }, 'Industry'),
-      tabs([['level', 'Level'], ['act', 'Activation'], ['content', 'Content'], ['list', 'Creators']], 'cvt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `Video only · vs ${P.plabel}`)),
+      tabs([['level', 'Level'], ['act', 'Activation'], ['content', 'Content']], 'cvt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `Video only · vs ${P.plabel}`)),
     h('div', {class: 'grid'}, kpi('Video redemption GMV', Rp(t.gr), {d: delta(t.gr, tp.gr), sub: `vs ${P.plabel}`, c: '--base', spark: tr.now}), kpi('Orders', N(t.od), {d: delta(t.od, tp.od)}), kpi('AOV', Rp(ratio(t.gs, t.od))),
-      kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}), kpi('Views', N(t.vw), {d: delta(t.vw, tp.vw)}), kpi('CTR', rt(t.ck, t.vw), {sub: 'clicks ÷ views'}), kpi('CVR', rt(t.od, t.ck), {sub: 'orders ÷ clicks'}),
-      kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} · ${pct(act, S.length)}%`}), kpi('GMV / active creator', Rp(ratio(t.gr, act))))];
+      kpi('New posts', N(t.np), {d: delta(t.np, tp.np)}), kpi('Active creators', N(act), {d: delta(act, actP), sub: `of ${N(S.length)} · ${pct(act, S.length)}%`}), kpi('GMV / active creator', Rp(ratio(t.gr, act))))];
   const R = lvlRows(S, Sp);
   if (tab === 'level') return [...head,
     row(card(`Video by level · ${P.label}`, 'Level at the end of the dates picked. Share is of video GMV.', ltable([
@@ -1115,8 +1152,7 @@ PAGES['Creator · Video'] = () => {
       card('Where video GMV comes from', 'Share of video GMV per level.', donut(R.filter(r => !r.total && r.t.gr > 0).map(r => ({label: r.lvl, value: r.t.gr, c: LVC[r.lvl]})), {fmt: short, center: short(t.gr)}))),
     row(levelMoves(P, s => F(s) && inI(s)))];
   if (tab === 'act') {
-    const posted = S.filter(s => s.np > 0).length, sold = S.filter(s => s.od > 0).length, dorm = S.filter(s => dormant(s, P.b));
-    const newJ = s => s.c.join >= P.m.s && s.c.join <= P.b, prevMonth = stats(P.pm.s, P.pm.s + P.pm.n - 1);
+    const posted = S.filter(s => s.np > 0).length, sold = S.filter(s => s.od > 0).length, newJ = s => s.c.join >= P.m.s && s.c.join <= P.b;
     const ad = trend(S, Sp, (c, d) => c.V.np[d] > 0 || c.V.od[d] > 0 ? 1 : 0, P);
     return [...head,
       h('div', {class: 'grid g12 mt'}, card('Activation', `Each step is part of the one before (${P.label}). Posted a new video: ${N(posted)}.`, funnel([['Linked creators', S.length], ['Active (posted or sold)', S.filter(s => s.vAct).length], ['Made a sale', sold], ['Sold and hit benchmark', S.filter(s => s.od > 0 && hitB(s, P)).length]], '--base')),
@@ -1126,13 +1162,9 @@ PAGES['Creator · Video'] = () => {
         {label: 'Sold', v: r => N(r.cur.filter(s => s.od > 0).length)}, {label: 'Sold %', v: r => pct(r.cur.filter(s => s.od > 0).length, r.cur.length) + '%'},
         {label: 'Active %', v: r => h('b', {}, pct(r.cur.filter(s => s.vAct).length, r.cur.length) + '%')}, {label: 'vs last month', v: r => dd(pct(r.cur.filter(s => s.vAct).length, r.cur.length), pct(r.prev.filter(s => s.vAct).length, r.prev.length))},
         {label: 'Hit benchmark %', v: r => pct(r.cur.filter(s => hitB(s, P)).length, r.cur.length) + '%'}, {label: 'Dormant 14+ days', v: r => N(r.cur.filter(s => dormant(s, P.b)).length)},
-        {label: 'Joined this month', v: r => N(r.cur.filter(newJ).length)}, {label: 'of them active', v: r => N(r.cur.filter(s => newJ(s) && s.vAct).length)}], R))),
-      row(card(`Dormant creators · ${N(dorm.length)}`, 'Linked, no new video for 14+ days. Biggest sellers last month first: they are the ones worth a call.', table([
-        {k: 'h', label: 'Creator', render: s => person(s.c.handle, `${s.c.ind} · ${s.c.city}`)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)}, {k: 'lastN', label: 'Last new video', num: true, render: s => s.last < 0 ? h('span', {class: 'muted'}, 'None in 3 months') : `${dLab(s.last)} · ${P.b - s.last} d ago`},
-        {k: 'pm', label: `GMV in ${P.pm.k}`, num: true, fmt: Rp}, {k: 'gr', label: 'GMV in these dates', num: true, fmt: Rp}, {k: 'places', label: 'Places they sell at', num: true}],
-        dorm.map(s => ({...s, h: s.c.handle, lastN: s.last, pm: prevMonth[s.c.i].gr, places: s.c.links.length, _open: () => openCreator(s.c.i)})), {sortKey: 'pm', pageSize: 10})))];
+        {label: 'Joined this month', v: r => N(r.cur.filter(newJ).length)}, {label: 'of them active', v: r => N(r.cur.filter(s => newJ(s) && s.vAct).length)}], R)))];
   }
-  if (tab === 'content') {
+  {
     const W = (list, f) => { const v = sum(list, s => s.vw); return v ? sum(list, s => s.vw * s.c.cq[f]) / v : 0; };
     const np = trend(S, Sp, (c, d) => c.V.np[d], P);
     return [...head,
@@ -1146,29 +1178,17 @@ PAGES['Creator · Video'] = () => {
       h('div', {class: 'grid g2 mt'}, card('New posts by day', `${P.m.label} next to ${P.pm.label}.`, area([{name: P.m.k, values: np.now, c: '--base'}, {name: P.pm.k, values: np.prev, c: '--muted', dash: true, fill: false}], np.labels, {height: 200})),
         card('GMV from new posts, by level', 'The share of each level’s video GMV that comes from videos posted this month.', hbars(R.filter(r => !r.total).map(r => ({label: r.lvl, value: pct(r.t.gn, r.t.gr), c: LVC[r.lvl]})), {fmt: v => v + '%'})))];
   }
-  const st = ui.tab.cvs || 'all', SpAll = stats(P.pa, P.pb);
-  const keep = {all: () => true, active: s => s.vAct, hit: s => hitB(s, P), dormant: s => dormant(s, P.b), none: s => !s.vAct}[st];
-  return [...head, row(card('Creators', 'Click a creator for the full profile.', table([
-    {k: 'h', label: 'Creator', render: s => person(s.c.handle, `${s.c.ind} · ${s.c.city}`)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)}, {k: 'stt', label: 'Status', render: s => chip(...vStatus(s, P), false)},
-    {k: 'np', label: 'New posts', num: true, fmt: N}, {k: 'vw', label: 'Views', num: true, fmt: N}, {k: 'ctr', label: 'CTR', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'cvr', label: 'CVR', num: true, fmt: v => v.toFixed(1) + '%'},
-    {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: s => dd(s.gr, SpAll[s.c.i].gr)}, {k: 'gpp', label: 'GMV / post', num: true, fmt: Rp},
-    {k: 'last', label: 'Last new post', num: true, render: s => h('span', {class: 'small'}, ago(s.last, P.b))}, {k: 'tr', label: 'This month', fixed: true, render: s => tspark(Array.from({length: P.n}, (_, i) => s.c.V.gr[P.m.s + i]), '--base')}],
-    S.filter(keep).map(s => ({...s, h: s.c.handle, stt: vStatus(s, P)[0], ctr: ratio(s.ck, s.vw) * 100, cvr: ratio(s.od, s.ck) * 100, chg: ratio(s.gr, SpAll[s.c.i].gr), gpp: ratio(s.gr, s.np), _open: () => openCreator(s.c.i)})),
-    {sortKey: 'gr', pageSize: 15, state: ui.tab.cvState ||= {}, tools: seg([['all', 'All'], ['active', 'Active'], ['hit', 'Hit benchmark'], ['dormant', 'Dormant'], ['none', 'Not active']], st, v => { ui.tab.cvs = v; render(); }, 'Status')})))];
 };
 // Level moves inside the selected month, from the level log (up, down, joined).
 function levelMoves(P, keep) {
   const s0 = P.m.s, all = stats(P.a, P.b).filter(keep), moves = [];
   for (const s of all) for (const [d, l] of s.c.hist.slice(1)) if (d >= s0 && d <= P.b) { const before = levelAt(s.c, d - 1); moves.push({s, d, from: before, to: l, up: LV.indexOf(l) > LV.indexOf(before)}); }
-  const pm = stats(P.pm.s, P.pm.s + P.pm.n - 1);
   const rows = LV.filter(l => !ui.f.lvl || l === ui.f.lvl).map(l => ({l, start: all.filter(s => s.c.join < s0 && levelAt(s.c, s0) === l).length, upOut: moves.filter(x => x.from === l && x.up).length, downOut: moves.filter(x => x.from === l && !x.up).length,
     inn: moves.filter(x => x.to === l).length, joined: all.filter(s => s.c.join >= s0 && s.c.join <= P.b && s.c.hist[0][1] === l).length, end: all.filter(s => s.lvl === l).length}));
   return card(`Level moves in ${P.m.label}`, 'From the level log: levels change on the 2nd of the month based on last month’s GMV.', h('div', {class: 'stack'},
     h('div', {class: 'tbl lvl'}, h('table', {}, h('thead', {}, h('tr', {}, ['Level', 'Start of month', 'Moved up', 'Moved down', 'Came in', 'Joined', 'Now'].map((x, i) => h('th', {class: i ? 'n' : ''}, x)))),
       h('tbody', {}, rows.map(r => h('tr', {}, h('td', {}, levelChip(r.l)), h('td', {class: 'n'}, N(r.start)), h('td', {class: 'n', style: 'color:var(--growth)'}, r.upOut ? '↑ ' + N(r.upOut) : '0'), h('td', {class: 'n', style: 'color:var(--rev)'}, r.downOut ? '↓ ' + N(r.downOut) : '0'),
-        h('td', {class: 'n'}, N(r.inn)), h('td', {class: 'n'}, N(r.joined)), h('td', {class: 'n'}, h('b', {}, N(r.end)))))))),
-    table([{k: 'h', label: 'Creator', render: x => person(x.s.c.handle, x.s.c.city)}, {k: 'mv', label: 'Move', render: x => h('span', {}, levelChip(x.from), x.up ? ' ↑ ' : ' ↓ ', levelChip(x.to))}, {k: 'd', label: 'Day', num: true, fmt: dLab},
-      {k: 'g', label: `GMV in ${P.pm.k}`, num: true, fmt: Rp}], moves.map(x => ({...x, h: x.s.c.handle, mv: x.to, g: pm[x.s.c.i].gmv, _open: () => openCreator(x.s.c.i)})), {sortKey: 'g', pageSize: 6, search: false})));
+        h('td', {class: 'n'}, N(r.inn)), h('td', {class: 'n'}, N(r.joined)), h('td', {class: 'n'}, h('b', {}, N(r.end))))))))));
 }
 
 // ================= Creator · LIVE =================
@@ -1176,10 +1196,9 @@ PAGES['Creator · LIVE'] = () => {
   const P = period(), tab = ui.tab.clt || 'level', isL = s => !!s.c.L;
   const S = stats(P.a, P.b).filter(s => F(s) && isL(s)), Sp = stats(P.pa, P.pb).filter(s => F(s) && isL(s)), t = tot(S), tp = tot(Sp);
   const act = S.filter(s => s.lAct).length, tr = trend(S, Sp, (c, d) => c.L.lgr[d], P);
-  const head = [h('div', {class: 'tools'}, h('b', {}, 'Dining · LIVE (LS)'), tabs([['level', 'Level'], ['act', 'Activation'], ['ses', 'Sessions'], ['list', 'Creators']], 'clt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `LIVE only · vs ${P.plabel}`)),
+  const head = [h('div', {class: 'tools'}, h('b', {}, 'Dining · LIVE (LS)'), tabs([['level', 'Level'], ['act', 'Activation'], ['ses', 'Sessions']], 'clt', 'level'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `LIVE only · vs ${P.plabel}`)),
     h('div', {class: 'grid'}, kpi('LIVE redemption GMV', Rp(t.lgr), {d: delta(t.lgr, tp.lgr), sub: `vs ${P.plabel}`, c: '--rev', spark: tr.now}), kpi('Sessions', N(t.ses), {d: delta(t.ses, tp.ses)}), kpi('Valid sessions', N(t.val), {sub: `${rt(t.val, t.ses, 0)} of sessions`}),
-      kpi('LIVE hours', N(t.sec / 3600)), kpi('Viewers', N(t.vwr), {d: delta(t.vwr, tp.vwr)}), kpi('Entering rate', rt(t.en, t.vwr), {sub: 'entered ÷ viewers'}), kpi('Purchase rate', rt(t.lod, t.en), {sub: 'orders ÷ entered'}),
-      kpi('GPM', Rp(ratio(t.lgs, t.vwr) * 1000), {sub: 'sales per 1,000 viewers'}), kpi('Active LIVE creators', N(act), {sub: `of ${N(S.length)} · ${pct(act, S.length)}%`}))];
+      kpi('LIVE hours', N(t.sec / 3600)), kpi('Viewers', N(t.vwr), {d: delta(t.vwr, tp.vwr)}), kpi('Active LIVE creators', N(act), {sub: `of ${N(S.length)} · ${pct(act, S.length)}%`}))];
   const R = lvlRows(S, Sp);
   if (tab === 'level') return [...head,
     row(card(`LIVE by level · ${P.label}`, 'Valid = 2 hours or more. Share is of LIVE GMV.', ltable([
@@ -1191,8 +1210,8 @@ PAGES['Creator · LIVE'] = () => {
       card('LIVE GMV by day', `${P.m.label} next to ${P.pm.label}.`, area([{name: P.m.k, values: tr.now, c: '--rev'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 220}))),
     row(levelMoves(P, s => F(s) && isL(s)))];
   if (tab === 'act') {
-    const went = S.filter(s => s.ses > 0).length, valid = S.filter(s => s.val > 0).length, sold = S.filter(s => s.lod > 0).length, dorm = S.filter(s => dormant(s, P.b, true));
-    const ad = trend(S, Sp, (c, d) => c.L.ses[d] > 0 ? 1 : 0, P), prevMonth = stats(P.pm.s, P.pm.s + P.pm.n - 1);
+    const went = S.filter(s => s.ses > 0).length, valid = S.filter(s => s.val > 0).length, sold = S.filter(s => s.lod > 0).length;
+    const ad = trend(S, Sp, (c, d) => c.L.ses[d] > 0 ? 1 : 0, P);
     return [...head,
       h('div', {class: 'grid g12 mt'}, card('Activation', `Each step is part of the one before (${P.label}). Had a valid session: ${N(valid)}.`, funnel([['LIVE creators', S.length], ['Went LIVE', went], ['Sold in LIVE', sold], ['Sold and hit benchmark', S.filter(s => s.lod > 0 && hitB(s, P)).length]], '--rev')),
         card('Creators LIVE by day', 'At least one session that day.', area([{name: P.m.k, values: ad.now, c: '--rev'}, {name: P.pm.k, values: ad.prev, c: '--muted', dash: true, fill: false}], ad.labels, {height: 200}))),
@@ -1200,12 +1219,9 @@ PAGES['Creator · LIVE'] = () => {
         {label: 'LIVE creators', v: r => N(r.cur.length)}, {label: 'Went LIVE', v: r => N(r.cur.filter(s => s.ses > 0).length)}, {label: 'Went LIVE %', v: r => pct(r.cur.filter(s => s.ses > 0).length, r.cur.length) + '%'},
         {label: 'Valid session %', v: r => pct(r.cur.filter(s => s.val > 0).length, r.cur.length) + '%'}, {label: 'Sold %', v: r => pct(r.cur.filter(s => s.lod > 0).length, r.cur.length) + '%'},
         {label: 'Sessions / active', v: r => ratio(r.t.ses, r.cur.filter(s => s.ses > 0).length).toFixed(1)}, {label: 'Hit benchmark %', v: r => pct(r.cur.filter(s => hitB(s, P)).length, r.cur.length) + '%'},
-        {label: 'No LIVE 14+ days', v: r => N(r.cur.filter(s => dormant(s, P.b, true)).length)}], R))),
-      row(card(`No LIVE for 14+ days · ${N(dorm.length)}`, 'Biggest LIVE sellers last month first.', table([{k: 'h', label: 'Creator', render: s => person(s.c.handle, s.c.city)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)},
-        {k: 'lastL', label: 'Last LIVE', num: true, render: s => s.lastL < 0 ? h('span', {class: 'muted'}, 'None in 3 months') : `${dLab(s.lastL)} · ${P.b - s.lastL} d ago`}, {k: 'pm', label: `LIVE GMV in ${P.pm.k}`, num: true, fmt: Rp}, {k: 'gr', label: 'Video GMV in these dates', num: true, fmt: Rp}],
-        dorm.map(s => ({...s, h: s.c.handle, pm: prevMonth[s.c.i].lgr, _open: () => openCreator(s.c.i)})), {sortKey: 'pm', pageSize: 10})))];
+        {label: 'No LIVE 14+ days', v: r => N(r.cur.filter(s => dormant(s, P.b, true)).length)}], R)))];
   }
-  if (tab === 'ses') {
+  {
     const ok = new Set(S.map(s => s.c.i)), RM = D.rooms.filter(r => r.d >= P.a && r.d <= P.b && ok.has(r.c)), hrs = [...Array(18).keys()].map(x => x + 6);
     const grid = WD.map((_, w) => hrs.map(hr => { const x = RM.filter(r => wday(r.d) === w && r.hr === hr); return {n: x.length, g: sum(x, r => r.gr)}; })), gmax = Math.max(1, ...grid.flat().map(x => x.n ? x.g / x.n : 0));
     const order = [1, 2, 3, 4, 5, 6, 0];
@@ -1213,20 +1229,8 @@ PAGES['Creator · LIVE'] = () => {
       h('div', {class: 'grid mt'}, kpi('Avg session', Math.round(ratio(sum(RM, r => r.dur), RM.length)) + ' min'), kpi('Viewers / session', N(ratio(t.vwr, t.ses))), kpi('GMV / session', Rp(ratio(t.lgr, t.ses))), kpi('Sessions with a sale', rt(RM.filter(r => r.od > 0).length, RM.length, 0)),
         kpi('Best hour', (() => { const by = hrs.map(hr => [hr, sum(RM.filter(r => r.hr === hr), r => r.gr)]).sort((a, b) => b[1] - a[1])[0]; return by && by[1] ? `${by[0]}:00` : '-'; })(), {sub: 'most GMV started then'})),
       row(card('When LIVE sells', 'Rows = day of the week, columns = start hour. Number = sessions. Darker = more GMV per session.', h('div', {class: 'tbl'}, h('table', {class: 'days heatmap'}, h('thead', {}, h('tr', {}, h('th', {}, ''), hrs.map(hr => h('th', {}, String(hr))))),
-        h('tbody', {}, order.map(w => h('tr', {}, h('td', {}, WD[w]), hrs.map((hr, i) => { const x = grid[w][i], v = x.n ? x.g / x.n / gmax : 0; return h('td', {}, h('span', {class: 'heat', style: x.n ? `background:color-mix(in srgb,var(--rev) ${12 + v * 70}%,transparent)` : '', title: `${WD[w]} ${hr}:00 · ${x.n} sessions · ${Rp(ratio(x.g, x.n))} per session`}, x.n || '')); })))))))),
-      row(card('Sessions', 'Every LIVE room in the dates picked. Click a row for the creator.', table([{k: 'day', label: 'Day', render: r => `${dLab(r.d)} · ${String(r.hr).padStart(2, '0')}:00`}, {k: 'h', label: 'Creator', render: r => person(D.creators[r.c].handle, levelAt(D.creators[r.c], P.b))},
-        {k: 'brand', label: 'Brand'}, {k: 'dur', label: 'Minutes', num: true}, {k: 'valid', label: 'Valid', render: r => r.valid ? chip('Valid', '--growth', false) : chip('Short', '--muted', false)}, {k: 'vw', label: 'Viewers', num: true, fmt: N},
-        {k: 'er', label: 'Entering', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'od', label: 'Orders', num: true}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
-        RM.map(r => ({...r, day: r.d * 100 + r.hr, h: D.creators[r.c].handle, brand: D.brands[r.b].name, er: ratio(r.en, r.vw) * 100, _open: () => openCreator(r.c)})), {sortKey: 'gr', pageSize: 12})))];
+        h('tbody', {}, order.map(w => h('tr', {}, h('td', {}, WD[w]), hrs.map((hr, i) => { const x = grid[w][i], v = x.n ? x.g / x.n / gmax : 0; return h('td', {}, h('span', {class: 'heat', style: x.n ? `background:color-mix(in srgb,var(--rev) ${12 + v * 70}%,transparent)` : '', title: `${WD[w]} ${hr}:00 · ${x.n} sessions · ${Rp(ratio(x.g, x.n))} per session`}, x.n || '')); }))))))))];
   }
-  const st = ui.tab.cls || 'all', SpAll = stats(P.pa, P.pb), keep = {all: () => true, active: s => s.lAct, hit: s => hitB(s, P), dormant: s => dormant(s, P.b, true)}[st];
-  return [...head, row(card('LIVE creators', 'Click a creator for the full profile.', table([
-    {k: 'h', label: 'Creator', render: s => person(s.c.handle, s.c.city)}, {k: 'lvl', label: 'Level', render: s => levelChip(s.lvl)}, {k: 'stt', label: 'Status', render: s => chip(...lStatus(s, P), false)},
-    {k: 'ses', label: 'Sessions', num: true}, {k: 'val', label: 'Valid', num: true}, {k: 'hrs', label: 'Hours', num: true, fmt: v => v.toFixed(1)}, {k: 'vwr', label: 'Viewers', num: true, fmt: N}, {k: 'er', label: 'Entering', num: true, fmt: v => v.toFixed(1) + '%'},
-    {k: 'pr', label: 'Purchase', num: true, fmt: v => v.toFixed(1) + '%'}, {k: 'lgr', label: 'LIVE GMV', num: true, fmt: Rp}, {k: 'chg', label: 'vs last month', num: true, render: s => dd(s.lgr, SpAll[s.c.i].lgr)},
-    {k: 'gvs', label: 'GMV / valid', num: true, fmt: Rp}, {k: 'lastL', label: 'Last LIVE', num: true, render: s => h('span', {class: 'small'}, s.lastL < 0 ? 'None in 3 months' : ago(s.lastL, P.b))}],
-    S.filter(keep).map(s => ({...s, h: s.c.handle, stt: lStatus(s, P)[0], hrs: s.sec / 3600, er: ratio(s.en, s.vwr) * 100, pr: ratio(s.lod, s.en) * 100, chg: ratio(s.lgr, SpAll[s.c.i].lgr), gvs: ratio(s.lgr, s.val), _open: () => openCreator(s.c.i)})),
-    {sortKey: 'lgr', pageSize: 15, state: ui.tab.clState ||= {}, tools: seg([['all', 'All'], ['active', 'Active'], ['hit', 'Hit benchmark'], ['dormant', 'No LIVE 14+ days']], st, v => { ui.tab.cls = v; render(); }, 'Status')})))];
 };
 
 // ================= Merchant · Video =================
@@ -1335,18 +1339,18 @@ PAGES['Metric guide'] = () => {
     ['Money', 'Shown in USD (like the KPI sheet) or IDR. Data is in IDR; USD = IDR ÷ the exchange rate on the Set Targets page.', 'Redeemed GMV = redemption amount', 'IDR_TO_USD rate'],
     ['Where creators are from', 'The creator’s city, grouped into province and region.', 'Creator city', 'creator_performance_video.creator_city'],
     ['Where they sell', 'The city of the place tagged in the video. LIVE has no place.', 'Place city', 'merchant_performance_video.location_city'],
-    ['Forecast', 'Month-end estimate. Each weekday’s usual share comes from the last 8 weeks; the trend from the last 4 weeks with the weekday effect removed, limited to ±1% a day.', 'So far + forecast of each day left', 'Statistics in the page, no AI'],
-    ['Likely range, chance to hit', 'The range covers 80% of likely outcomes, from how far the model missed over the last 4 weeks. Chance = probability the month ends at or above the target.', 'Normal spread of the misses', 'Checked on earlier months in Forecast'],
-    ['GMV factors', 'Video GMV = active creators × posts per creator × views per post × CTR × CVR × AOV × redemption rate. LIVE uses sessions, viewers, entering and purchase rate.', 'The change is split by each factor’s share of the log change', 'Adds up exactly to the GMV change'],
-    ['Levers', 'Impact if a level reached what its own top quarter of creators already does on one factor.', 'Level monthly GMV × lift, lift capped at +100%', 'Other factors held the same'],
-    ['Go-quiet risk', 'Chance an active creator posts nothing in the next 14 days.', 'Logistic regression on 6 simple inputs, trained on past days, one in four creators kept aside to test', 'AUC shown on the page'],
-    ['Level outlook', 'Chance to move up or down next month.', 'Month so far + daily average × days left, with the spread of their daily GMV', 'Level benchmark rule'],
-    ['Unusual days', 'A day far from what the same weekday usually makes.', 'Robust z-score (median and MAD) of 2.5 or more', 'Last 4 weeks of the same weekday']];
+    ['Current situation', 'Top of Summary: is GMV growing, flat or declining, the main problem, the bright spot, the month end and the GMV at risk.', 'Growing = GMV up more than 3%, declining = down more than 3%', 'Same days of the month before'],
+    ['Growth formulas', 'GMV split into parts that multiply together, from the TTLS GMV growth framework: orders × AOV × redemption rate, active creators × posts per creator × GMV per post, the content funnel, merchants, LIVE hours × GMV per hour, LIVE products.', 'Each part gets the share of the GMV change equal to its share of the log change', 'Adds up exactly to the GMV change'],
+    ['Problem, watch, healthy', 'Problem = the formula’s result fell more than 3%. Watch = it held up but one part fell 5% or more. Healthy = neither.', 'Weakest part = the one that took away the most', 'Focus text follows the framework’s optimization column'],
+    ['Month end', 'Month-end estimate. Each weekday’s usual share comes from the last 8 weeks; the trend from the last 4 weeks with the weekday effect removed, limited to ±1% a day. The range covers 80% of likely outcomes; chance = probability of ending at or above the target.', 'So far + forecast of each day left', 'Statistics in the page, no AI'],
+    ['GMV at risk', 'Last month’s GMV made by creators who have gone quiet.', 'No new post and no LIVE for 14+ days', 'GMV of the whole month before'],
+    ['Unusual days', 'A day far from what the same weekday usually makes; shown under the Summary chart.', 'Robust z-score (median and MAD) of 2.5 or more', 'Last 4 weeks of the same weekday']];
   return [h('div', {class: 'grid g12'}, card('How to read this app', null, h('ul', {class: 'report'},
+      h('li', {}, h('b', {}, 'Start at Summary: '), 'the current situation, then which growth formula has the problem and what to focus on.'),
       h('li', {}, h('b', {}, 'Pick the dates at the top. '), 'Every number compares with the same days of the month before.'),
       h('li', {}, h('b', {}, 'Creator or Merchant, then Video or LIVE. '), 'LIVE exists for Dining only, like the flowchart.'),
-      h('li', {}, h('b', {}, 'Level tab: '), 'who brings the GMV. ', h('b', {}, 'Activation tab: '), 'who is working and who went quiet.'),
-      h('li', {}, h('b', {}, 'Click any row '), 'for the full profile of a creator, place or brand.'),
+      h('li', {}, h('b', {}, 'Level tab: '), 'which levels bring the GMV. ', h('b', {}, 'Activation tab: '), 'how many creators are working and how many went quiet.'),
+      h('li', {}, h('b', {}, 'Business view: '), 'creators show up as totals. Single creators appear only in Biggest drops and gains on Summary. Click a place or brand for its detail.'),
       h('li', {}, h('b', {}, 'Target Achievement '), 'shows every target line; ', h('b', {}, 'Explorer '), 'puts any breakdown against any other (level, industry, region, city, where they sell, status).'),
       h('li', {}, h('b', {}, 'Linked creators only, '), 'and every name and number here is made up.'))),
       card('Level benchmarks (sample rule)', 'GMV a month to keep the level. Reaching the next one moves the creator up on the 2nd of the month; making under a quarter of it can move them down.', h('div', {}, table([{k: 'l', label: 'Level', render: r => levelChip(r.l)}, {k: 'b', label: 'Keep level (a month)', num: true, fmt: Rp}, {k: 'nx', label: 'To move up', num: true, render: r => r.nx ? Rp(r.nx) : '-'}],
@@ -1394,7 +1398,7 @@ function vT(T, stk, ls) {
   return {...z, aov: ratio(z.gmv, z.ro), soldRate: ratio(z.sold, z.active), gps: ratio(z.gmv, z.sold), ppa: ratio(z.posts, z.active), ctr: ls.length === 1 ? T.video[stk][ls[0]].ctr : null};
 }
 const lT = T => { const x = T.live; return {...x, aov: ratio(x.gmv, x.ro), validRate: ratio(x.valid, x.rooms), opk: ratio(x.ro, x.viewers) * 1000, gpr: ratio(x.gmv, x.rooms), gpsl: ratio(x.gmv, x.sold)}; };
-// Target total for gmv / posts / valid across lines (used by Forecast and the simulator). Dining LS has no level split, so it only counts when all levels are in.
+// Target total for gmv / posts / valid across lines (used by the month-end line on Summary). Dining LS has no level split, so it only counts when all levels are in.
 function tSum(T, k, sts, ls) {
   let t = 0, any = false; const allLv = ls.length === LV.length;
   for (const sk of sts) {
@@ -1809,15 +1813,11 @@ PAGES['Explorer'] = () => {
           h('tr', {class: 'tot-row'}, h('td', {}, h('b', {}, 'Total')), cols.map(c => td(TOT, c, true)), cd ? td(TOT, TOT, true) : null))))))];
 };
 
-// ================= Data science: forecast, drivers, levers, creator outlook, unusual days =================
-// Plain statistics run in the page (no AI): weekday pattern + damped trend, log-change attribution, logistic regression.
+// ================= Statistics used inside Summary: month-end forecast, unusual days, GMV factor split =================
+// Plain statistics run in the page (no AI).
 const erf = x => { const s = Math.sign(x), a = Math.abs(x), t = 1 / (1 + 0.3275911 * a); return s * (1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a)); };
 const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
 const median = a => { const b = [...a].sort((x, y) => x - y), m = b.length >> 1; return b.length ? (b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2) : 0; };
-function pearson(xs, ys) { const n = xs.length; if (n < 3) return 0; const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n; let sxy = 0, sxx = 0, syy = 0;
-  for (let i = 0; i < n; i++) { const dx = xs[i] - mx, dy = ys[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; } return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0; }
-const pctS = v => (v >= 0 ? '+' : '') + Math.round(v * 100) + '%';
-const chanceChip = p => p == null ? h('span', {class: 'muted'}, '-') : chip(Math.round(p * 100) + '%', p >= 0.7 ? '--growth' : p >= 0.4 ? '--ops' : '--rev', false);
 
 // Forecast one daily series: weekday pattern from the last 8 weeks, trend from the last 4 weeks (damped), error band from the misses.
 function fcSeries(y, cut, s, n) {
@@ -1838,263 +1838,12 @@ function fcSeries(y, cut, s, n) {
   return {f, b, my, pred, sig, fc, mtd, mu, sd, rem, lo: Math.max(mtd, mu - 1.2816 * sd), hi: mu + 1.2816 * sd, pace: (cut - s + 1) ? mtd / (cut - s + 1) * n : 0,
     chance: t => !(t > 0) ? null : rem ? 1 - Phi((t - mu) / (sd || 1)) : (mtd >= t ? 1 : 0)};
 }
-const dsKeep = s => s.linked && (!ui.f.lvl || s.lvl === ui.f.lvl) && cityOk(s.c.city);
-const sdf = (k, st) => k === 'gmv' ? (st.live ? (c, d) => c.L.lgr[d] : (c, d) => c.V.gr[d]) : k === 'posts' ? (c, d) => c.V.np[d] : (c, d) => c.L ? c.L.val[d] : 0;
-const FK = [['gmv', 'Redemption GMV'], ['posts', 'New posts'], ['valid', 'Valid LIVE sessions']];
-function fcChart(P, y, fc, cut) {
-  const s0 = Math.max(0, cut - 34), end = P.m.s + P.m.n - 1, N0 = end - s0 + 1, top = Math.max(1, ...y.slice(s0, Math.min(end, LAST) + 1), ...fc.fc.map((v, i) => v + 1.2816 * fc.sig)), step = nice(top / 4), hi = Math.ceil(top / step) * step;
-  return h('div', {class: 'viz'}, chart((W, H) => {
-    const L = 54, R = 12, Tp = 10, B = 22, x = d => L + (d - s0) * (W - L - R) / Math.max(1, N0 - 1), yy = v => Tp + (H - Tp - B) * (1 - v / hi);
-    let s = ''; for (let t = 0; t <= hi + step / 2; t += step) s += `<line x1="${L}" x2="${W - R}" y1="${yy(t)}" y2="${yy(t)}" stroke="var(--line)"/><text x="${L - 8}" y="${yy(t) + 3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${short(t)}</text>`;
-    const every = Math.max(1, Math.ceil(N0 / Math.max(2, Math.floor((W - L - R) / 46))));
-    for (let d = s0; d <= end; d++) if ((d - s0) % every === 0) s += `<text x="${x(d)}" y="${H - 6}" font-size="10.5" fill="var(--muted)" text-anchor="middle">${dLab(d)}</text>`;
-    s += `<line x1="${x(cut)}" x2="${x(cut)}" y1="${Tp}" y2="${H - B}" stroke="var(--line2)" stroke-dasharray="3 3"/><text x="${x(cut) + 4}" y="${Tp + 10}" font-size="10.5" fill="var(--muted)">forecast from here</text>`;
-    const band = fc.fc.map((v, i) => [x(cut + 1 + i), yy(v + 1.2816 * fc.sig)]).concat(fc.fc.map((v, i) => [x(cut + 1 + i), yy(Math.max(0, v - 1.2816 * fc.sig))]).reverse());
-    if (band.length) s += `<polygon points="${band.map(p => p.map(q => q.toFixed(1)).join(',')).join(' ')}" fill="var(--base)" opacity=".12"><title>Likely range (80%)</title></polygon>`;
-    const line = (pts, c, dash, w = 2) => pts.length > 1 ? `<polyline points="${pts.map(([d, v]) => `${x(d).toFixed(1)},${yy(v).toFixed(1)}`).join(' ')}" fill="none" stroke="var(${c})" stroke-width="${w}" ${dash ? 'stroke-dasharray="4 4"' : ''} stroke-linejoin="round"/>` : '';
-    const act = []; for (let d = s0; d <= Math.min(end, LAST); d++) act.push([d, y[d]]);
-    const fit = []; for (let d = Math.max(s0, cut - 27); d <= cut; d++) fit.push([d, fc.pred(d)]);
-    s += line(fit, '--muted', true, 1.4) + line(act.filter(([d]) => d <= cut), '--growth') + line(act.filter(([d]) => d >= cut), '--growth', false, 1.2).replace('stroke-width="1.2"', 'stroke-width="1.2" opacity=".45"');
-    s += line([[cut, y[cut]], ...fc.fc.map((v, i) => [cut + 1 + i, v])], '--base', true, 2);
-    s += act.map(([d, v]) => `<circle cx="${x(d)}" cy="${yy(v)}" r="7" fill="transparent"><title>${dLab(d)}: ${Rp(v)}</title></circle>`).join('') + fc.fc.map((v, i) => `<circle cx="${x(cut + 1 + i)}" cy="${yy(v)}" r="7" fill="transparent"><title>${dLab(cut + 1 + i)} forecast: ${short(v)} (likely ${short(Math.max(0, v - 1.2816 * fc.sig))} to ${short(v + 1.2816 * fc.sig)})</title></circle>`).join('');
-    return s;
-  }, 240, 'Forecast chart'), legend([{name: 'Actual', c: '--growth'}, {name: 'Model fit', c: '--muted', dash: true}, {name: 'Forecast', c: '--base', dash: true}, {name: 'Likely range (80%)', c: '--base'}]));
-}
-
-// ================= Forecast =================
-PAGES['Forecast'] = () => {
-  const P = period(), k = ui.tab.fk || 'gmv', cut = P.b, T = D.targets[P.m.k], S = stats(P.m.s, cut).filter(dsKeep), lv = LV.filter(l => !ui.f.lvl || l === ui.f.lvl), noT = !!ui.f.area || (k === 'gmv' && !!ui.f.lvl);
-  const allF = (c, d) => dayVal(k, c, d), y = daily(S, 0, LAST, allF), fc = fcSeries(y, cut, P.m.s, P.m.n), fm = tFmt(k);
-  const sts = STREAMS.filter(st => applies(k, st)), tgt = noT ? null : tSum(T, k, sts.map(st => st.k), lv), ch = fc.chance(tgt);
-  // backtest: forecast made on the same day of the last two months, against what really happened
-  const back = [1, 2].map(i => MONTHS[MONTHS.indexOf(P.m) - i]).filter(m => m).map(m => { const c2 = m.s + Math.min(P.d1, m.n) - 1, f2 = fcSeries(y, c2, m.s, m.n); let act = 0; for (let d = m.s; d < m.s + m.n; d++) act += y[d];
-    return {m: m.label, day: Math.min(P.d1, m.n), fc: f2.mu, lo: f2.lo, hi: f2.hi, act, err: act ? (f2.mu - act) / act : 0, inside: act >= f2.lo && act <= f2.hi, paceErr: act ? (f2.pace - act) / act : 0}; }).filter(x => x.day < MONTHS.find(m => m.label === x.m).n);
-  const mape = back.length ? back.reduce((a, x) => a + Math.abs(x.err), 0) / back.length : null;
-  const rowsOf = (groups) => groups.map(g => { const yy = daily(g.list, 0, LAST, g.f), f2 = fcSeries(yy, cut, P.m.s, P.m.n); return {...g, mtd: f2.mtd, mu: f2.mu, lo: f2.lo, hi: f2.hi, pace: f2.pace, tgt: g.tgt, ch: f2.chance(g.tgt), _f: f2}; });
-  const byStream = rowsOf(sts.map(st => ({label: st.label, c: st.c, list: S.filter(s => inStream(s, st)), f: sdf(k, st), tgt: noT ? null : tSum(T, k, [st.k], lv)})));
-  const byLevel = rowsOf(lv.map(l => ({label: l, lvl: l, list: S.filter(s => s.lvl === l), f: k === 'gmv' ? (c, d) => c.V.gr[d] : allF, tgt: ui.f.area ? null : tSum(T, k, sts.filter(st => !st.live).map(st => st.k), [l])})));
-  const byRegion = k === 'gmv' ? rowsOf(REGIONS.map(r => ({label: r, list: S.filter(s => REGION[s.c.city] === r), f: allF, tgt: ui.f.lvl || noT ? null : T.area[r]}))).filter(r => r.list.length) : [];
-  const cols = [{k: 'label', label: 'Group', render: r => r.lvl ? levelChip(r.lvl) : r.c ? h('div', {class: 'who'}, h('i', {class: 'dot-c', style: `background:var(${r.c})`}), r.label) : h('b', {style: 'font-weight:600'}, r.label)},
-    {k: 'mtd', label: 'So far', num: true, fmt: fm}, {k: 'mu', label: 'Forecast month end', num: true, fmt: v => h('b', {}, fm(v))}, {k: 'lo', label: 'Likely range (80%)', num: true, render: r => `${fm(r.lo)} to ${fm(r.hi)}`},
-    {k: 'pace', label: 'Simple pace', num: true, fmt: fm}, {k: 'tgt', label: 'Target', num: true, fmt: v => v ? fm(v) : '-'}, {k: 'ach', label: 'Forecast ÷ target', num: true, fmt: v => v ? Math.round(v * 100) + '%' : '-'}, {k: 'ch', label: 'Chance to hit', num: true, render: r => chanceChip(r.ch)}];
-  const prep = rows => rows.map(r => ({...r, ach: r.tgt ? r.mu / r.tgt : 0}));
-  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
-  return [h('div', {class: 'tools'}, seg(FK, k, v => { ui.tab.fk = v; render(); }, 'Metric'), h('span', {class: 'muted small'}, `Forecast from ${dLab(cut)} to the end of ${P.m.label}. ${cut < Math.min(LAST, P.m.s + P.m.n - 1) ? 'The days after the end date are already known: compare the forecast with them.' : ''}`)),
-    h('div', {class: 'grid'}, kpi('Forecast month end', fm(fc.mu), {sub: `likely ${fm(fc.lo)} to ${fm(fc.hi)}`, c: '--base'}), kpi('Target', tgt ? fm(tgt) : '-', {sub: noT ? 'targets are for all areas' : `forecast = ${tgt ? Math.round(fc.mu / tgt * 100) : 0}% of it`}),
-      kpi('Chance to hit target', ch == null ? '-' : Math.round(ch * 100) + '%', {sub: ch == null ? '' : ch >= 0.7 ? 'likely' : ch >= 0.4 ? 'toss-up' : 'unlikely', c: ch == null ? '--muted' : ch >= 0.7 ? '--growth' : ch >= 0.4 ? '--ops' : '--rev'}),
-      kpi('Simple pace', fm(fc.pace), {sub: 'so far ÷ days × days in month'}), kpi('Trend', `${fc.b >= 0 ? '+' : ''}${(fc.b / (fc.my || 1) * 100).toFixed(1)}% a day`, {sub: 'last 4 weeks, weekday effect removed'}),
-      kpi('Model error', mape == null ? '-' : Math.round(mape * 100) + '%', {sub: 'average miss on past months'})),
-    row(card(`${TLABEL[k] || k} by day and forecast`, 'Weekday pattern from the last 8 weeks, trend from the last 4 weeks (damped), range from how far the model missed in those 4 weeks.', fcChart(P, y, fc, cut))),
-    row(card('Forecast by industry and format', null, table(cols, prep(byStream), {search: false, sortKey: 'mu', pageSize: 6}))),
-    h('div', {class: ui.f.lvl ? 'stack mt' : 'grid g2 mt'}, card(k === 'gmv' ? 'Video GMV forecast by level' : 'Forecast by level', k === 'gmv' ? 'Video only: Dining LS has no level targets.' : 'Level at the end date.', table(cols, prep(byLevel), {search: false, pageSize: 6})),
-      card('Weekday pattern', 'An average day = 100. Used to shape the forecast.', h('div', {class: 'stack'}, columns(dowOrder.map(w => ({label: WD[w], value: Math.round(fc.f[w] * 100), c: fc.f[w] >= 1 ? '--growth' : '--ops'})), {height: 190, ref: {value: 100, label: 'average'}}),
-        h('div', {class: 'muted small'}, (() => { const best = dowOrder.reduce((a, w) => fc.f[w] > fc.f[a] ? w : a, 1), worst = dowOrder.reduce((a, w) => fc.f[w] < fc.f[a] ? w : a, 1); return `${WD[best]} is the strongest day (${Math.round(fc.f[best] * 100)}), ${WD[worst]} the weakest (${Math.round(fc.f[worst] * 100)}).`; })())))),
-    byRegion.length ? row(card('Forecast by region (creator origin)', ui.f.lvl ? 'Regional targets are for all levels, so they are hidden while a level is picked.' : 'Against the regional GMV targets.', table(cols, prep(byRegion), {search: false, sortKey: 'mu', pageSize: 8}))) : null,
-    row(card('How good is the forecast?', 'The same model run on the same day of earlier months, then compared with how the month really ended.', back.length ? table([{k: 'm', label: 'Month'}, {k: 'day', label: 'Forecast made on day', num: true}, {k: 'fc', label: 'Forecast', num: true, fmt: fm},
-      {k: 'lo', label: 'Likely range', num: true, render: r => `${fm(r.lo)} to ${fm(r.hi)}`}, {k: 'act', label: 'Actual month end', num: true, fmt: v => h('b', {}, fm(v))}, {k: 'err', label: 'Forecast miss', num: true, render: r => chip(pctS(r.err), Math.abs(r.err) < 0.08 ? '--growth' : Math.abs(r.err) < 0.15 ? '--ops' : '--rev', false)},
-      {k: 'paceErr', label: 'Simple pace miss', num: true, render: r => h('span', {class: 'muted'}, pctS(r.paceErr))}, {k: 'inside', label: 'Actual inside range', render: r => r.inside ? chip('Yes', '--growth', false) : chip('No', '--rev', false)}], back, {search: false, pageSize: 3})
-      : h('div', {class: 'muted small'}, 'No earlier month to test against.')))];
-};
-
-// ================= Drivers & Levers =================
-const VF = [['act', 'Active creators', t => t.act, 'Wake up dormant creators, chase the ones who went quiet'], ['ppa', 'Posts per active creator', t => ratio(t.np, t.act), 'Ask each creator for more videos a week'],
-  ['vpp', 'Views per new post', t => ratio(t.vw, t.np), 'Better hooks and trending formats, post at strong hours'], ['ctr', 'CTR', t => ratio(t.ck, t.vw), 'Clear product pin and call to action'],
-  ['cvr', 'CVR', t => ratio(t.od, t.ck), 'Stronger deals and vouchers on the promoted places'], ['aov', 'AOV', t => ratio(t.gs, t.od), 'Push bundles and bigger packages'], ['rr', 'Redemption rate', t => ratio(t.gr, t.gs), 'Remind buyers to use their vouchers']];
-const LF = [['act', 'Active LIVE creators', t => t.act, 'Get more LIVE creators on air each week'], ['spc', 'Sessions per creator', t => ratio(t.ses, t.act), 'Agree a fixed LIVE schedule'],
-  ['vps', 'Viewers per session', t => ratio(t.vwr, t.ses), 'Go LIVE at the strong hours, promote the room before'], ['er', 'Entering rate', t => ratio(t.en, t.vwr), 'Better cover and title so people enter'],
-  ['pr', 'Purchase rate', t => ratio(t.lod, t.en), 'Flash deals and clear pinned products'], ['aov', 'AOV', t => ratio(t.lgs, t.lod), 'Bundles and higher value packages'], ['rr', 'Redemption rate', t => ratio(t.lgr, t.lgs), 'Remind buyers to use their vouchers']];
 const vTot = list => { const t = tot(list); t.act = list.filter(s => s.vAct).length; t.g = t.gr; return t; };
-const lTot = list => { const t = tot(list); t.act = list.filter(s => s.ses > 0).length; t.g = t.lgr; return t; };
-function bridgeChart(before, after, parts) {
-  const steps = [{name: 'Last month', v: before, from: 0, to: before, end: true}]; let run0 = before;
-  for (const p of parts) { steps.push({name: p.name, v: p.v, from: run0, to: run0 + p.v}); run0 += p.v; }
-  steps.push({name: 'This period', v: after, from: 0, to: after, end: true});
-  const lv0 = steps.flatMap(s => s.end ? [s.to] : [s.from, s.to]), span = Math.max(...lv0) - Math.min(...lv0) || 1, st = nice(span / 3), lo = Math.max(0, Math.floor((Math.min(...lv0) - span * 0.6) / st) * st), hi = Math.max(...lv0) + span * 0.25;
-  return chart((W, H) => { const Tp = 18, B = 34, bw = W / steps.length, w = Math.min(54, bw * 0.6), y = v => Tp + (H - Tp - B) * (1 - (Math.max(lo, v) - lo) / (hi - lo));
-    return steps.map((s, i) => { const cx = bw * i + bw / 2, a = y(Math.max(s.from, s.to)), b = s.end ? H - B : y(Math.min(s.from, s.to)), c = s.end ? '--muted' : s.v >= 0 ? '--good' : '--bad';
-      const words = s.name.split(' '), l1 = words.slice(0, Math.ceil(words.length / 2)).join(' '), l2 = words.slice(Math.ceil(words.length / 2)).join(' ');
-      return `<rect x="${cx - w / 2}" y="${a}" width="${w}" height="${Math.max(2, b - a)}" rx="4" fill="var(${c})" ${s.end ? 'opacity=".5"' : ''}><title>${esc(s.name)}: ${s.end ? Rp(s.v) : (s.v >= 0 ? '+' : '−') + Rp(Math.abs(s.v))}</title></rect>` +
-        (i < steps.length - 1 ? `<line x1="${cx + w / 2}" x2="${cx + bw - w / 2}" y1="${y(s.to)}" y2="${y(s.to)}" stroke="var(--line2)" stroke-dasharray="3 3"/>` : '') +
-        `<text x="${cx}" y="${a - 6}" font-size="10.5" font-weight="600" text-anchor="middle" fill="var(${s.end ? '--text' : c})">${s.end ? short(s.v) : (s.v >= 0 ? '+' : '−') + short(Math.abs(s.v))}</text>` +
-        `<text x="${cx}" y="${H - 19}" font-size="10" text-anchor="middle" fill="var(--muted)">${esc(fit(l1, bw - 2))}</text><text x="${cx}" y="${H - 7}" font-size="10" text-anchor="middle" fill="var(--muted)">${esc(fit(l2, bw - 2))}</text>`; }).join('') +
-      `<line x1="0" x2="${W}" y1="${H - B}" y2="${H - B}" stroke="var(--line2)"/>`; }, 240, 'GMV bridge');
-}
 // Log-change split: each factor gets the share of the GMV change equal to its share of the log change (adds up exactly).
 function attribute(F0, t0, t1) {
   const g0 = t0.g, g1 = t1.g, L = g0 > 0 && g1 > 0 ? Math.log(g1 / g0) : 0;
   return F0.map(([key, name, fn, tip]) => { const a = fn(t0), b = fn(t1), lr = a > 0 && b > 0 ? Math.log(b / a) : 0; return {key, name, tip, a, b, chg: a ? b / a - 1 : 0, v: L ? (g1 - g0) * lr / L : 0}; });
 }
-const fFmt = key => ['ctr', 'cvr', 'rr', 'er', 'pr'].includes(key) ? v => (v * 100).toFixed(key === 'rr' ? 1 : 2) + '%' : ['aov'].includes(key) ? Rp : key === 'act' ? N : v => v >= 100 ? N(v) : v.toFixed(2);
-PAGES['Drivers & Levers'] = () => {
-  const P = period(), fmt = ui.tab.dfm || 'video', tab = ui.tab.dlt || 'tree', live = fmt === 'live', FF = live ? LF : VF, TT = live ? lTot : vTot;
-  const keepF = s => dsKeep(s) && (live ? !!s.c.L : true), S = stats(P.a, P.b).filter(keepF), Sp = stats(P.pa, P.pb).filter(keepF), t1 = TT(S), t0 = TT(Sp), parts = attribute(FF, t0, t1);
-  const lv = LV.filter(l => !ui.f.lvl || l === ui.f.lvl), byL = lv.map(l => ({l, t: TT(S.filter(s => s.lvl === l)), tp: TT(Sp.filter(s => s.lvl === l))}));
-  const head = h('div', {class: 'tools'}, seg([['video', 'Video'], ['live', 'LIVE (Dining)']], fmt, v => { ui.tab.dfm = v; render(); }, 'Format'),
-    seg([['tree', 'What moved GMV'], ['levers', 'Levers and impact'], ['sim', 'Simulator'], ['top', 'Top creators vs rest']], tab, v => { ui.tab.dlt = v; render(); }, 'View'), h('span', {class: 'spacer'}),
-    h('span', {class: 'muted small'}, `GMV = ${FF.map(f => f[1].toLowerCase()).join(' × ')}`));
-  if (tab === 'tree') {
-    const worst = [...parts].sort((a, b) => a.v - b.v)[0], best = [...parts].sort((a, b) => b.v - a.v)[0];
-    return [head, h('div', {class: 'grid g21'}, card(`${live ? 'LIVE' : 'Video'} GMV: ${P.plabel} to ${P.label}`, 'Each bar = how much of the GMV change one factor explains. The factors multiply to GMV, so the bars add up exactly.', bridgeChart(t0.g, t1.g, parts)),
-        card('In one line', null, h('div', {class: 'stack'}, h('div', {class: 'signal', style: '--c:var(--growth)'}, h('i'), h('span', {class: 'grow'}, h('b', {}, `${best.name} `), `added ${short(Math.max(0, best.v))} (${pctS(best.chg)}).`)),
-          h('div', {class: 'signal', style: '--c:var(--rev)'}, h('i'), h('span', {class: 'grow'}, h('b', {}, `${worst.name} `), worst.v < 0 ? `took away ${short(-worst.v)} (${pctS(worst.chg)}).` : 'grew too: nothing pulled GMV down.')),
-          h('div', {class: 'signal', style: '--c:var(--base)'}, h('i'), h('span', {class: 'grow'}, `GMV ${pctS(ratio(t1.g, t0.g) - 1 || 0)}: ${short(t0.g)} to ${short(t1.g)}.`)),
-          h('div', {class: 'muted small'}, worst.v < 0 ? `Start with ${worst.name.toLowerCase()}: ${worst.tip.toLowerCase()}.` : '')))),
-      row(card('The factors', `${P.label} vs ${P.plabel}.`, table([{k: 'name', label: 'Factor', render: r => h('b', {style: 'font-weight:600'}, r.name)}, {k: 'a', label: P.plabel, num: true, render: r => fFmt(r.key)(r.a)}, {k: 'b', label: P.label, num: true, render: r => h('b', {}, fFmt(r.key)(r.b))},
-        {k: 'chg', label: 'Change', num: true, render: r => chip(pctS(r.chg), r.chg >= 0 ? '--growth' : '--rev', false)}, {k: 'v', label: 'GMV it explains', num: true, render: r => h('span', {style: `color:var(${r.v >= 0 ? '--growth' : '--rev'});font-weight:600`}, (r.v >= 0 ? '+' : '−') + short(Math.abs(r.v)))},
-        {k: 'tip', label: 'What moves it', render: r => h('span', {class: 'muted small', style: 'white-space:normal;display:block;min-width:220px'}, r.tip)}], parts, {search: false, pageSize: 8}))),
-      row(card('Factors by level', 'Each level’s value, and how much of that level’s GMV change each factor explains.', h('div', {class: 'tbl'}, h('table', {class: 'mtx'}, h('thead', {}, h('tr', {}, h('th', {}, 'Level'), FF.map(f => h('th', {class: 'n'}, f[1])), h('th', {class: 'n'}, 'GMV'), h('th', {class: 'n'}, 'Change'))),
-        h('tbody', {}, byL.map(r => { const ps = attribute(FF, r.tp, r.t); return h('tr', {}, h('td', {}, levelChip(r.l)), ps.map(p => h('td', {class: 'n'}, h('span', {class: 'xcell', style: `background:color-mix(in srgb,var(${p.v >= 0 ? '--growth' : '--rev'}) ${Math.round(Math.min(1, Math.abs(p.v) / (Math.abs(r.t.g - r.tp.g) || 1)) * 45 + 4)}%,transparent)`, title: `${p.name}: ${fFmt(p.key)(p.a)} to ${fFmt(p.key)(p.b)}`}, fFmt(p.key)(p.b), h('small', {}, (p.v >= 0 ? '+' : '−') + short(Math.abs(p.v)))))),
-          h('td', {class: 'n'}, h('b', {}, short(r.t.g))), h('td', {class: 'n'}, dd(r.t.g, r.tp.g))); }))))))];
-  }
-  // Levers: for each level, lift one factor to what the top quarter of that level's creators already do.
-  const levers = [], days = P.days, fcCut = P.b, remain = Math.max(0, P.m.s + P.m.n - 1 - fcCut), rate = d => ratio(d, days);
-  for (const r of byL) {
-    const list = S.filter(s => s.lvl === r.l && (live ? s.ses > 0 : s.vAct)), q = [...list].sort((a, b) => (live ? b.lgr - a.lgr : b.gr - a.gr)), topQ = q.slice(0, Math.max(1, Math.ceil(q.length / 4)));
-    if (list.length < 4) continue;
-    const tq = TT(topQ), linked = S.filter(s => s.lvl === r.l).length, bestRate = Math.min(0.9, Math.max(...byL.map(x => ratio(x.t.act, S.filter(s => s.lvl === x.l).length))));
-    for (const [key, name, fn, tip] of FF) {
-      const cur = fn(r.t), bench = key === 'act' ? Math.max(cur, linked * bestRate) : fn(tq);
-      if (!(cur > 0) || !(bench > cur)) continue;
-      const lift = Math.min(1, bench / cur - 1), month = rate(r.t.g) * P.m.n;
-      levers.push({l: r.l, key, name, tip, cur, bench, lift, month: month * lift, rest: rate(r.t.g) * remain * lift});
-    }
-  }
-  levers.sort((a, b) => b.month - a.month);
-  if (tab === 'levers') {
-    const topL = levers.slice(0, 12), tot12 = sum(topL.slice(0, 5), x => x.month);
-    return [head, h('div', {class: 'grid'}, kpi('Biggest lever', topL[0] ? `${topL[0].l} · ${topL[0].name}` : '-', {sub: topL[0] ? `+${short(topL[0].month)} a month` : ''}), kpi('Top 5 levers together', `+${short(tot12)}`, {sub: 'a month, if each is reached'}),
-        kpi('Levers found', N(levers.length), {sub: 'level × factor below its top quarter'}), kpi('Rest of this month', `+${short(sum(topL.slice(0, 5), x => x.rest))}`, {sub: `top 5, ${remain} days left`})),
-      row(card('Best levers', 'Benchmark = what the top quarter of creators at the same level already do (active creators: the most active level’s rate, max 90%). Impact = the level’s monthly GMV × the lift, other factors unchanged, lift capped at +100%.', table([
-        {k: 'l', label: 'Level', render: r => levelChip(r.l)}, {k: 'name', label: 'Factor', render: r => h('b', {style: 'font-weight:600'}, r.name)}, {k: 'cur', label: 'Now', num: true, render: r => fFmt(r.key)(r.cur)}, {k: 'bench', label: 'Top quarter', num: true, render: r => fFmt(r.key)(r.bench)},
-        {k: 'lift', label: 'Lift', num: true, render: r => chip('+' + Math.round(r.lift * 100) + '%', '--growth', false)}, {k: 'month', label: 'GMV impact a month', num: true, render: r => h('b', {style: 'color:var(--growth)'}, '+' + short(r.month))},
-        {k: 'tip', label: 'How', render: r => h('span', {class: 'muted small', style: 'white-space:normal;display:block;min-width:220px'}, r.tip)}], levers, {search: false, sortKey: 'month', pageSize: 12}))),
-      row(card('Impact by factor', 'All levels together.', hbars(FF.map(([key, name]) => ({label: name, value: sum(levers.filter(x => x.key === key), x => x.month), c: '--growth'})).sort((a, b) => b.value - a.value), {fmt: v => '+' + short(v), share: true})))];
-  }
-  if (tab === 'sim') {
-    const sim = ui.tab.sim ||= {}, slv = ui.tab.simL || '', T = D.targets[P.m.k], mS = stats(P.m.s, P.b).filter(keepF);
-    const scope = s => !slv || s.lvl === slv, yAll = daily(mS, 0, LAST, live ? (c, d) => c.L.lgr[d] : (c, d) => c.V.gr[d]), ySc = daily(mS.filter(scope), 0, LAST, live ? (c, d) => c.L.lgr[d] : (c, d) => c.V.gr[d]);
-    const fAll = fcSeries(yAll, P.b, P.m.s, P.m.n), fSc = fcSeries(ySc, P.b, P.m.s, P.m.n), restSc = fSc.mu - fSc.mtd, mult = FF.reduce((a, [key]) => a * (1 + (sim[fmt + key] || 0) / 100), 1);
-    const newMu = fAll.mu + restSc * (mult - 1), tgt = ui.f.area ? null : tSum(T, 'gmv', STREAMS.filter(st => live ? st.live : !st.live).map(st => st.k), LV.filter(l => !ui.f.lvl || l === ui.f.lvl));
-    const ch0 = fAll.chance(tgt), ch1 = tgt ? (fAll.rem ? 1 - Phi((tgt - newMu) / (fAll.sd || 1)) : (newMu >= tgt ? 1 : 0)) : null, need = tgt && restSc > 0 ? (tgt - fAll.mu) / restSc : null;
-    const slider = ([key, name]) => { const v = sim[fmt + key] || 0; return h('label', {class: 'simrow'}, h('span', {}, name), h('input', {type: 'range', min: -20, max: 50, step: 5, value: v, 'aria-label': name, oninput: e => { sim[fmt + key] = +e.target.value; render(); }}), h('b', {style: `color:var(${v > 0 ? '--growth' : v < 0 ? '--rev' : '--muted'})`}, (v > 0 ? '+' : '') + v + '%')); };
-    return [head, h('div', {class: 'grid g12'}, card('Change the factors', `For the rest of ${P.m.label} (${fAll.rem} days). ${slv ? `Only ${slv} creators.` : 'All levels.'}`, h('div', {class: 'stack'},
-        seg([['', 'All levels'], ...LV.map(l => [l, l])], slv, v => { ui.tab.simL = v; render(); }, 'Level'), ...FF.map(slider),
-        h('button', {class: 'btn sm', style: 'align-self:flex-start', onclick: () => { FF.forEach(([key]) => { sim[fmt + key] = 0; }); render(); }}, 'Reset'))),
-      card('Result', 'Factors multiply: +10% on two factors is +21%.', h('div', {class: 'stack'},
-        h('div', {class: 'grid'}, kpi('Forecast now', short(fAll.mu), {sub: `chance ${ch0 == null ? '-' : Math.round(ch0 * 100) + '%'}`}), kpi('With your changes', short(newMu), {d: delta(newMu, fAll.mu), sub: `chance ${ch1 == null ? '-' : Math.round(ch1 * 100) + '%'}`, c: '--growth'}),
-          kpi('Target', tgt ? short(tgt) : '-'), kpi('Gap after changes', tgt ? (newMu >= tgt ? 'Closed' : short(tgt - newMu)) : '-', {c: tgt && newMu >= tgt ? '--growth' : '--rev'})),
-        need != null ? h('div', {class: 'callout' + (need <= 0 ? ' good' : '')}, need <= 0 ? 'The forecast already reaches the target.' : `To hit the target, ${slv || 'all levels'} need about +${Math.round(need * 100)}% on any one factor (or a mix that multiplies to it) for the rest of the month.`) : null,
-        table([{k: 'name', label: 'Factor'}, {k: 'chg', label: 'Change', num: true, render: r => (r.chg > 0 ? '+' : '') + r.chg + '%'}, {k: 'alone', label: 'GMV alone', num: true, render: r => (r.alone >= 0 ? '+' : '−') + short(Math.abs(r.alone))}],
-          FF.map(([key, name]) => ({name, chg: sim[fmt + key] || 0, alone: restSc * ((sim[fmt + key] || 0) / 100)})).filter(r => r.chg), {search: false, pageSize: 8}))))];
-  }
-  // Top quarter vs the rest, and how strongly each factor moves with GMV across creators
-  const sl = ui.tab.topL || '', base = S.filter(s => (live ? s.ses > 0 : s.vAct) && (!sl || s.lvl === sl)), g = s => live ? s.lgr : s.gr, sorted = [...base].sort((a, b) => g(b) - g(a)), cut4 = Math.max(1, Math.ceil(sorted.length / 4));
-  const top = sorted.slice(0, cut4), rest = sorted.slice(cut4), tt = TT(top), tr = TT(rest);
-  const posted = list => list.length ? sum(list, s => { let n = 0; for (let d = P.a; d <= P.b; d++) n += live ? (s.c.L.ses[d] ? 1 : 0) : (s.c.V.np[d] ? 1 : 0); return n; }) / list.length : 0;
-  const M2 = live ? [['Sessions per creator', t => ratio(t.ses, t.act)], ['Days LIVE', null], ['Viewers per session', t => ratio(t.vwr, t.ses)], ['Entering rate', t => ratio(t.en, t.vwr)], ['Purchase rate', t => ratio(t.lod, t.en)], ['AOV', t => ratio(t.lgs, t.lod)], ['GMV per creator', t => ratio(t.g, t.act)]]
-    : [['Posts per creator', t => ratio(t.np, t.act)], ['Days posted', null], ['Views per new post', t => ratio(t.vw, t.np)], ['CTR', t => ratio(t.ck, t.vw)], ['CVR', t => ratio(t.od, t.ck)], ['AOV', t => ratio(t.gs, t.od)], ['GMV per creator', t => ratio(t.g, t.act)]];
-  const fmtM = name => /rate|CTR|CVR/.test(name) ? v => (v * 100).toFixed(2) + '%' : /AOV|GMV/.test(name) ? Rp : v => v.toFixed(1);
-  const corr = lv.map(l => { const x = base.filter(s => s.lvl === l); if (x.length < 6) return null; const gg = x.map(s => Math.log10(1 + g(s)));
-    return live ? {l, n: x.length, a: pearson(x.map(s => s.ses), gg), b: pearson(x.map(s => ratio(s.vwr, s.ses)), gg), c: pearson(x.map(s => ratio(s.en, s.vwr)), gg), d: pearson(x.map(s => ratio(s.lod, s.en)), gg)}
-      : {l, n: x.length, a: pearson(x.map(s => s.np), gg), b: pearson(x.map(s => ratio(s.vw, s.np)), gg), c: pearson(x.map(s => ratio(s.ck, s.vw)), gg), d: pearson(x.map(s => ratio(s.od, s.ck)), gg)}; }).filter(Boolean);
-  const rc = v => h('span', {class: 'xcell', style: `background:color-mix(in srgb,var(${v >= 0 ? '--growth' : '--rev'}) ${Math.round(Math.abs(v) * 60 + 4)}%,transparent)`}, v.toFixed(2));
-  return [head, h('div', {class: 'tools'}, seg([['', 'All levels'], ...LV.map(l => [l, l])], sl, v => { ui.tab.topL = v; render(); }, 'Level'), h('span', {class: 'muted small'}, `${N(base.length)} active creators · top quarter = ${N(top.length)}`)),
-    h('div', {class: 'stack'}, card('What the top quarter does differently', 'Top 25% of active creators by GMV vs the other 75%.', table([{k: 'm', label: 'Measure', render: r => h('b', {style: 'font-weight:600'}, r.m)}, {k: 'top', label: 'Top quarter', num: true, render: r => h('b', {}, fmtM(r.m)(r.top))},
-        {k: 'rest', label: 'The rest', num: true, render: r => fmtM(r.m)(r.rest)}, {k: 'x', label: 'Top ÷ rest', num: true, render: r => chip(r.x.toFixed(1) + '×', r.x >= 1.5 ? '--growth' : r.x >= 1.1 ? '--base' : '--muted', false)}],
-        M2.map(([m, fn]) => { const a = fn ? fn(tt) : posted(top), b = fn ? fn(tr) : posted(rest); return {m, top: a, rest: b, x: ratio(a, b)}; }), {search: false, pageSize: 8})),
-      card('How strongly each factor moves with GMV', 'Correlation across creators of the same level (−1 to 1). Above 0.4 = strong link.', h('div', {}, table([{k: 'l', label: 'Level', render: r => levelChip(r.l)}, {k: 'n', label: 'Creators', num: true},
-        {k: 'a', label: live ? 'Sessions' : 'New posts', num: true, render: r => rc(r.a)}, {k: 'b', label: live ? 'Viewers / session' : 'Views / post', num: true, render: r => rc(r.b)}, {k: 'c', label: live ? 'Entering rate' : 'CTR', num: true, render: r => rc(r.c)},
-        {k: 'd', label: live ? 'Purchase rate' : 'CVR', num: true, render: r => rc(r.d)}], corr, {search: false, pageSize: 6}),
-        h('div', {class: 'stack', style: 'gap:4px;margin-top:10px'}, corr.map(r => { const names = live ? ['sessions', 'viewers per session', 'entering rate', 'purchase rate'] : ['new posts', 'views per post', 'CTR', 'CVR'], vals = [r.a, r.b, r.c, r.d], i = vals.indexOf(Math.max(...vals));
-          return h('div', {class: 'small'}, levelChip(r.l), ` ${names[i]} moves most with GMV (${vals[i].toFixed(2)}): start there for ${r.l}.`); })))))];
-};
-
-// ================= Creator Outlook =================
-const RISK_F = ['Days since last post', 'Posts in last 14 days', 'GMV in last 14 days', 'Posting trend (this week vs last)', 'Level', 'Does LIVE'];
-function riskX(c, t) {
-  let last = -1; for (let d = t; d >= Math.max(c.join, t - 60); d--) if (c.V.np[d]) { last = d; break; }
-  let p14 = 0, p7 = 0, pp7 = 0, g14 = 0; for (let d = Math.max(0, t - 13); d <= t; d++) { p14 += c.V.np[d]; g14 += c.V.gr[d] + (c.L ? c.L.lgr[d] : 0); if (d > t - 7) p7 += c.V.np[d]; else pp7 += c.V.np[d]; }
-  return {last, g14, x: [last < 0 ? 15 : Math.min(15, t - last), Math.log1p(p14), Math.log10(1 + g14), p7 - pp7, LV.indexOf(levelAt(c, t)), c.L ? 1 : 0]};
-}
-const quietNext = (c, t) => { for (let d = t + 1; d <= Math.min(LAST, t + 14); d++) if (c.V.np[d]) return 0; return 1; };
-let RISK = null;
-// Trained once: state of active creators 28 days before the last data day, label = no new post in the next 14 days. One in four kept aside to test.
-function riskModel() {
-  if (RISK) return RISK;
-  const t0 = LAST - 28, rows = [];
-  for (const c of D.creators) { if (c.join > t0 - 14) continue; const r = riskX(c, t0); if (r.last < t0 - 13) continue; rows.push({c, x: r.x, y: quietNext(c, t0), test: c.i % 4 === 0}); }
-  const tr = rows.filter(r => !r.test), te = rows.filter(r => r.test), K = RISK_F.length;
-  const mu = Array.from({length: K}, (_, j) => tr.reduce((a, r) => a + r.x[j], 0) / tr.length), sd = Array.from({length: K}, (_, j) => Math.sqrt(tr.reduce((a, r) => a + (r.x[j] - mu[j]) ** 2, 0) / tr.length) || 1);
-  const z = x => x.map((v, j) => (v - mu[j]) / sd[j]), sig = v => 1 / (1 + Math.exp(-v));
-  const w = Array(K).fill(0); let b = 0;
-  for (let it = 0; it < 600; it++) { const gw = Array(K).fill(0); let gb = 0; for (const r of tr) { const zz = z(r.x), p = sig(b + zz.reduce((a, v, j) => a + v * w[j], 0)), e = p - r.y; gb += e; for (let j = 0; j < K; j++) gw[j] += e * zz[j]; }
-    b -= 0.5 * gb / tr.length; for (let j = 0; j < K; j++) w[j] -= 0.5 * (gw[j] / tr.length + 0.01 * w[j]); }
-  const prob = x => sig(b + z(x).reduce((a, v, j) => a + v * w[j], 0));
-  const scored = te.map(r => ({p: prob(r.x), y: r.y})), pos = scored.filter(r => r.y), neg = scored.filter(r => !r.y);
-  let wins = 0; for (const p of pos) for (const q of neg) wins += p.p > q.p ? 1 : p.p === q.p ? 0.5 : 0;
-  const acc = scored.filter(r => (r.p >= 0.5) === !!r.y).length / Math.max(1, scored.length);
-  return RISK = {w, b, prob, auc: pos.length && neg.length ? wins / (pos.length * neg.length) : 0, acc, n: tr.length, nt: te.length, base: rows.reduce((a, r) => a + r.y, 0) / Math.max(1, rows.length), t0};
-}
-PAGES['Creator Outlook'] = () => {
-  const P = period(), tab = ui.tab.cot || 'risk', cut = P.b;
-  const head = h('div', {class: 'tools'}, seg([['risk', 'Likely to go quiet'], ['level', 'Level outlook']], tab, v => { ui.tab.cot = v; render(); }, 'View'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, `Scored on ${dLab(cut)}.`));
-  if (tab === 'risk') {
-    const M = riskModel(), S = stats(Math.max(0, cut - 29), cut).filter(dsKeep);
-    const sc = S.map(s => { const r = riskX(s.c, cut); return r.last >= cut - 13 ? {s, r, p: M.prob(r.x), g30: s.gmv} : null; }).filter(Boolean);
-    const hi = sc.filter(x => x.p >= 0.6), atRisk = sum(sc, x => x.p * x.g30);
-    return [head, h('div', {class: 'grid'}, kpi('Active creators scored', N(sc.length), {sub: 'posted in the last 14 days'}), kpi('High risk', N(hi.length), {sub: '60% or more chance to stop posting in 14 days', c: '--rev'}),
-        kpi('GMV at risk', Rp(atRisk), {sub: 'last 30 days GMV × chance'}), kpi('Model accuracy', `AUC ${M.auc.toFixed(2)}`, {sub: `${Math.round(M.acc * 100)}% right on ${N(M.nt)} test creators`}), kpi('Normal rate', Math.round(M.base * 100) + '%', {sub: 'of active creators go quiet in 14 days'})),
-      h('div', {class: ui.f.lvl ? 'stack mt' : 'grid g12 mt'}, card('What drives the risk', `Logistic regression on ${N(M.n)} creators as they were on ${dLab(M.t0)}, checked against the next 14 days. Bar right = raises the risk.`, h('div', {class: 'stack'},
-          ...RISK_F.map((f, j) => ({f, w: M.w[j]})).sort((a, b) => Math.abs(b.w) - Math.abs(a.w)).map(x => h('div', {class: 'wrow'}, h('span', {}, x.f), h('div', {class: 'wbar'}, h('i', {style: `${x.w >= 0 ? 'left:50%' : `right:50%`};width:${Math.min(50, Math.abs(x.w) * 22)}%;background:var(${x.w >= 0 ? '--rev' : '--growth'})`})), h('b', {}, (x.w >= 0 ? '+' : '') + x.w.toFixed(2)))),
-          h('div', {class: 'muted small'}, 'Weights are on a standard scale, so they compare with each other. AUC 0.5 = guessing, 1.0 = perfect.'))),
-        card('Risk by level', null, h('div', {}, table([{k: 'l', label: 'Level', render: r => levelChip(r.l)}, {k: 'n', label: 'Scored', num: true}, {k: 'hi', label: 'High risk', num: true}, {k: 'avg', label: 'Average chance', num: true, fmt: v => Math.round(v * 100) + '%'}, {k: 'g', label: 'GMV at risk', num: true, fmt: Rp}],
-          LV.map(l => { const x = sc.filter(y => y.s.lvl === l); return {l, n: x.length, hi: x.filter(y => y.p >= 0.6).length, avg: x.length ? sum(x, y => y.p) / x.length : 0, g: sum(x, y => y.p * y.g30)}; }).filter(r => r.n), {search: false, pageSize: 6}),
-          h('div', {class: 'stack', style: 'gap:4px;margin-top:10px'}, [['--rev', '60% or more', 'call them this week'], ['--ops', '40% to 59%', 'send a message and a content idea'], ['--growth', 'under 40%', 'no action needed']].map(([c, a, b]) => h('div', {class: 'small'}, chip(a, c, false), ` ${b}`)))))),
-      row(card('Creators likely to go quiet', 'Sorted by GMV at risk. Call them this week; click a row for the profile.', table([{k: 'h', label: 'Creator', render: x => person(x.s.c.handle, `${x.s.c.ind} · ${x.s.c.city}`)}, {k: 'lvl', label: 'Level', render: x => levelChip(x.s.lvl)},
-        {k: 'p', label: 'Chance to go quiet', num: true, render: x => chip(Math.round(x.p * 100) + '%', x.p >= 0.6 ? '--rev' : x.p >= 0.4 ? '--ops' : '--growth', false)}, {k: 'ds', label: 'Days since last post', num: true}, {k: 'p14', label: 'Posts, 14 days', num: true},
-        {k: 'g30', label: 'GMV, 30 days', num: true, fmt: Rp}, {k: 'risk', label: 'GMV at risk', num: true, fmt: v => h('b', {}, Rp(v))}],
-        sc.map(x => ({...x, h: x.s.c.handle, lvl: x.s.lvl, ds: x.r.x[0], p14: Math.round(Math.expm1(x.r.x[1])), risk: x.p * x.g30, _open: () => openCreator(x.s.c.i)})), {sortKey: 'risk', pageSize: 12})))];
-  }
-  // Level outlook: month total = so far + daily average × days left, with the spread of their daily GMV
-  const el = cut - P.m.s + 1, rem = Math.max(0, P.m.n - el), S = stats(P.m.s, cut).filter(dsKeep);
-  const out = S.map(s => { const vals = []; for (let d = P.m.s; d <= cut; d++) vals.push(gmvDay(s.c, d)); const m = vals.reduce((a, b) => a + b, 0) / vals.length, sd = Math.sqrt(vals.reduce((a, v) => a + (v - m) ** 2, 0) / Math.max(1, vals.length - 1));
-    const mu = s.gmv + m * rem, sdT = sd * Math.sqrt(rem), x = LV.indexOf(s.lvl), next = LV[x + 1], keepTh = BENCH[s.lvl] * 0.25;
-    const up = next ? (rem ? 1 - Phi((BENCH[next] - mu) / (sdT || 1)) : (mu >= BENCH[next] ? 1 : 0)) : 0, down = x > 0 ? (rem ? Phi((keepTh - mu) / (sdT || 1)) : (mu < keepTh ? 1 : 0)) : 0;
-    return {s, mu, up, down, next, prev: LV[x - 1]}; });
-  const ups = out.filter(x => x.up >= 0.5), downs = out.filter(x => x.down >= 0.5);
-  return [head, h('div', {class: 'grid'}, kpi('Likely to move up', N(ups.length), {sub: 'next month, 50% chance or more', c: '--growth'}), kpi('Likely to move down', N(downs.length), {sub: 'under a quarter of their level’s GMV', c: '--rev'}),
-      kpi('Expected moves up', sum(out, x => x.up).toFixed(0), {sub: 'sum of all chances'}), kpi('Expected moves down', sum(out, x => x.down).toFixed(0)), kpi('Days left', N(rem), {sub: P.m.label})),
-    row(card('Level outlook by level', 'Based on the level rule: reach the next level’s monthly GMV to move up; make under a quarter of your own to risk moving down.', table([{k: 'l', label: 'Level', render: r => levelChip(r.l)}, {k: 'n', label: 'Creators', num: true},
-      {k: 'up', label: 'Likely up', num: true}, {k: 'eu', label: 'Expected up', num: true, fmt: v => v.toFixed(1)}, {k: 'down', label: 'Likely down', num: true}, {k: 'ed', label: 'Expected down', num: true, fmt: v => v.toFixed(1)}, {k: 'net', label: 'Expected next month', num: true}],
-      LV.map((l, i) => { const x = out.filter(y => y.s.lvl === l), inUp = out.filter(y => LV[i - 1] && y.s.lvl === LV[i - 1]), inDown = out.filter(y => LV[i + 1] && y.s.lvl === LV[i + 1]);
-        return {l, n: x.length, up: x.filter(y => y.up >= 0.5).length, eu: sum(x, y => y.up), down: x.filter(y => y.down >= 0.5).length, ed: sum(x, y => y.down), net: Math.round(x.length - sum(x, y => y.up + y.down) + sum(inUp, y => y.up) + sum(inDown, y => y.down))}; }).filter(r => r.n), {search: false, pageSize: 6}))),
-    h('div', {class: Math.abs(ups.length - downs.length) > 3 ? 'stack mt' : 'grid g2 mt'}, card(`Likely to move up · ${N(ups.length)}`, 'Keep them going: they are close to the next level.', table([{k: 'h', label: 'Creator', render: x => person(x.s.c.handle, x.s.c.city)}, {k: 'mv', label: 'Move', render: x => h('span', {}, levelChip(x.s.lvl), ' ↑ ', levelChip(x.next))},
-        {k: 'mu', label: 'Month forecast', num: true, fmt: Rp}, {k: 'up', label: 'Chance', num: true, render: x => chanceChip(x.up)}], ups.map(x => ({...x, h: x.s.c.handle, mv: x.next, _open: () => openCreator(x.s.c.i)})), {search: false, sortKey: 'up', pageSize: 8})),
-      card(`At risk of moving down · ${N(downs.length)}`, 'Help them sell before the month ends.', table([{k: 'h', label: 'Creator', render: x => person(x.s.c.handle, x.s.c.city)}, {k: 'mv', label: 'Move', render: x => h('span', {}, levelChip(x.s.lvl), ' ↓ ', levelChip(x.prev))},
-        {k: 'mu', label: 'Month forecast', num: true, fmt: Rp}, {k: 'down', label: 'Chance', num: true, render: x => chip(Math.round(x.down * 100) + '%', '--rev', false)}], downs.map(x => ({...x, h: x.s.c.handle, mv: x.prev, _open: () => openCreator(x.s.c.i)})), {search: false, sortKey: 'down', pageSize: 8})))];
-};
-
-// ================= Unusual Days =================
-// A day is unusual when it is far from what the same weekday of the 4 weeks before suggests (robust z-score on median and MAD, 2.5 or more).
-PAGES['Unusual Days'] = () => {
-  const P = period(), sk = ui.tab.uds || 'all', S = stats(P.m.s, P.b).filter(dsKeep), stSel = STREAMS.find(st => st.k === sk);
-  const fOf = st => st ? sdf('gmv', st) : (c, d) => gmvDay(c, d), list = st => st ? S.filter(s => inStream(s, st)) : S;
-  const scan = st => { const y = daily(list(st), 0, LAST, fOf(st)), out = [];
-    for (let d = P.m.s; d <= P.b; d++) { const win = []; for (let w = d - 28; w < d; w++) if (w >= 0 && wday(w) === wday(d)) win.push(y[w]); const all28 = []; for (let w = d - 28; w < d; w++) if (w >= 0) all28.push(y[w]);
-      const exp = median(win), mad = median(all28.map(v => Math.abs(v - median(all28)))) * 1.4826 || 1, z = (y[d] - exp) / mad;
-      out.push({d, y: y[d], exp, z, flag: Math.abs(z) >= 2.5, st}); }
-    return {y, out}; };
-  const groups = (stSel ? [stSel] : STREAMS).map(st => scan(st)), main = scan(stSel), flags = groups.flatMap(g => g.out.filter(x => x.flag));
-  const why = x => { const lst = list(x.st), f = fOf(x.st); let best = null, bv = 0; for (const s of lst) { const v = f(s.c, x.d); if (Math.abs(v) > Math.abs(bv)) { bv = v; best = s; } } return best ? {s: best, v: bv} : null; };
-  return [h('div', {class: 'tools'}, seg([['all', 'All'], ...STREAMS.map(st => [st.k, st.label])], sk, v => { ui.tab.uds = v; render(); }, 'Industry · format'), h('span', {class: 'spacer'}), h('span', {class: 'muted small'}, 'Robust z-score against the same weekday of the 4 weeks before.')),
-    h('div', {class: 'grid'}, kpi('Unusual days', N(flags.length), {sub: `${P.m.label}, up to ${dLab(P.b)}`, c: flags.length ? '--ops' : '--growth'}), kpi('Spikes', N(flags.filter(x => x.z > 0).length), {c: '--growth'}), kpi('Drops', N(flags.filter(x => x.z < 0).length), {c: '--rev'})),
-    row(card(`Redemption GMV by day · ${stSel ? stSel.label : 'all'}`, 'Bar = actual, tick = expected for that weekday. Coloured bars = unusual.', columns(main.out.map(x => ({label: String(x.d - P.m.s + 1), value: x.y, target: x.exp, c: x.flag ? (x.z > 0 ? '--growth' : '--rev') : '--muted'})), {fmt: short, height: 230}))),
-    row(card('Unusual days found', 'Biggest single creator that day, to see where to look first.', flags.length ? table([{k: 'd', label: 'Day', fmt: (v) => `${WD[wday(v)]} ${dLab(v)}`}, {k: 'stl', label: 'Industry · format'},
-      {k: 'y', label: 'Actual', num: true, fmt: Rp}, {k: 'exp', label: 'Expected', num: true, fmt: Rp}, {k: 'chg', label: 'Difference', num: true, render: r => chip(pctS(r.chg), r.z > 0 ? '--growth' : '--rev', false)}, {k: 'z', label: 'Score', num: true, fmt: v => v.toFixed(1)},
-      {k: 'who', label: 'Biggest creator that day', render: r => r.w ? h('span', {class: 'small'}, `${r.w.s.c.handle} · ${short(r.w.v)} (${pct(r.w.v, r.y)}%)`) : '-'}],
-      flags.map(x => { const w = why(x); return {...x, stl: x.st ? x.st.label : 'All', chg: x.exp ? x.y / x.exp - 1 : 0, w, _open: w ? () => openCreator(w.s.c.i) : null}; }), {search: false, sortKey: 'd', pageSize: 10}) : h('div', {class: 'muted small'}, 'No unusual days in these dates.')))];
-};
-
 // ================= profiles =================
 function openCreator(i) {
   const c = D.creators[i], P = period(), s = stats(P.a, P.b)[i], p = stats(P.pa, P.pb)[i], pm = stats(P.pm.s, P.pm.s + P.pm.n - 1)[i];
@@ -2122,9 +1871,7 @@ function openMerchant(i) {
   drawer([avatar(m.name), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, m.name), h('div', {class: 'muted small'}, `${m.ind} · ${m.city}`), h('div', {class: 'chips'}, m.promoted ? chip('Promoted', '--ops', false) : chip('Not promoted', '--muted', false)))],
   [h('div', {class: 'grid'}, mini('Redemption GMV', Rp(x.gr), dd(x.gr, xp.gr)), mini('Orders', N(x.od)), mini('New posts', N(x.np)), mini('Active creators', N(x.act)), mini('CTR', rt(x.ck, x.vw)), mini('CVR', rt(x.od, x.ck))),
     sec(`GMV by day · ${P.m.label}`, area([{name: 'GMV', values: tr, c: '--ops'}], Array.from({length: P.n}, (_, k) => String(k + 1)), {fmt: short, height: 160})),
-    sec('By creator level', hbars(LV.map(l => ({label: l, value: x.byL[l], c: LVC[l]})), {fmt: short, share: true})),
-    sec('Creators selling here', table([{k: 'h', label: 'Creator', render: r => person(r.s.c.handle, r.s.c.city)}, {k: 'lvl', label: 'Level', render: r => levelChip(r.s.lvl)}, {k: 'np', label: 'New posts', num: true, fmt: v => v.toFixed(1)}, {k: 'gr', label: 'GMV here', num: true, fmt: Rp}],
-      x.crs.map(r => ({...r, h: r.s.c.handle, lvl: r.s.lvl, _open: () => openCreator(r.s.c.i)})), {search: false, sortKey: 'gr', pageSize: 8}))],
+    sec('By creator level', hbars(LV.map(l => ({label: l, value: x.byL[l], c: LVC[l]})), {fmt: short, share: true}))],
   [h('span', {class: 'muted small'}, `${P.label} vs ${P.plabel} · sample place`)]);
 }
 function openBrand(i) {
@@ -2135,14 +1882,12 @@ function openBrand(i) {
     sec(`GMV by day · ${P.m.label}`, area([{name: 'GMV', values: tr, c: '--rev'}], Array.from({length: P.n}, (_, k) => String(k + 1)), {fmt: short, height: 160})),
     sec('Products', table([{k: 'name', label: 'Product'}, {k: 'price', label: 'Price', num: true, fmt: Rp}, {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share', num: true, fmt: v => v + '%'}],
       x.prod.map(pp => ({name: pp.p.name, price: pp.p.price, od: pp.od, gr: pp.gr, sh: pct(pp.gr, x.gr)})), {search: false, sortKey: 'gr', pageSize: 6})),
-    sec('By creator level', hbars(LV.map(l => ({label: l, value: x.byL[l], c: LVC[l]})), {fmt: short, share: true})),
-    sec('Creators selling it', table([{k: 'h', label: 'Creator', render: r => person(r.h, r.lvl)}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}],
-      [...x.crs].map(([ci, g]) => ({h: D.creators[ci].handle, lvl: levelAt(D.creators[ci], P.b), gr: g, _open: () => openCreator(ci)})), {search: false, sortKey: 'gr', pageSize: 8}))],
+    sec('By creator level', hbars(LV.map(l => ({label: l, value: x.byL[l], c: LVC[l]})), {fmt: short, share: true}))],
   [h('span', {class: 'muted small'}, `${P.label} vs ${P.plabel} · sample brand`)]);
 }
 
 // ================= shell =================
-const GROUPS = [['Overview', '--growth', ['Summary', 'Overview', 'Target Achievement']], ['Creator', '--base', ['Creator · Video', 'Creator · LIVE']], ['Merchant', '--ops', ['Merchant · Video', 'Merchant · LIVE']], ['Breakdown', '--rev', ['Area & Origin', 'Explorer']], ['Data science', '--base', ['Forecast', 'Drivers & Levers', 'Creator Outlook', 'Unusual Days']], ['Settings', '--ops', ['Set Targets']], ['Guide', '--muted', ['Metric guide']]];
+const GROUPS = [['Overview', '--growth', ['Summary', 'Overview', 'Target Achievement']], ['Creator', '--base', ['Creator · Video', 'Creator · LIVE']], ['Merchant', '--ops', ['Merchant · Video', 'Merchant · LIVE']], ['Breakdown', '--rev', ['Area & Origin', 'Explorer']], ['Settings', '--ops', ['Set Targets']], ['Guide', '--muted', ['Metric guide']]];
 const PAGES_ALL = GROUPS.flatMap(g => g[2]);
 function rangeBox(fg) {
   const P = period(), iso = d => `2026-${String(MONTHS.indexOf(P.m) + 8).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
