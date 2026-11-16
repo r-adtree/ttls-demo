@@ -474,6 +474,9 @@ td{padding:5px 12px;height:40px}
 .chk-top .seg{flex-wrap:nowrap;width:100%}
 .chk-top .seg button{flex:1 1 auto;font-size:11.5px;padding:4px 5px;white-space:nowrap}
 @media (max-width:820px){.top{height:auto;padding:8px 12px;flex-wrap:wrap}main{padding:0 12px 32px}.filters{padding:8px 12px}}
+.chsw{margin-left:auto}
+.chsw .seg button.on{background:var(--base);color:#fff;box-shadow:none}
+@media (max-width:820px){.chsw{margin-left:0;width:100%}.chsw .seg{width:100%}.chsw .seg button{flex:1}}
 </style>
 </head>
 <body>
@@ -689,10 +692,10 @@ function opener(r) { return r && r._open || null; }
    plans, reports), extended to short video, traffic, GMV source, a month-end forecast per creator
    and a Fix / Push / Guard call for each one.
    ========================================================================================= */
-var ui = {page: 'Summary', month: 'Nov', range: {k: 'mtd', d0: 1, d1: 15}, f: {tier: '', area: ''}, theme: 'light', tab: {}, cur: 'USD', creator: null, card: 'week'};
+var ui = {page: 'Summary', ch: 'all', month: 'Nov', range: {k: 'mtd', d0: 1, d1: 15}, f: {tier: '', area: ''}, theme: 'light', tab: {}, cur: 'USD', creator: null, card: 'week'};
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], MONFULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], DAYFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const dec1 = v => (Math.round((v || 0) * 10) / 10).toFixed(1);
+const dec1 = v => (Math.round((v || 0) * 10) / 10).toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
 const pc = (v, d) => ((v || 0) * 100).toFixed(d == null ? 0 : d) + '%';
 const big = n => { const a = Math.abs(n || 0); return a >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : a >= 1e4 ? (n / 1e3).toFixed(1) + 'K' : N(n); };
 const ch = (c, p) => p > 0 && c > 0 ? c / p - 1 : (p > 0 && c === 0 ? -1 : null);
@@ -815,26 +818,29 @@ CREATORS.forEach(c => {
 });
 
 /* ---------- sums ---------- */
+// The channel switch: 'all' = Livestream + Video, 'live' = Livestream only, 'video' = short video only. Every headline number follows it.
+const chAct = (h, p) => ui.ch === 'live' ? h > 0 : ui.ch === 'video' ? p > 0 : h > 0 || p > 0;
 const agg0 = () => ({h: 0, view: 0, lord: 0, lgmv: 0, ses: 0, clk: 0, eng: 0, posts: 0, views: 0, vord: 0, vgmv: 0, show: 0, ads: 0, days: 0, ldays: 0, gmv: 0, ord: 0});
 function agg(c, a, b) {
   const r = agg0(), L = c.L, V = c.V;
   a = Math.max(0, a); b = Math.min(A, b);
   for (let i = a; i <= b; i++) { r.h += L.h[i]; r.view += L.view[i]; r.lord += L.ord[i]; r.lgmv += L.gmv[i]; r.ses += L.ses[i]; r.clk += L.clk[i]; r.eng += L.eng[i];
-    r.posts += V.posts[i]; r.views += V.views[i]; r.vord += V.ord[i]; r.vgmv += V.gmv[i]; r.show += V.show[i]; r.ads += V.ads[i]; if (L.h[i] > 0 || V.posts[i] > 0) r.days++; if (L.h[i] > 0) r.ldays++; }
-  r.gmv = r.lgmv + r.vgmv; r.ord = r.lord + r.vord; return r;
+    r.posts += V.posts[i]; r.views += V.views[i]; r.vord += V.ord[i]; r.vgmv += V.gmv[i]; r.show += V.show[i]; r.ads += V.ads[i]; if (chAct(L.h[i], V.posts[i])) r.days++; if (L.h[i] > 0) r.ldays++; }
+  r.gmv = ui.ch === 'live' ? r.lgmv : ui.ch === 'video' ? r.vgmv : r.lgmv + r.vgmv; r.ord = ui.ch === 'live' ? r.lord : ui.ch === 'video' ? r.vord : r.lord + r.vord; return r;
 }
 const sumK = (c, from, to) => to < from ? agg(c, 1, 0) : agg(c, di(from), di(to));
 function tot(list, a, b) { const r = agg0(); for (const c of list) { const x = agg(c, a, b); for (const k in r) r[k] += x[k]; } return r; }
-const dayG = (c, i) => c.L.gmv[i] + c.V.gmv[i];
+const dayG = (c, i) => ui.ch === 'live' ? c.L.gmv[i] : ui.ch === 'video' ? c.V.gmv[i] : c.L.gmv[i] + c.V.gmv[i];
 function dailyF(list, a, b, f) { const out = new Array(Math.max(0, b - a + 1)).fill(0); for (const c of list) for (let i = a; i <= b; i++) if (i >= 0 && i <= A) out[i - a] += f(c, i); return out; }
-const lv = a => ({hours: a.h, vph: a.h > 0 ? a.view / a.h : 0, cvr: a.view > 0 ? a.lord / a.view : 0, aov: a.lord > 0 ? a.lgmv / a.lord : 0, posts: a.posts, vpp: a.posts > 0 ? a.views / a.posts : 0, vgmv: a.vgmv});
+const lv = a => ({hours: a.h, vph: a.h > 0 ? a.view / a.h : 0, cvr: a.view > 0 ? a.lord / a.view : 0, aov: a.lord > 0 ? a.lgmv / a.lord : 0, posts: a.posts, vpp: a.posts > 0 ? a.views / a.posts : 0, vgmv: a.vgmv, vcvr: a.views > 0 ? a.vord / a.views : 0, vaov: a.vord > 0 ? a.vgmv / a.vord : 0});
 function leverCompare(cur, prev) { const c = lv(cur), p = lv(prev), o = {}; Object.keys(c).forEach(k => { o[k] = {cur: c[k], prev: p[k], change: p[k] > 0 && c[k] > 0 ? c[k] / p[k] - 1 : (p[k] > 0 && c[k] === 0 ? -1 : null)}; }); return o; }
 function statusRange(c, p) {
-  const act = x => x.h > 0 || x.posts > 0;
+  const video = ui.ch === 'video', act = x => chAct(x.h, x.posts), thin = x => video ? x.posts < 3 : ui.ch === 'live' ? x.h < 2 : x.h < 2 && x.posts < 3;
   if (!act(c) && !act(p)) return 'inactive';
   if (!act(c)) return 'stopped';
-  if ((p.h < 2 && p.posts < 3) || (c.h < 2 && c.posts < 3)) return 'new';
-  const r = p.gmv > 0 ? c.gmv / p.gmv : null, vC = c.h > 0 ? c.view / c.h : 0, vP = p.h > 0 ? p.view / p.h : 0, vr = vP > 0 && vC > 0 ? vC / vP : null;
+  if (thin(p) || thin(c)) return 'new';
+  const reach = x => video ? (x.posts > 0 ? x.views / x.posts : 0) : (x.h > 0 ? x.view / x.h : 0);
+  const r = p.gmv > 0 ? c.gmv / p.gmv : null, vC = reach(c), vP = reach(p), vr = vP > 0 && vC > 0 ? vC / vP : null;
   if ((r !== null && r <= .8) || (vr !== null && vr <= .75)) return 'down';
   if (r !== null && r >= 1.2) return 'up';
   return 'stable';
@@ -845,6 +851,13 @@ const LEVER = {hours: 'LIVE hours', vph: 'Viewers per hour', cvr: 'Conversion (o
 const LEVN = {hours: 'LIVE hours', vph: 'Viewers per hour', cvr: 'Conversion', aov: 'Order value', posts: 'Video posts', vpp: 'Views per video', vgmv: 'Short video GMV'};
 const LEVER_FIX = {hours: 'a fixed LIVE schedule with no skipped weekends', vph: 'short videos before each LIVE and the same start time every day', cvr: 'pin the hero product and say the price every 5 minutes',
   aov: 'bundles and bigger packages', posts: '2 short videos a day from each active creator', vpp: 'stronger hooks with the price in the first 3 seconds', vgmv: 'short videos that show the price and point to the next LIVE'};
+
+Object.assign(LEVN, {vcvr: 'Video conversion', vaov: 'Video order value'}); Object.assign(LEVER, {vcvr: 'Video conversion (orders per view)', vaov: 'Video order value'});
+Object.assign(LEVER_FIX, {vcvr: 'name the voucher and the price in the video, and pin the link', vaov: 'promote the bigger package in the video', posts: 'at least 1 video a day from each active creator'});
+const LEVKEYS = () => ui.ch === 'video' ? ['posts', 'vpp', 'vcvr', 'vaov'] : ['hours', 'vph', 'cvr', 'aov'];
+const CHNAME = {all: 'Livestream and Video', live: 'Livestream', video: 'Video'};
+const chTag = () => ui.ch === 'all' ? '' : ' · ' + CHNAME[ui.ch];
+const tkey = id => MONTH + '|' + id + (ui.ch === 'all' ? '' : '|' + ui.ch);
 
 /* ---------- settings the team can change (Boost page) ---------- */
 let SETTINGS = {cpv: 22, commissionMin: .02, commissionMax: .05, targetRoas: 3, minUplift: .3};  // cpv: $ per 1,000 boost views
@@ -877,6 +890,7 @@ const ELASTIC = (() => {
 function productStats() {
   const from7 = A - 6, pf = A - 13, pt = A - 7, from3 = A - 2, from14 = A - 13, byKey = {}, byCreator = {};
   SALES.forEach(r => {
+    if (ui.ch === 'live' && r[5] !== 0 || ui.ch === 'video' && r[5] !== 1) return;
     const d = r[2], p = byKey[r[0]] || (byKey[r[0]] = {i: r[0], cur: 0, prev: 0, ord: 0, hot: 0, cr: {}}), P = PRODUCTS[r[0]];
     if (d >= from7) { p.cur += r[3]; p.ord += r[4]; p.cr[r[1]] = 1; } else if (d >= pf && d <= pt) p.prev += r[3];
     if (d >= from3) p.hot += r[3];
@@ -916,25 +930,33 @@ function evaluateBoosts() {
 
 /* ---------- focus: the one thing to fix this week ---------- */
 function focusOf(status, lev, cur, prev, medHours) {
-  const p = v => Math.abs(Math.round(v * 100)) + '%';
-  if (status === 'inactive' || status === 'stopped') return {lever: 'hours', title: 'No LIVE in the last 7 days', sub: 'Start again on a fixed schedule.', actions: ['LIVE at least 2 hours, 3 days this week', 'Use the same start time every LIVE', 'Pin the 3 best products from the start']};
-  const keys = ['hours', 'vph', 'cvr', 'aov']; let worst = null, best = null;
+  const p = v => Math.abs(Math.round(v * 100)) + '%', video = ui.ch === 'video';
+  if (status === 'inactive' || status === 'stopped') return video ? {lever: 'posts', title: 'No videos in the last 7 days', sub: 'Start posting again on a fixed rhythm.', actions: ['Post at least 1 video a day this week', 'Record 3 videos in one sitting', 'Show the price in the first 3 seconds']}
+    : {lever: 'hours', title: 'No LIVE in the last 7 days', sub: 'Start again on a fixed schedule.', actions: ['LIVE at least 2 hours, 3 days this week', 'Use the same start time every LIVE', 'Pin the 3 best products from the start']};
+  const keys = LEVKEYS(); let worst = null, best = null;
   keys.forEach(k => { const v = lev[k].change; if (v === null) return; if (worst === null || v < lev[worst].change) worst = k; if (best === null || v > lev[best].change) best = k; });
-  if (status === 'new' || worst === null) return {lever: 'cvr', title: 'Build a routine first', sub: 'There is not enough data to compare yet.', actions: ['LIVE at least 2 hours at the same time', 'Pin the top 3 products from minute one', 'Say the promo price every 5 minutes']};
+  if (status === 'new' || worst === null) return video ? {lever: 'vcvr', title: 'Build a routine first', sub: 'There is not enough data to compare yet.', actions: ['Post 1 video a day at the same time', 'Show the price and the voucher in every video', 'Reply to every comment in the first hour']}
+    : {lever: 'cvr', title: 'Build a routine first', sub: 'There is not enough data to compare yet.', actions: ['LIVE at least 2 hours at the same time', 'Pin the top 3 products from minute one', 'Say the promo price every 5 minutes']};
   const drop = lev[worst].change, vchg = lev.vgmv.change, vshare = (cur.vgmv + prev.vgmv) / ((cur.gmv + prev.gmv) || 1);
-  if (vchg !== null && vchg <= -.25 && vshare >= .25 && vchg < drop) return {lever: 'vgmv', title: 'Short videos are selling less', sub: 'Short video GMV is down ' + p(vchg) + ' against the 7 days before.', actions: ['Post 2 short videos a day that show the price', 'Point every video to the next LIVE', 'Reuse the best LIVE moment as a short video']};
-  const lever = drop < -.05 ? worst : 'cvr';
-  if (status === 'up' && drop >= -.05) return {lever: best, title: 'Going well, keep it up', sub: LEVN[best] + ' is up ' + p(lev[best].change) + ' against the 7 days before.', actions: ['Keep the same LIVE hours as last week', 'Keep pinning the products that sell', 'Add 1 new product to test']};
+  if (ui.ch === 'all' && vchg !== null && vchg <= -.25 && vshare >= .25 && vchg < drop) return {lever: 'vgmv', title: 'Short videos are selling less', sub: 'Short video GMV is down ' + p(vchg) + ' against the 7 days before.', actions: ['Post 2 short videos a day that show the price', 'Point every video to the next LIVE', 'Reuse the best LIVE moment as a short video']};
+  const lever = drop < -.05 ? worst : video ? 'vcvr' : 'cvr';
+  if (status === 'up' && drop >= -.05) return {lever: best, title: 'Going well, keep it up', sub: LEVN[best] + ' is up ' + p(lev[best].change) + ' against the 7 days before.', actions: video ? ['Keep posting at the same rhythm', 'Reuse what worked in your best video', 'Add 1 new product to test'] : ['Keep the same LIVE hours as last week', 'Keep pinning the products that sell', 'Add 1 new product to test']};
+  if (video) {
+    if (lever === 'posts') return {lever, title: 'Fewer videos', sub: 'Video posts are down ' + p(drop) + ' against the 7 days before.', actions: ['Post at least 1 video every day', 'Record 3 videos in one sitting', 'Reuse the best LIVE moments as videos']};
+    if (lever === 'vpp') return {lever, title: 'Videos reach fewer people', sub: 'Views per video are down ' + p(drop) + ' against the 7 days before.', actions: ['Show the price in the first 3 seconds', 'Post when your viewers are online', 'Copy the hook of your best video']};
+    if (lever === 'vaov') return {lever, title: 'Smaller baskets', sub: 'Video order value is down ' + p(drop) + '.', actions: ['Promote the bigger package in the video', 'Show the price per item so packages feel cheaper', 'Pin 1 big package in the first comment']};
+    return {lever: 'vcvr', title: drop < -.05 ? 'Views, but few buyers' : 'Turn views into buyers', sub: drop < -.05 ? 'Orders per view are down ' + p(drop) + '.' : 'The biggest chance this week is conversion.', actions: ['Name the voucher and the price in the video', 'Pin the voucher link in the comments', 'Show how to redeem in the last 5 seconds']};
+  }
   if (lever === 'vph') return {lever: 'vph', title: 'Chase viewers', sub: 'Viewers per hour are down ' + p(drop) + ' against the 7 days before.', actions: ['Post 2 short videos before going LIVE', 'LIVE at the same time every day', 'Open with the biggest promo']};
-  if (lever === 'cvr') return {lever: 'cvr', title: drop < -.05 ? 'Viewers come, but don’t buy' : 'Turn viewers into buyers', sub: drop < -.05 ? 'Out of every 100 viewers, buyers are down ' + p(drop) + '.' : 'The biggest chance this week is conversion.', actions: ['Pin the hero product the whole LIVE', 'Say the price and how to buy every 5 minutes', 'Switch product after 15 minutes with no order']};
+  if (lever === 'cvr') return {lever: 'cvr', title: drop < -.05 ? 'Viewers come, but don\u2019t buy' : 'Turn viewers into buyers', sub: drop < -.05 ? 'Out of every 100 viewers, buyers are down ' + p(drop) + '.' : 'The biggest chance this week is conversion.', actions: ['Pin the hero product the whole LIVE', 'Say the price and how to buy every 5 minutes', 'Switch product after 15 minutes with no order']};
   if (lever === 'aov') return {lever: 'aov', title: 'Smaller baskets', sub: 'Average order value is down ' + p(drop) + '.', actions: ['Push bigger packages, not single items', 'Show the price per item so packages feel cheaper', 'Pin 1 big package in the first 30 minutes']};
-  return {lever: 'hours', title: 'Fewer LIVE hours', sub: 'LIVE hours are down ' + p(drop) + ' against the 7 days before.', actions: ['LIVE at least ' + Math.max(2, Math.ceil(medHours)) + ' hours every LIVE day', 'Don’t skip Friday to Sunday', 'Use the same start time']};
+  return {lever: 'hours', title: 'Fewer LIVE hours', sub: 'LIVE hours are down ' + p(drop) + ' against the 7 days before.', actions: ['LIVE at least ' + Math.max(2, Math.ceil(medHours)) + ' hours every LIVE day', 'Don\u2019t skip Friday to Sunday', 'Use the same start time']};
 }
 
 /* ---------- targets and plans ---------- */
 function dayWeights(c) {
   const s = [0, 0, 0, 0, 0, 0, 0], n = [0, 0, 0, 0, 0, 0, 0]; let tot = 0, tn = 0;
-  for (let i = 0; i < ND; i++) { const g = dayG(c, i); if (c.L.h[i] <= 0 && c.V.posts[i] <= 0) continue; const w = dowOf(dk(i)); s[w] += g; n[w]++; tot += g; tn++; }
+  for (let i = 0; i < ND; i++) { const g = dayG(c, i); if (!chAct(c.L.h[i], c.V.posts[i])) continue; const w = dowOf(dk(i)); s[w] += g; n[w]++; tot += g; tn++; }
   const avg = tn ? tot / tn : 0, out = []; for (let k = 0; k < 7; k++) out.push(avg > 0 ? (s[k] + 3 * avg * DOWIDX[k]) / ((n[k] + 3) * avg) : DOWIDX[k]);
   return out;
 }
@@ -975,23 +997,27 @@ const FCS = c => c == null ? ['No target', '--muted'] : c >= .65 ? ['On track', 
 const BK = {fix: ['Fix', '--rev'], push: ['Push', '--growth'], guard: ['Guard', '--ops'], watch: ['Watch', '--muted']};
 const dirTxt = x => `${x >= 0 ? 'up' : 'down'} ${Math.abs(Math.round(x * 100))}%`;
 function triageOf(c, X, gTop) {
-  const T = TIERS[c.tier], cur = X.cur, prev = X.prev, st = X.status, lev = X.levers, fc = X.fc, tg = X.monthTarget.target, chance = fc.chance(tg), b = X.boost;
-  const loss = Math.max(0, prev.gmv - cur.gmv), gc = ch(cur.gmv, prev.gmv) || 0, hpd = cur.h / Math.max(1, cur.ldays), extraH = Math.max(0, T.tH - hpd), gph = cur.h ? cur.lgmv / cur.h : 0;
-  const slot = X.bestSlots[0] ? X.bestSlots[0].label + ' WIB' : 'the usual time', act = X.focus.actions[0];
-  const warn = ['vph', 'hours', 'cvr'].filter(k => lev[k].change !== null && lev[k].change <= -.12);
+  const T = TIERS[c.tier], cur = X.cur, prev = X.prev, st = X.status, lev = X.levers, fc = X.fc, tg = X.monthTarget.target, chance = fc.chance(tg), b = X.boost, video = ui.ch === 'video';
+  const loss = Math.max(0, prev.gmv - cur.gmv), gc = ch(cur.gmv, prev.gmv) || 0;
+  // The unit a creator can add: LIVE hours a day, or videos a day. The tier sets how many are normal.
+  const unitNow = video ? cur.posts / Math.max(1, cur.days) : cur.h / Math.max(1, cur.ldays), unitTarget = video ? T.post * 1.3 : T.tH, extraH = Math.max(0, unitTarget - unitNow);
+  const gpu = video ? (cur.posts ? cur.vgmv / cur.posts : 0) : (cur.h ? cur.lgmv / cur.h : 0);
+  const slot = X.bestSlots[0] ? X.bestSlots[0].label + ' WIB' : 'the usual time', act = X.focus.actions[0], gone = ui.ch === 'live' ? 'LIVE' : video ? 'video' : 'LIVE or video';
+  const addTxt = n => video ? `Post ${dec1(n)} more videos a day.` : `Add ${dec1(n)} LIVE hours a day at ${slot}.`, unitWord = video ? 'videos' : 'LIVE hours';
+  const warn = (video ? ['vpp', 'posts', 'vcvr'] : ['vph', 'hours', 'cvr']).filter(k => lev[k].change !== null && lev[k].change <= -.12);
   const mk = (bucket, short, why, action, value) => ({bucket, short, why, action, value, rank: {fix: 0, push: 1, guard: 2, watch: 3}[bucket]});
-  if (st === 'stopped') return mk('fix', 'Stopped', `No LIVE or video in the last 7 days; the 7 days before made ${money(prev.gmv)}.`, act + '.', prev.gmv);
-  if (st === 'inactive') return mk('watch', 'Inactive', 'No LIVE or video in the last 14 days.', 'Check whether the creator is still in the program.', 0);
+  if (st === 'stopped') return mk('fix', 'Stopped', `No ${gone} in the last 7 days; the 7 days before made ${money(prev.gmv)}.`, act + '.', prev.gmv);
+  if (st === 'inactive') return mk('watch', 'Inactive', `No ${gone} in the last 14 days.`, 'Check whether the creator is still in the program.', 0);
   if (st === 'down') return mk('fix', `Down ${Math.abs(Math.round(gc * 100))}%`, `${money(loss)} less than the 7 days before. ${X.focus.sub}`, `${X.focus.title}: ${act.charAt(0).toLowerCase() + act.slice(1)}.`, loss);
   if (tg > 0 && chance !== null && chance < .35 && fc.mu < tg * .85 && st !== 'up') return mk('fix', 'Will miss target', `On course for ${money(fc.mu)} of a ${money(tg)} target, a ${Math.round(chance * 100)}% chance. ${X.focus.sub}`, `Needs ${money(fc.need(tg))} a day. ${act}.`, Math.max(0, tg - fc.mu) / Math.max(1, fc.rem) * 7);
-  if (st === 'new') return mk('watch', 'New data', 'Not enough data to compare yet.', 'Build a routine: LIVE at the same time, pin the top 3 products.', 0);
-  const boostGain = b.verdict === 'go' || b.verdict === 'test' ? b.gain * b.days : 0, hoursGain = extraH * gph * Math.max(1, cur.ldays), pushV = boostGain + hoursGain;
+  if (st === 'new') return mk('watch', 'New data', 'Not enough data to compare yet.', video ? 'Build a routine: post at the same time, show the price in every video.' : 'Build a routine: LIVE at the same time, pin the top 3 products.', 0);
+  const boostGain = b.verdict === 'go' || b.verdict === 'test' ? b.gain * b.days : 0, hoursGain = extraH * gpu * Math.max(1, video ? cur.days : cur.ldays), pushV = boostGain + hoursGain;
   if (warn.length) { const k = warn[0]; return mk('guard', `${LEVN[k]} slipping`, `GMV holds (${dirTxt(gc)}), but ${LEVN[k].toLowerCase()} fell ${Math.abs(Math.round(lev[k].change * 100))}%. It shows in GMV next.`, `Before it shows: ${LEVER_FIX[k]}.`, fc.mu); }
-  if (st === 'up' && pushV > 0) return mk('push', `Up ${Math.round(gc * 100)}%`, `GMV ${dirTxt(gc)}${b.verdict === 'go' ? ', and a boost should pay back ' + b.roas.toFixed(1) + 'x' : ''}${extraH >= .5 ? ', with room for ' + dec1(extraH) + ' more LIVE hours a day' : ''}.`,
-    b.verdict === 'go' ? `Boost ${money(b.perDay)} × ${b.days} days at ${slot}.` : `Add ${dec1(Math.max(.5, extraH))} LIVE hours a day at ${slot}.`, pushV);
-  if (cur.gmv >= gTop && (chance === null || chance >= .5)) return mk('guard', 'Top earner', `${money(cur.gmv)} in 7 days${tg ? `, on course for ${money(fc.mu)} of a ${money(tg)} target` : ''}. Nothing is slipping.`, 'Keep the schedule and the products; don’t change what works.', fc.mu);
+  if (st === 'up' && pushV > 0) return mk('push', `Up ${Math.round(gc * 100)}%`, `GMV ${dirTxt(gc)}${b.verdict === 'go' ? ', and a boost should pay back ' + b.roas.toFixed(1) + 'x' : ''}${extraH >= .5 ? ', with room for ' + dec1(extraH) + ' more ' + unitWord + ' a day' : ''}.`,
+    b.verdict === 'go' ? `Boost ${money(b.perDay)} × ${b.days} days at ${slot}.` : addTxt(Math.max(.5, extraH)), pushV);
+  if (cur.gmv >= gTop && (chance === null || chance >= .5)) return mk('guard', 'Top earner', `${money(cur.gmv)} in 7 days${tg ? `, on course for ${money(fc.mu)} of a ${money(tg)} target` : ''}. Nothing is slipping.`, 'Keep the schedule and the products; don\u2019t change what works.', fc.mu);
   if (b.verdict === 'go' && (chance === null || chance >= .5)) return mk('push', 'Boost pays back', `Stable, and a boost should return ${b.roas.toFixed(1)}x.`, `Boost ${money(b.perDay)} × ${b.days} days at ${slot}.`, pushV);
-  if (extraH >= 1) return mk('push', 'Room for hours', `GMV ${dirTxt(gc)} with ${dec1(hpd)} LIVE hours a day against a ${T.tH}h tier target.`, `Add ${dec1(extraH)} LIVE hours a day at ${slot}.`, hoursGain);
+  if (extraH >= (video ? .4 : 1)) return mk('push', video ? 'Room for posts' : 'Room for hours', `GMV ${dirTxt(gc)} with ${dec1(unitNow)} ${unitWord} a day against a ${dec1(unitTarget)} tier target.`, addTxt(extraH), hoursGain);
   if (tg > 0 && chance !== null && chance < .65) return mk('watch', 'Near target', `About the same as the 7 days before; a ${Math.round(chance * 100)}% chance to reach ${money(tg)}.`, `Needs ${money(fc.need(tg))} a day. ${act}.`, 0);
   return mk('watch', 'Stable', 'About the same as the 7 days before, and on course for the target.', 'Keep the routine.', 0);
 }
@@ -1003,7 +1029,7 @@ function analyze() {
   const from7 = A - 6, p7a = A - 13, p7b = A - 7, from14 = A - 13, from28 = A - 27, mS = CUR_M.s, mDays = CUR_M.n;
   CREATORS.forEach(c => {
     const cur = agg(c, from7, A), prev = agg(c, p7a, p7b), w14 = agg(c, from14, A), w28 = agg(c, from28, A), status = statusRange(cur, prev), lev = leverCompare(cur, prev);
-    const hrs = []; for (let i = from14; i <= A; i++) if (c.L.h[i] > 0) hrs.push(c.L.h[i]); const medHours = median(hrs);
+    const hrs = [], pst = []; for (let i = from14; i <= A; i++) { if (c.L.h[i] > 0) hrs.push(c.L.h[i]); if (c.V.posts[i] > 0) pst.push(c.V.posts[i]); } const medHours = median(hrs), medPosts = median(pst);
     // hours: value per viewer by 2-hour slot, pulled toward the network pattern when sessions are few
     const t = totalOf(c), gpvC = t.v > 0 ? t.g / t.v : 0, s28 = c.ses.filter(s => s.d >= from28), v0 = Math.max(median(s28.map(s => s.view)) * 3, 500);
     const sl = []; for (let b = 0; b < 12; b++) sl.push({gmv: 0, view: 0, hours: 0, n: 0});
@@ -1014,7 +1040,7 @@ function analyze() {
     // boost
     const vph14 = w14.h > 0 ? w14.view / w14.h : 0, gpv14 = w14.view > 0 ? w14.lgmv / w14.view : 0, bp = bestSlots.length ? slots[bestSlots[0].b] : null, gpvUse = bp ? Math.max(gpv14 * .5, Math.min(gpv14 * 1.5, bp.gpv)) : gpv14, W = vph14 * 2;
     const opts = boostOptions(W, W * gpvUse, cpv, ELASTIC.value); let verdict, chosen = null, bdays = 0;
-    if (w14.h === 0 || status === 'stopped' || status === 'inactive') verdict = 'off';
+    if (ui.ch === 'video' || w14.h === 0 || status === 'stopped' || status === 'inactive') verdict = 'off';
     else if (w14.lord < 3) verdict = 'fix';
     else if (opts.best) { verdict = 'go'; chosen = opts.best; bdays = opts.best.roas >= SETTINGS.targetRoas * 2 ? 5 : 3; }
     else if (opts.min.roas >= SETTINGS.targetRoas * .6) { verdict = 'test'; chosen = opts.min; bdays = 2; }
@@ -1030,8 +1056,8 @@ function analyze() {
     if (tryList.length < 3) tryList = tryList.concat(prod.top.filter(p => !mine[p.i] && tryList.indexOf(p) < 0).slice(0, 5 - tryList.length));
     // month target: suggested at the start of the month as October's daily pace plus 15%; a number typed on Targets always wins
     const oct = agg(c, MONTHS[2].s, MONTHS[2].s + MONTHS[2].n - 1), octAvg = oct.gmv / MONTHS[2].n;
-    const active = w28.h > 0 || w28.posts > 0, base = oct.days >= 5 ? octAvg * 1.15 : status === 'new' || status === 'stopped' ? Math.max(cur.gmv, prev.gmv) / 7 : w28.gmv / 28;
-    const suggested = roundNice(base * mDays), custom = TGT[MONTH + '|' + c.id] > 0, target = custom ? TGT[MONTH + '|' + c.id] : active ? suggested : 0, split = allocateMonth(target, MONTH, dayWeights(c));
+    const active = chAct(w28.h, w28.posts), base = oct.days >= 5 ? octAvg * 1.15 : status === 'new' || status === 'stopped' ? Math.max(cur.gmv, prev.gmv) / 7 : w28.gmv / 28;
+    const suggested = roundNice(base * mDays), custom = TGT[tkey(c.id)] > 0, target = custom ? TGT[tkey(c.id)] : active ? suggested : 0, split = allocateMonth(target, MONTH, dayWeights(c));
     const dayTarget = k => k.slice(0, 7) === MONTH ? split[k] : null;
     const mtd = agg(c, mS, A).gmv; let expected = 0, remaining = 0;
     for (let k = MONTH + '-01'; k <= monthEnd(MONTH + '-01'); k = addDays(k, 1)) { if (k <= ANCHOR) expected += dayTarget(k) || 0; else remaining++; }
@@ -1048,7 +1074,7 @@ function analyze() {
       const liveH = Math.max(2, Math.round(medHours * 2) / 2), s1 = bestSlots[0] || {label: slotLabel(10)}, s2 = bestSlots[1] || s1, days = []; let tw = 0, bw = 0;
       for (let d = 0; d < 7; d++) { const key = addDays(WEEK_START, d), hit = CAMPAIGNS.find(x => key >= x.start && key <= x.end); let bst = bset[d] ? boost.perDay : 0;
         if (hit && bst) bst = Math.ceil(bst * hit.multiplier / 5) * 5;
-        const day = {date: key, dow: d, type: hit || strong[d] ? 'strong' : weak[d] ? 'light' : 'normal', target: dayTarget(key) || 0, hours: liveH, slot: (strong[d] ? s1 : s2).label, boost: bst, campaign: hit ? hit.name : ''};
+        const day = {date: key, dow: d, type: hit || strong[d] ? 'strong' : weak[d] ? 'light' : 'normal', target: dayTarget(key) || 0, hours: liveH, posts: Math.max(1, Math.round(medPosts || 1)), slot: (strong[d] ? s1 : s2).label, boost: bst, campaign: hit ? hit.name : ''};
         tw += day.target; bw += day.boost; days.push(day); }
       plan = {week: WEEK_START, targetWeek: tw, lastWeek: cur.gmv, boostWeek: bw, focus, days,
         products: ownTop.slice(0, 3).map(p => ({name: p.name, merchant: p.merchant, price: p.price, kind: 'hero'})).concat(tryList.slice(0, 2).map(p => ({name: p.name, merchant: p.merchant, price: p.price, kind: 'try'})))};
@@ -1057,7 +1083,7 @@ function analyze() {
       report = {from: rf, to: rt, gmv: ra.gmv, prevGmv: rb.gmv, change: rb.gmv > 0 ? ra.gmv / rb.gmv - 1 : null, levers: leverCompare(ra, rb), days: rdays, targetWeek: pt};
     }
     const series = []; for (let j = from28; j <= A; j++) series.push({d: dk(j), gmv: dayG(c, j), view: c.L.view[j], h: c.L.h[j], posts: c.V.posts[j]});
-    c.a = {status, cur, prev, levers: lev, medHours, slots: active ? slots : [], bestSlots, boost, focus, ownTop, tryList, monthTarget, fc, plan, report, series, active, recent: c.ses.slice(-8).reverse()};
+    c.a = {status, cur, prev, levers: lev, medHours, medPosts, slots: active ? slots : [], bestSlots, boost, focus, ownTop, tryList, monthTarget, fc, plan, report, series, active, recent: c.ses.slice(-8).reverse()};
   });
   const gs = CREATORS.map(c => c.a.cur.gmv).filter(g => g > 0).sort((a, b) => a - b), gTop = gs.length ? gs[Math.floor(gs.length * .75)] : 0;
   CREATORS.forEach(c => { c.a.tri = triageOf(c, c.a, gTop); });
@@ -1113,10 +1139,14 @@ function compareWindows(mode, key) {
   const end = mode === 'wow' ? weekEndOf(key) : monthEnd(key), to = end < ANCHOR ? end : ANCHOR, p = prevRange(key, to), w = {from: key, to, full: end, pFrom: p.pFrom, pTo: p.pTo};
   w.partial = w.to < w.full; w.prevMissing = w.pTo < FROM; w.prevCut = !w.prevMissing && w.pFrom < FROM; return w;
 }
+const vphOf = x => ui.ch === 'video' ? lv(x).vpp : lv(x).vph;
 function compareRows(list, w) {
-  const a = tot(list, di(w.from), di(w.to)), b = tot(list, di(w.pFrom), di(w.pTo)), la = lv(a), lb = lv(b);
-  return [['GMV', a.gmv, b.gmv, money], ['LIVE GMV', a.lgmv, b.lgmv, money], ['Short video GMV', a.vgmv, b.vgmv, money], ['Orders', a.ord, b.ord, N], ['LIVE hours', a.h, b.h, dec1], ['LIVE viewers', a.view, b.view, N],
-    ['Viewers per hour', la.vph, lb.vph, N], ['Conversion', la.cvr, lb.cvr, v => pc(v, 2)], ['Order value', la.aov, lb.aov, money], ['Video posts', a.posts, b.posts, N], ['Views per video', la.vpp, lb.vpp, N]].map(x => ({n: x[0], c: x[1], p: x[2], f: x[3], d: ch(x[1], x[2])}));
+  const a = tot(list, di(w.from), di(w.to)), b = tot(list, di(w.pFrom), di(w.pTo)), la = lv(a), lb = lv(b), pcf = v => pc(v, 2);
+  const rows = ui.ch === 'live' ? [['GMV', a.gmv, b.gmv, money], ['Orders', a.ord, b.ord, N], ['LIVE hours', a.h, b.h, dec1], ['LIVE viewers', a.view, b.view, N], ['Viewers per hour', la.vph, lb.vph, N], ['Conversion', la.cvr, lb.cvr, pcf], ['Order value', la.aov, lb.aov, money]]
+    : ui.ch === 'video' ? [['GMV', a.gmv, b.gmv, money], ['Orders', a.ord, b.ord, N], ['Video posts', a.posts, b.posts, N], ['Video views', a.views, b.views, N], ['Views per video', la.vpp, lb.vpp, N], ['Video conversion', la.vcvr, lb.vcvr, pcf], ['Video order value', la.vaov, lb.vaov, money]]
+    : [['GMV', a.gmv, b.gmv, money], ['LIVE GMV', a.lgmv, b.lgmv, money], ['Short video GMV', a.vgmv, b.vgmv, money], ['Orders', a.ord, b.ord, N], ['LIVE hours', a.h, b.h, dec1], ['LIVE viewers', a.view, b.view, N],
+      ['Viewers per hour', la.vph, lb.vph, N], ['Conversion', la.cvr, lb.cvr, pcf], ['Order value', la.aov, lb.aov, money], ['Video posts', a.posts, b.posts, N], ['Views per video', la.vpp, lb.vpp, N]];
+  return rows.map(x => ({n: x[0], c: x[1], p: x[2], f: x[3], d: ch(x[1], x[2])}));
 }
 function compareTable(rows, w) {
   return table([{k: 'n', label: ''}, {k: 'c', label: rangeLabel(w.from, w.to), num: true, render: r => h('b', {}, r.f(r.c))}, {k: 'p', label: rangeLabel(w.pFrom, w.pTo), num: true, render: r => h('span', {class: 'muted'}, r.f(r.p))},
@@ -1133,7 +1163,7 @@ PAGES['Compare'] = () => {
   const mode = ui.tab.cmpMode || 'wow', opts = periodOptions(mode); if (!opts.some(o => o.key === ui.tab.cmpPeriod)) ui.tab.cmpPeriod = opts[0].key;
   const w = compareWindows(mode, ui.tab.cmpPeriod), L = CREATORS.filter(F), whoC = ui.tab.cmpWho ? byId(ui.tab.cmpWho) : null, rows = compareRows(whoC ? [whoC] : L, w), g = rows[0].d;
   const f = ui.tab.cmpF || 'all';
-  const per = L.map(c => { const a = sumK(c, w.from, w.to), b = sumK(c, w.pFrom, w.pTo); return {c, id: c.id, a: a.gmv, b: b.gmv, d: ch(a.gmv, b.gmv), v: ch(lv(a).vph, lv(b).vph), diff: a.gmv - b.gmv, _open: () => openCreator(c.id)}; }).filter(r => r.a > 0 || r.b > 0);
+  const per = L.map(c => { const a = sumK(c, w.from, w.to), b = sumK(c, w.pFrom, w.pTo); return {c, id: c.id, a: a.gmv, b: b.gmv, d: ch(a.gmv, b.gmv), v: ch(vphOf(a), vphOf(b)), diff: a.gmv - b.gmv, _open: () => openCreator(c.id)}; }).filter(r => r.a > 0 || r.b > 0);
   const nUp = per.filter(r => r.diff > 0).length, nDown = per.filter(r => r.diff < 0).length;
   const show = per.filter(r => f === 'all' || (f === 'up' ? r.diff > 0 : r.diff < 0)).sort((a, b) => f === 'up' ? b.diff - a.diff : f === 'down' ? a.diff - b.diff : Math.abs(b.diff) - Math.abs(a.diff));
   const verdict = h('section', {class: 'card'}, h('div', {class: 'verdict', style: `--c:var(${g === null ? '--muted' : g >= 0 ? '--growth' : '--rev'})`}, h('div', {}, h('div', {class: 'muted small'}, `${mode === 'wow' ? 'Week on week' : 'Month on month'} · ${rangeLabel(w.from, w.to)} against ${rangeLabel(w.pFrom, w.pTo)}`),
@@ -1145,14 +1175,14 @@ PAGES['Compare'] = () => {
     h('datalist', {id: 'cmpList'}, CREATORS.map(c => h('option', {value: c.id}))), ui.tab.cmpWho ? h('button', {class: 'btn sm', onclick: () => { ui.tab.cmpWho = ''; render(); }}, 'Everyone') : null, h('span', {class: 'spacer'}), help('compare'));
   return [verdict, tools, card('Every number, now against before', null, h('div', {}, compareNote(w), compareTable(rows, w))),
     row(card('By creator', 'Sorted by the money gap. Click a creator for the detail.', table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 'a', label: 'GMV now', num: true, fmt: money}, {k: 'b', label: 'GMV before', num: true, fmt: money},
-      {k: 'diff', label: 'Gap', num: true, render: r => h('span', {style: `color:var(${r.diff >= 0 ? '--growth' : '--rev'});font-weight:600`}, (r.diff >= 0 ? '+' : '−') + money(Math.abs(r.diff)))}, {k: 'd', label: 'GMV', num: true, render: r => r.d === null ? chip('new', '--muted', false) : dd(r.a, r.b)}, {k: 'v', label: 'Viewers / hour', num: true, render: r => r.v === null ? h('span', {class: 'muted'}, '-') : delta(1 + r.v, 1)}],
+      {k: 'diff', label: 'Gap', num: true, render: r => h('span', {style: `color:var(${r.diff >= 0 ? '--growth' : '--rev'});font-weight:600`}, (r.diff >= 0 ? '+' : '−') + money(Math.abs(r.diff)))}, {k: 'd', label: 'GMV', num: true, render: r => r.d === null ? chip('new', '--muted', false) : dd(r.a, r.b)}, {k: 'v', label: ui.ch === 'video' ? 'Views / video' : 'Viewers / hour', num: true, render: r => r.v === null ? h('span', {class: 'muted'}, '-') : delta(1 + r.v, 1)}],
       show, {sortKey: null, pageSize: 15, state: ui.tab.cmpState ||= {}, tools: seg([['all', `All ${per.length}`], ['down', `Down ${nDown}`], ['up', `Up ${nUp}`]], f, v => { ui.tab.cmpF = v; render(); }, 'Show')})))];
 };
 
 /* ================= Sales check ================= */
 const CHN = ['LIVE', 'Short video'];
 function salesRows(P, L) {
-  const keep = new Set(L.map(c => c.i)), chn = ui.tab.skc || 'all', map = {};
+  const keep = new Set(L.map(c => c.i)), chn = ui.ch === 'live' ? '0' : ui.ch === 'video' ? '1' : (ui.tab.skc || 'all'), map = {};
   SALES.forEach(r => { if (r[2] < P.a || r[2] > P.b || !keep.has(r[1]) || (chn !== 'all' && r[5] !== +chn)) return; const k = r[0] + '|' + r[1], o = map[k] || (map[k] = {p: r[0], c: r[1], gmv: 0, ord: 0, ch: {}}); o.gmv += r[3]; o.ord += r[4]; o.ch[r[5]] = 1; });
   return Object.keys(map).map(k => { const o = map[k], Pd = PRODUCTS[o.p]; return {sku: Pd.name, merchant: Pd.merchant, pid: 'P' + (1000 + Pd.i), creator: CREATORS[o.c].id, ci: o.c, gmv: o.gmv, ord: o.ord, ch: Object.keys(o.ch).map(x => CHN[x]).join(' + ')}; });
 }
@@ -1173,13 +1203,13 @@ PAGES['Sales check'] = () => {
   const verdict = h('section', {class: 'card'}, h('div', {class: 'verdict', style: '--c:var(--base)'}, h('div', {}, h('div', {class: 'muted small'}, `Sales check · ${P.label}`), h('div', {class: 'verdict-v'}, rows.length ? `${money(total)} sold` : 'No sales in these dates'),
     h('div', {class: 'small'}, rows.length ? `${N(orders)} orders · ${uniq(rows, r => r.merchant)} merchants · ${uniq(rows, skuKey)} SKUs · ${uniq(rows, r => r.creator)} creators. Click a row to see who sold what.` : 'Pick other dates at the top.')), h('div', {class: 'verdict-n'}, h('span', {class: 'muted small'}, 'Orders'), h('b', {}, N(orders)))));
   return [verdict, row(card('What sold, and who sold it', 'LIVE sales count on the day the LIVE started; short video sales on the day of the order. Use the filter box for a merchant, SKU, product ID or creator.',
-    table(cols, groups, {sortKey: 'gmv', pageSize: 15, state: ui.tab.skState ||= {}, tools: [seg([['merchant', 'By merchant'], ['sku', 'By SKU'], ['creator', 'By creator']], g, v => { ui.tab.skg = v; render(); }, 'Group'), seg([['all', 'LIVE + video'], ['0', 'LIVE'], ['1', 'Short video']], ui.tab.skc || 'all', v => { ui.tab.skc = v; render(); }, 'Channel')]}), help('sales')))];
+    table(cols, groups, {sortKey: 'gmv', pageSize: 15, state: ui.tab.skState ||= {}, tools: [seg([['merchant', 'By merchant'], ['sku', 'By SKU'], ['creator', 'By creator']], g, v => { ui.tab.skg = v; render(); }, 'Group'), ui.ch === 'all' ? seg([['all', 'LIVE + video'], ['0', 'LIVE'], ['1', 'Short video']], ui.tab.skc || 'all', v => { ui.tab.skc = v; render(); }, 'Channel') : null]}), help('sales')))];
 };
 
 /* ================= Products ================= */
 function productsInRange(a, b, L, ci, pa, pb) {
   const keep = L ? new Set(L.map(c => c.i)) : null, map = {};
-  SALES.forEach(r => { if (ci !== undefined && r[1] !== ci) return; if (keep && !keep.has(r[1])) return;
+  SALES.forEach(r => { if (ci !== undefined && r[1] !== ci) return; if (keep && !keep.has(r[1])) return; if (ui.ch === 'live' && r[5] !== 0 || ui.ch === 'video' && r[5] !== 1) return;
     const inCur = r[2] >= a && r[2] <= b, inPrev = pa !== undefined && r[2] >= pa && r[2] <= pb; if (!inCur && !inPrev) return;
     const p = map[r[0]] || (map[r[0]] = {i: r[0], cur: 0, prev: 0, ord: 0, cr: {}}); if (inCur) { p.cur += r[3]; p.ord += r[4]; p.cr[r[1]] = 1; } else p.prev += r[3]; });
   return Object.keys(map).map(k => { const p = map[k], Pd = PRODUCTS[p.i]; return {name: Pd.name, merchant: Pd.merchant, cur: p.cur, prev: p.prev, ord: p.ord, price: p.ord ? p.cur / p.ord : Pd.price, creators: Object.keys(p.cr).length, change: p.prev > 0 ? p.cur / p.prev - 1 : null}; });
@@ -1208,8 +1238,17 @@ function slotsInRange(a, b, L) {
     forSlots(s, (bb, sh) => { slots[bb].gmv += s.gmv * sh; slots[bb].exp += s.view * sh * gpv; slots[bb].view += s.view * sh; slots[bb].hours += s.dur * sh; }); });
   return {used, idx: slots.map(x => x.exp > 0 ? x.gmv / x.exp : 0), vp: slots.map(x => x.hours > 0 ? x.view / x.hours : 0), hrs: slots.map(x => x.hours)};
 }
+function hoursVideo(P, L) {
+  const dS = [0, 0, 0, 0, 0, 0, 0], dN = [0, 0, 0, 0, 0, 0, 0]; for (let i = P.a; i <= P.b; i++) { const w = dowOf(dk(i)); for (const c of L) dS[w] += dayG(c, i); dN[w]++; }
+  const dAvg = dS.map((v, i) => dN[i] ? v / dN[i] : 0), pres = dAvg.filter((v, i) => dN[i] > 0), dMean = pres.reduce((a, b) => a + b, 0) / (pres.length || 1), dIdx = dAvg.map(v => dMean > 0 ? v / dMean : 0);
+  const ranked = dIdx.map((v, i) => ({i, v})).filter(x => dN[x.i] > 0).sort((a, b) => b.v - a.v);
+  return [verdictBox('--ops', `Days · ${P.label} · Video`, ranked.length ? `${DAYFULL[ranked[0].i]} is the strongest day for video` : 'Not enough days picked', 'The hour charts use LIVE sessions, so they are on the Livestream view. Video sales follow the day of the week.'),
+    row(card(ranked.length > 1 ? `${DAYFULL[ranked[0].i]} is the strongest day, ${DAYFULL[ranked[ranked.length - 1].i]} the weakest` : 'Days of the week', 'Average video GMV per day; 100 is the week\u2019s average.',
+      columns(dIdx.map((v, i) => ({label: DAY[i], value: v * 100, c: ranked.length && i === ranked[0].i ? '--ops' : '--growth'})), {fmt: N, height: 200}), h('div', {style: 'margin-top:10px'}, help('hours'))))];
+}
 PAGES['Hours and days'] = () => {
-  const P = period(), L = CREATORS.filter(F), sl = slotsInRange(P.a, P.b, L), totH = sl.hrs.reduce((a, b) => a + b, 0);
+  const P = period(), L = CREATORS.filter(F); if (ui.ch === 'video') return hoursVideo(P, L);
+  const sl = slotsInRange(P.a, P.b, L), totH = sl.hrs.reduce((a, b) => a + b, 0);
   const usable = sl.idx.map((v, b) => ({b, v, views: sl.vp[b], h: sl.hrs[b]})).filter(x => x.h >= totH * .03);
   const best = usable.slice().sort((a, b) => b.v - a.v)[0], crowded = usable.slice().sort((a, b) => b.views - a.views)[0];
   const dS = [0, 0, 0, 0, 0, 0, 0], dN = [0, 0, 0, 0, 0, 0, 0]; for (let i = P.a; i <= P.b; i++) { const w = dowOf(dk(i)); for (const c of L) dS[w] += dayG(c, i); dN[w]++; }
@@ -1241,19 +1280,24 @@ const insight = (tag, c, ...txt) => h('div', {class: 'ins', style: `--c:var(${c}
 /* ================= Summary ================= */
 PAGES['Summary'] = () => {
   const P = period(), L = CREATORS.filter(F), t = tot(L, P.a, P.b), tp = tot(L, P.pa, P.pb), chg = tp.gmv ? t.gmv / tp.gmv - 1 : 0;
-  const lev = leverCompare(t, tp), ks = ['hours', 'vph', 'cvr', 'aov', 'posts', 'vpp'].filter(k => lev[k].change !== null).sort((x, y) => lev[x].change - lev[y].change), worst = ks[0], best = ks[ks.length - 1];
+  const lev = leverCompare(t, tp), ks = (ui.ch === 'all' ? ['hours', 'vph', 'cvr', 'aov', 'posts', 'vpp'] : LEVKEYS()).filter(k => lev[k].change !== null).sort((x, y) => lev[x].change - lev[y].change), worst = ks[0], best = ks[ks.length - 1];
   const fc = netForecast(L), tg = sum(L, c => c.a.monthTarget.target), chance = fc.chance(tg);
   const quiet = L.filter(c => c.a.status === 'stopped' || c.a.status === 'inactive'), risk = sum(quiet, c => agg(c, P.pa, P.pb).gmv);
   const st = chg > .03 ? ['Growing', '--growth'] : chg < -.03 ? ['Declining', '--rev'] : ['Flat', '--ops'];
-  const act = (a, b) => L.filter(c => { const x = agg(c, a, b); return x.h > 0 || x.posts > 0; }).length, ac = act(P.a, P.b), acp = act(P.pa, P.pb);
+  const act = (a, b) => L.filter(c => { const x = agg(c, a, b); return chAct(x.h, x.posts); }).length, ac = act(P.a, P.b), acp = act(P.pa, P.pb);
   const grp = (name, keep) => { const l = L.filter(keep), a = tot(l, P.a, P.b).gmv, b = tot(l, P.pa, P.pb).gmv; return {name, a, b, d: a - b}; };
   const gs = [...TIER_LIST.map(k => grp(k + ' tier', c => c.tier === k)), ...CITIES.map(x => grp(x[0], c => c.city === x[0]))].filter(g => g.b > 0), gW = [...gs].sort((x, y) => x.d - y.d)[0], gB = [...gs].sort((x, y) => y.d - x.d)[0];
   const grew = L.filter(c => c.a.status === 'up').length, fell = L.filter(c => c.a.status === 'down' || c.a.status === 'stopped').length;
   const tr = trendG(L, P);
-  const head = verdictBox(st[1], `Summary · ${P.label} vs ${P.plabel}`, `${st[0]}: GMV ${dirTxt(chg)}`, `${money(tp.gmv)} became ${money(t.gmv)} across ${N(L.length)} creators, LIVE and short video.`);
-  const strip = kstrip(6, kpi('GMV', money(t.gmv), {d: delta(t.gmv, tp.gmv), sub: `from ${short(tp.gmv)}`, c: '--growth', spark: tr.now}), kpi('LIVE GMV', money(t.lgmv), {d: delta(t.lgmv, tp.lgmv), sub: `${pct(t.lgmv, t.gmv)}% of GMV`}),
-    kpi('Short video GMV', money(t.vgmv), {d: delta(t.vgmv, tp.vgmv), sub: `${pct(t.vgmv, t.gmv)}% of GMV`}), kpi('Orders', N(t.ord), {d: delta(t.ord, tp.ord), sub: `order value ${money(ratio(t.gmv, t.ord))}`}),
-    kpi('Active creators', N(ac), {d: delta(ac, acp), sub: `of ${N(L.length)}`}), kpi('LIVE viewers', big(t.view), {d: delta(t.view, tp.view), sub: `${big(t.views)} video views`}));
+  const head = verdictBox(st[1], `Summary${chTag()} · ${P.label} vs ${P.plabel}`, `${st[0]}: GMV ${dirTxt(chg)}`, `${money(tp.gmv)} became ${money(t.gmv)} across ${N(L.length)} creators, ${CHNAME[ui.ch].toLowerCase()}.`);
+  const lt = lv(t), ltp = lv(tp);
+  const strip = ui.ch === 'live' ? kstrip(6, kpi('LIVE GMV', money(t.gmv), {d: delta(t.gmv, tp.gmv), sub: `from ${short(tp.gmv)}`, c: '--growth', spark: tr.now}), kpi('Orders', N(t.ord), {d: delta(t.ord, tp.ord), sub: `order value ${money(ratio(t.gmv, t.ord))}`}), kpi('LIVE viewers', big(t.view), {d: delta(t.view, tp.view), sub: `${big(t.clk)} product clicks`}),
+      kpi('LIVE hours', dec1(t.h), {d: delta(t.h, tp.h), sub: `${N(t.ses)} sessions`}), kpi('GMV per hour', money(ratio(t.lgmv, t.h)), {d: delta(ratio(t.lgmv, t.h), ratio(tp.lgmv, tp.h)), sub: `${N(lt.vph)} viewers an hour`}), kpi('Active creators', N(ac), {d: delta(ac, acp), sub: `of ${N(L.length)}`}))
+    : ui.ch === 'video' ? kstrip(6, kpi('Video GMV', money(t.gmv), {d: delta(t.gmv, tp.gmv), sub: `from ${short(tp.gmv)}`, c: '--growth', spark: tr.now}), kpi('Orders', N(t.ord), {d: delta(t.ord, tp.ord), sub: `order value ${money(ratio(t.gmv, t.ord))}`}), kpi('Video views', big(t.views), {d: delta(t.views, tp.views), sub: `${N(lt.vpp)} per video`}),
+      kpi('Video posts', N(t.posts), {d: delta(t.posts, tp.posts), sub: `${dec1(ratio(t.posts, ac))} per creator`}), kpi('GMV per post', money(ratio(t.vgmv, t.posts)), {d: delta(ratio(t.vgmv, t.posts), ratio(tp.vgmv, tp.posts)), sub: `conversion ${pc(lt.vcvr, 2)}`}), kpi('Active creators', N(ac), {d: delta(ac, acp), sub: `of ${N(L.length)}`}))
+    : kstrip(6, kpi('GMV', money(t.gmv), {d: delta(t.gmv, tp.gmv), sub: `from ${short(tp.gmv)}`, c: '--growth', spark: tr.now}), kpi('LIVE GMV', money(t.lgmv), {d: delta(t.lgmv, tp.lgmv), sub: `${pct(t.lgmv, t.gmv)}% of GMV`}),
+      kpi('Short video GMV', money(t.vgmv), {d: delta(t.vgmv, tp.vgmv), sub: `${pct(t.vgmv, t.gmv)}% of GMV`}), kpi('Orders', N(t.ord), {d: delta(t.ord, tp.ord), sub: `order value ${money(ratio(t.gmv, t.ord))}`}),
+      kpi('Active creators', N(ac), {d: delta(ac, acp), sub: `of ${N(L.length)}`}), kpi('LIVE viewers', big(t.view), {d: delta(t.view, tp.view), sub: `${big(t.views)} video views`}));
   const insights = card('Key insights', 'What to know about this period', h('div', {},
     worst && lev[worst].change < 0 ? insight('DRAG', '--rev', h('b', {}, `${LEVN[worst]} ${dirTxt(lev[worst].change)}.`), ` Fix: ${LEVER_FIX[worst]}.`) : insight('GOOD', '--growth', h('b', {}, 'No lever is falling.')),
     best && lev[best].change > 0 ? insight('PUSH', '--growth', h('b', {}, `${LEVN[best]} ${dirTxt(lev[best].change)}.`), ' Keep it going.') : null,
@@ -1267,7 +1311,7 @@ PAGES['Summary'] = () => {
     return h('section', {class: 'card', style: `border-top:3px solid var(${BK[b][1]})`}, h('div', {class: 'card-h'}, h('div', {}, h('h3', {}, d[0]), h('p', {}, d[2])), h('div', {class: 'spacer'}), h('button', {class: 'btn sm', onclick: () => goPage('Fix · Push · Guard', {tri: b})}, 'See all')),
       h('div', {class: 'tri-n'}, h('b', {style: `color:var(${BK[b][1]})`}, N(l.length)), ' creators · ', h('b', {}, money(sum(l, x => x.value))), ' ' + d[1]),
       l.length ? h('div', {class: 'movers'}, l.slice(0, 5).map(x => h('button', {class: 'mover', onclick: () => openCreator(x.c.id)}, who(x.c), h('span', {class: 'mv-v'}, h('b', {}, money(x.value)), h('small', {}, x.short))))) : h('p', {class: 'muted small'}, 'Nobody here for these filters.')); };
-  const bd = ui.tab.sbd || 'tier';
+  const bd = ui.ch === 'all' ? (ui.tab.sbd || 'tier') : (ui.tab.sbd === 'city' ? 'city' : 'tier');
   const groups = bd === 'tier' ? TIER_LIST.map(k => ({name: k, tier: true, keep: c => c.tier === k, open: () => { ui.f.tier = k; render(); }}))
     : bd === 'city' ? CITIES.map(x => ({name: x[0], keep: c => c.city === x[0], open: () => { ui.f.area = 'c:' + x[0]; render(); }}))
     : [{name: 'LIVE', fmt: 'l', c: '--base'}, {name: 'Short video', fmt: 'v', c: '--ops'}];
@@ -1281,7 +1325,7 @@ PAGES['Summary'] = () => {
     row(card('Breakdown', 'Click a row to look closer.', table([{k: 'name', label: bd === 'tier' ? 'Tier' : bd === 'city' ? 'City' : 'Format', render: r => r.tier ? tierChip(r.name) : h('div', {class: 'who'}, r.c ? h('i', {class: 'dot-c', style: `background:var(${r.c})`}) : null, h('b', {style: 'font-weight:600'}, r.name))},
       {k: 'g', label: 'GMV', num: true, fmt: money}, {k: 'gp', label: `GMV ${P.plabel}`, num: true, fmt: money}, {k: 'chg', label: 'Change', num: true, render: r => dd(r.g, r.gp)}, {k: 'sh', label: 'Share', num: true, render: r => meterRow(pct(r.g, gT), '--base', `${pct(r.g, gT)}%`, 70)},
       {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'n', label: 'Active creators', num: true, fmt: N}], rows.map(r => ({...r, chg: ratio(r.g, r.gp), sh: r.g})), {search: false, sortKey: 'g', pageSize: 12}),
-      seg([['tier', 'Tier'], ['city', 'City'], ['fmt', 'LIVE / video']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
+      seg(ui.ch === 'all' ? [['tier', 'Tier'], ['city', 'City'], ['fmt', 'LIVE / video']] : [['tier', 'Tier'], ['city', 'City']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
 };
 
 /* ================= Fix · Push · Guard ================= */
@@ -1289,7 +1333,7 @@ PAGES['Fix · Push · Guard'] = () => {
   const L = CREATORS.filter(F), tri = L.map(c => ({c, ...c.a.tri})), f = ui.tab.tri || 'fix', cnt = b => tri.filter(x => x.bucket === b);
   const strip = kstrip(4, ...['fix', 'push', 'guard', 'watch'].map(b => { const l = cnt(b); return pickKpi(BDESC[b][0], N(l.length), b === 'watch' ? BDESC[b][2] : `${money(sum(l, x => x.value))} ${BDESC[b][1]}`, f === b, () => { ui.tab.tri = b; render(); }, BK[b][1]); }));
   const list = tri.filter(x => f === 'all' || x.bucket === f).sort((a, b) => a.rank - b.rank || b.value - a.value), d = BDESC[f];
-  const head = verdictBox(f === 'all' ? '--base' : BK[f][1], 'Fix · Push · Guard · last 7 days and the November forecast', f === 'all' ? `${N(L.length)} creators, each with one action` : `${N(list.length)} creators to ${d[0].toLowerCase()}`,
+  const head = verdictBox(f === 'all' ? '--base' : BK[f][1], `Fix · Push · Guard${chTag()} · last 7 days and the November forecast`, f === 'all' ? `${N(L.length)} creators, each with one action` : `${N(list.length)} creators to ${d[0].toLowerCase()}`,
     f === 'all' ? 'Fix first, then Push, then Guard. Click a group below to see only those creators.' : `${d[2]}. The biggest money is at the top. Click a creator to check them one by one.`, f === 'all' || f === 'watch' ? 'Creators' : d[1].replace(/^./, x => x.toUpperCase()), f === 'all' || f === 'watch' ? N(list.length) : money(sum(list, x => x.value)));
   return [head, h('div', {class: 'mt'}, strip),
     row(card(f === 'all' ? 'Every creator' : `${d[0]}: who and what to do`, null, table([{k: 'id', label: 'Creator', render: r => who(r.c)},
@@ -1311,7 +1355,7 @@ PAGES['Monitor'] = () => {
   const down = rows.filter(r => r.s === 'down'), lost = sum(down, r => Math.max(0, r.prev.gmv - r.cur.gmv)), up = rows.filter(r => r.s === 'up'), gained = sum(up, r => Math.max(0, r.cur.gmv - r.prev.gmv));
   const opts = [['down', `Down ${counts.down || 0}`], ['up', `Up ${counts.up || 0}`], ['stable', `Stable ${counts.stable || 0}`], ['new', `New data ${counts.new || 0}`], ['stopped', `Stopped ${counts.stopped || 0}`], ['inactive', `Inactive ${counts.inactive || 0}`], ['active', `All active ${active}`], ['all', `Everyone ${rows.length}`]];
   const sortLoss = f === 'down' ? (a, b) => (b.prev.gmv - b.cur.gmv) - (a.prev.gmv - a.cur.gmv) : (a, b) => b.cur.gmv - a.cur.gmv;
-  return [verdictBox(down.length ? '--rev' : '--growth', `Monitor · ${P.label} vs ${P.plabel}`, down.length ? `${N(down.length)} creators are down, ${money(lost)} less GMV` : 'No creator is down', 'Biggest money gap first. Click a creator to check them one by one.'),
+  return [verdictBox(down.length ? '--rev' : '--growth', `Monitor${chTag()} · ${P.label} vs ${P.plabel}`, down.length ? `${N(down.length)} creators are down, ${money(lost)} less GMV` : 'No creator is down', 'Biggest money gap first. Click a creator to check them one by one.'),
     h('div', {class: 'mt'}, kstrip(4, pickKpi('Down', N(counts.down || 0), `${money(lost)} less GMV`, f === 'down', () => { ui.tab.mst = 'down'; render(); }, '--rev'), pickKpi('Up', N(counts.up || 0), `${money(gained)} more GMV`, f === 'up', () => { ui.tab.mst = 'up'; render(); }, '--growth'),
       pickKpi('Stable', N(counts.stable || 0), 'about the same', f === 'stable', () => { ui.tab.mst = 'stable'; render(); }), pickKpi('Stopped or inactive', N((counts.stopped || 0) + (counts.inactive || 0)), 'no LIVE or video', f === 'quiet', () => { ui.tab.mst = 'quiet'; render(); }, '--ops'))),
     row(card('Creators', null, table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 's', label: 'Status', render: r => statusChip(r.s)},
@@ -1327,7 +1371,7 @@ PAGES['Month-end forecast'] = () => {
   const daily = dailyF(L, m.s, A, dayG), items = daily.map((v, i) => ({label: String(i + 1), value: v, c: '--growth'})).concat(fc.path.map((p, i) => ({label: String(A - m.s + 2 + i), value: p.v, c: '--faint'})));
   const rows = L.filter(c => c.a.active).map(c => { const X = c.a, t = X.monthTarget.target, ch2 = X.fc.chance(t); return {c, id: c.id, mtd: X.fc.mtd, mu: X.fc.mu, lo: X.fc.lo, hi: X.fc.hi, tg: t, ch: ch2 ?? -1, need: t ? X.fc.need(t) : 0, call: X.tri.rank, _open: () => openCreator(c.id, 'forecast')}; });
   const buckets = [['On track', rows.filter(r => r.ch >= .65).length, '--growth'], ['At risk', rows.filter(r => r.ch >= .35 && r.ch < .65).length, '--ops'], ['Will miss', rows.filter(r => r.ch >= 0 && r.ch < .35).length, '--rev'], ['No target', rows.filter(r => r.ch < 0).length, '--muted']];
-  return [verdictBox(st[1], `${m.label} · ${N(L.length)} creators`, fc.rem ? `On course for ${money(fc.mu)}${tg ? `: ${st[0].toLowerCase()} for the ${money(tg)} target` : ''}` : `${m.label} closed at ${money(fc.mtd)}`,
+  return [verdictBox(st[1], `${m.label}${chTag()} · ${N(L.length)} creators`, fc.rem ? `On course for ${money(fc.mu)}${tg ? `: ${st[0].toLowerCase()} for the ${money(tg)} target` : ''}` : `${m.label} closed at ${money(fc.mtd)}`,
       fc.rem ? `Likely between ${money(fc.lo)} and ${money(fc.hi)} if everyone keeps the pace of the last two weeks.` : 'The month is complete.'),
     h('div', {class: 'mt'}, kstrip(4, kpi('Projected month end', money(fc.mu), {sub: `likely ${short(fc.lo)} to ${short(fc.hi)}`}), kpi('Target', tg ? money(tg) : '-', {sub: tg ? `${Math.round(chance * 100)}% chance` : 'no target set'}), kpi('Month to date', money(fc.mtd), {sub: `${N(A - m.s + 1)} of ${m.n} days done`}), kpi('Needed a day', tg ? money(fc.need(tg)) : '-', {sub: `to reach the target, ${N(fc.rem)} days left`}))),
     h('div', {class: 'grid g21 mt'}, card(`${m.label} by day`, 'Green = what happened. Grey = the forecast for each remaining day.', columns(items, {fmt: short, height: 240, ref: tg ? {value: tg / m.n, label: 'Target pace a day'} : undefined})),
@@ -1343,21 +1387,25 @@ PAGES['Month-end forecast'] = () => {
 /* The profile compares the creator with their tier (peer set) for the dates picked, like the team's creator card. */
 const GAP_ACTION = {'Short video GMV': 'Post 2 short videos a day that show the price and point to the next LIVE.', 'LIVE GMV': 'Add one more LIVE day this week at the best hour.',
   'CTR': 'Show the product card in the first minute and repeat the price every 5 minutes.', 'CVR': 'Pin one hero product and say how to buy; switch product after 15 minutes with no order.',
-  'ERR': 'Ask a question every 10 minutes and answer comments by name.', 'AOV': 'Push bigger packages and bundles; pin one in the first 30 minutes.'};
+  'ERR': 'Ask a question every 10 minutes and answer comments by name.', 'AOV': 'Push bigger packages and bundles; pin one in the first 30 minutes.',
+  'GMV per post': 'Show the price in the first 3 seconds and point to the voucher.', 'Views per video': 'Copy the hook of your best video and post when your viewers are online.', 'Video conversion': 'Name the voucher and the price, and pin the link in the comments.', 'Video order value': 'Promote the bigger package in the video.'};
 function profile(c, P) {
   const peers = CREATORS.filter(x => x.tier === c.tier), a = agg(c, P.a, P.b), p = agg(c, P.pa, P.pb);
-  const m = t => ({gmv: t.gmv, lgmv: t.lgmv, vgmv: t.vgmv, gph: t.h ? t.lgmv / t.h : 0, ctr: t.view ? t.clk / t.view : 0, cvr: t.clk ? t.lord / t.clk : 0, err: t.view ? t.eng / t.view : 0, aov: t.lord ? t.lgmv / t.lord : 0, hours: t.h});
-  const pa = peers.map(x => ({x, m: m(x === c ? a : agg(x, P.a, P.b))})).filter(o => o.m.gmv > 0 || o.x === c), liveP = pa.filter(o => o.m.hours > 0), me = m(a), was = m(p);
+  const m = t => ({gmv: t.gmv, lgmv: t.lgmv, vgmv: t.vgmv, gph: t.h ? t.lgmv / t.h : 0, ctr: t.view ? t.clk / t.view : 0, cvr: t.clk ? t.lord / t.clk : 0, err: t.view ? t.eng / t.view : 0, aov: t.lord ? t.lgmv / t.lord : 0, hours: t.h, posts: t.posts, gpp: t.posts ? t.vgmv / t.posts : 0, vpp: t.posts ? t.views / t.posts : 0, vcvr: t.views ? t.vord / t.views : 0, vaov: t.vord ? t.vgmv / t.vord : 0});
+  const pa = peers.map(x => ({x, m: m(x === c ? a : agg(x, P.a, P.b))})).filter(o => o.m.gmv > 0 || o.x === c), liveP = pa.filter(o => ui.ch === 'video' ? o.m.posts > 0 : o.m.hours > 0), me = m(a), was = m(p);
   const avgOf = (list, k) => list.length ? sum(list, o => o.m[k]) / list.length : 0, rankOf = (list, k) => 1 + list.filter(o => o.x !== c && o.m[k] > me[k]).length;
   let rs = 0, rn = 0; for (let i = P.a; i <= P.b; i++) { const g = dayG(c, i); if (g <= 0) continue; let r = 1; peers.forEach(x => { if (x !== c && dayG(x, i) > g) r++; }); rs += r; rn++; }
-  const above = ['gph', 'ctr', 'cvr', 'aov'].filter(k => me[k] > avgOf(liveP, k)).length;
+  const above = (ui.ch === 'video' ? ['gpp', 'vpp', 'vcvr', 'vaov'] : ['gph', 'ctr', 'cvr', 'aov']).filter(k => me[k] > avgOf(liveP, k)).length;
   const src = c.srcM[P.to.slice(0, 7)] || c.srcM[MONTH], srcV = src.map(s => s * a.gmv), mainSrc = srcV.indexOf(Math.max(...srcV));
   const HI = [], LO = [], pcf = v => pc(v, 1);
   HI.push([`${P.label} total GMV: ${money(a.gmv)} `, dd(a.gmv, p.gmv), ' vs last month.']);
   if (a.gmv > 0) HI.push([`Main GMV source: ${SOURCES[mainSrc]} at ${money(srcV[mainSrc])}.`]);
-  [['LIVE GMV', 'lgmv', pa], ['Short video GMV', 'vgmv', pa], ['GMV per hour', 'gph', liveP], ['CVR', 'cvr', liveP]].forEach(x => { const r = rankOf(x[2], x[1]); if (HI.length < 5 && me[x[1]] > 0 && r <= 3 && me[x[1]] > avgOf(x[2], x[1])) HI.push([`${x[0]} ranks #${r} in tier and is above the peer average.`]); });
-  [['LIVE hours', 'hours', v => dec1(v) + 'h'], ['GMV per hour', 'gph', money], ['CTR', 'ctr', pcf], ['CVR', 'cvr', pcf]].forEach(x => { const d = ch(me[x[1]], was[x[1]]); if (LO.length < 2 && d !== null && d <= -.1) LO.push([`${x[0]} `, dd(me[x[1]], was[x[1]]), ` vs last month: ${x[2](me[x[1]])} against ${x[2](was[x[1]])}.`]); });
-  const gaps = [['Short video GMV', 'vgmv', pa, money], ['LIVE GMV', 'lgmv', pa, money], ['CTR', 'ctr', liveP, pcf], ['CVR', 'cvr', liveP, pcf], ['ERR', 'err', liveP, pcf], ['AOV', 'aov', liveP, money]]
+  (ui.ch === 'video' ? [['Short video GMV', 'vgmv', pa], ['GMV per post', 'gpp', liveP], ['Video conversion', 'vcvr', liveP], ['Views per video', 'vpp', liveP]] : ui.ch === 'live' ? [['LIVE GMV', 'lgmv', pa], ['GMV per hour', 'gph', liveP], ['CVR', 'cvr', liveP], ['AOV', 'aov', liveP]]
+    : [['LIVE GMV', 'lgmv', pa], ['Short video GMV', 'vgmv', pa], ['GMV per hour', 'gph', liveP], ['CVR', 'cvr', liveP]]).forEach(x => { const r = rankOf(x[2], x[1]); if (HI.length < 5 && me[x[1]] > 0 && r <= 3 && me[x[1]] > avgOf(x[2], x[1])) HI.push([`${x[0]} ranks #${r} in tier and is above the peer average.`]); });
+  (ui.ch === 'video' ? [['Video posts', 'posts', N], ['GMV per post', 'gpp', money], ['Views per video', 'vpp', N], ['Video conversion', 'vcvr', v => pc(v, 2)]] : [['LIVE hours', 'hours', v => dec1(v) + 'h'], ['GMV per hour', 'gph', money], ['CTR', 'ctr', pcf], ['CVR', 'cvr', pcf]]).forEach(x => { const d = ch(me[x[1]], was[x[1]]); if (LO.length < 2 && d !== null && d <= -.1) LO.push([`${x[0]} `, dd(me[x[1]], was[x[1]]), ` vs last month: ${x[2](me[x[1]])} against ${x[2](was[x[1]])}.`]); });
+  const gaps = (ui.ch === 'video' ? [['Short video GMV', 'vgmv', pa, money], ['GMV per post', 'gpp', liveP, money], ['Views per video', 'vpp', liveP, N], ['Video conversion', 'vcvr', liveP, v => pc(v, 2)], ['Video order value', 'vaov', liveP, money]]
+    : ui.ch === 'live' ? [['LIVE GMV', 'lgmv', pa, money], ['CTR', 'ctr', liveP, pcf], ['CVR', 'cvr', liveP, pcf], ['ERR', 'err', liveP, pcf], ['AOV', 'aov', liveP, money]]
+    : [['Short video GMV', 'vgmv', pa, money], ['LIVE GMV', 'lgmv', pa, money], ['CTR', 'ctr', liveP, pcf], ['CVR', 'cvr', liveP, pcf], ['ERR', 'err', liveP, pcf], ['AOV', 'aov', liveP, money]])
     .map(x => { const av = avgOf(x[2], x[1]); return {name: x[0], v: me[x[1]], av, fmt: x[3], gap: av > 0 ? 1 - me[x[1]] / av : 0}; }).filter(g => g.gap >= .15 && g.fmt(g.v) !== g.fmt(g.av)).sort((x, y) => y.gap - x.gap);
   gaps.forEach(g => { if (LO.length < 4) LO.push([`${g.name} is below the tier average: ${g.fmt(g.v)} against ${g.fmt(g.av)}.`]); });
   if (!LO.length) LO.push(['No weak spot against the tier in these dates.']);
@@ -1395,8 +1443,8 @@ function cardWeek(cv, c) {
   const maxT = Math.max(...p.days.map(d => d.target)) || 1, hs = p.days.map(d => 84 + Math.round(d.target / maxT * 34)), total = hs.reduce((a, b) => a + b, 0); let yy = y;
   x.save(); x.beginPath(); x.roundRect(64, y, W - 128, total + 12, 28); x.clip();
   p.days.forEach((d, i) => { const hh = hs[i], mid = yy + hh / 2 + 13; x.fillStyle = dayColor(d); x.fillRect(64, yy, W - 128, hh + (i === 6 ? 12 : 0)); if (i < 6) { x.fillStyle = CARD.line; x.fillRect(64, yy + hh - 1, W - 128, 2); }
-    tx(x, DAY[d.dow], 96, mid, '700 36px ' + FD, CARD.ink); tx(x, String(dateKeyParts(d.date).d), 190, mid, '400 32px ' + FD, CARD.soft); tx(x, d.target > 0 ? money(d.target) : 'LIVE', 270, mid, '700 40px ' + FD, CARD.ink);
-    tx(x, 'LIVE ' + d.hours + ' h', W - 96, mid - 20, '600 28px ' + FD, CARD.ink, 'right'); tx(x, 'start ' + d.slot.slice(0, 5), W - 96, mid + 18, '400 26px ' + FD, CARD.soft, 'right'); yy += hh; });
+    tx(x, DAY[d.dow], 96, mid, '700 36px ' + FD, CARD.ink); tx(x, String(dateKeyParts(d.date).d), 190, mid, '400 32px ' + FD, CARD.soft); tx(x, d.target > 0 ? money(d.target) : ui.ch === 'video' ? 'Post' : 'LIVE', 270, mid, '700 40px ' + FD, CARD.ink);
+    if (ui.ch === 'video') { tx(x, d.posts + (d.posts === 1 ? ' video' : ' videos'), W - 96, mid, '600 28px ' + FD, CARD.ink, 'right'); } else { tx(x, 'LIVE ' + d.hours + ' h', W - 96, mid - 20, '600 28px ' + FD, CARD.ink, 'right'); tx(x, 'start ' + d.slot.slice(0, 5), W - 96, mid + 18, '400 26px ' + FD, CARD.soft, 'right'); } yy += hh; });
   x.restore(); y += total + 12 + 40;
   let lx = 64; [[CARD.greenS, 'Strong day'], [CARD.paper, 'Normal'], [CARD.light, 'Light']].concat(p.days.some(d => d.campaign) ? [[CARD.amberS, 'Campaign']] : []).forEach(l => { rr(x, lx, y - 22, 26, 26, 8, l[0]); x.strokeStyle = CARD.line; x.lineWidth = 2; x.stroke(); tx(x, l[1], lx + 36, y, '400 26px ' + FD, CARD.soft); x.font = '400 26px ' + FD; lx += 36 + x.measureText(l[1]).width + 34; });
   y += 76; tx(x, 'Pin these products', 64, y, '700 40px ' + FD, CARD.ink); y += 24;
@@ -1411,13 +1459,13 @@ function cardToday(cv, c) {
   if (d.campaign) { const ct = 'Campaign ' + d.campaign; x.font = '600 30px ' + FD; rr(x, 64, 122, x.measureText(ct).width + 56, 58, 29, CARD.amberS); tx(x, ct, 92, 162, '600 30px ' + FD, CARD.amber); }
   let y = d.campaign ? 240 : 190; const cw = (W - 128 - 24) / 2, mt = c.a.monthTarget;
   tx(x, 'Target today', 64, y, '400 34px ' + FD, CARD.soft); tx(x, money(d.target), 64, y + 136, '700 140px ' + FD, CARD.ink); y += 190;
-  rr(x, 64, y, cw, 250, 28, CARD.greenS); tx(x, 'Start LIVE', 96, y + 62, '400 30px ' + FD, CARD.green); tx(x, d.slot.slice(0, 5), 96, y + 150, '700 80px ' + FD, CARD.ink); tx(x, 'at least ' + d.hours + ' hours', 96, y + 208, '400 30px ' + FD, CARD.ink);
+  rr(x, 64, y, cw, 250, 28, CARD.greenS); const vid = ui.ch === 'video'; tx(x, vid ? 'Post today' : 'Start LIVE', 96, y + 62, '400 30px ' + FD, CARD.green); tx(x, vid ? String(d.posts) : d.slot.slice(0, 5), 96, y + 150, '700 80px ' + FD, CARD.ink); tx(x, vid ? 'at least ' + d.posts + (d.posts === 1 ? ' video' : ' videos') : 'at least ' + d.hours + ' hours', 96, y + 208, '400 30px ' + FD, CARD.ink);
   const bx = 64 + cw + 24; rr(x, bx, y, cw, 250, 28, CARD.blueS); tx(x, 'Target ' + MONFULL[+mt.month.slice(5) - 1], bx + 32, y + 62, '400 30px ' + FD, CARD.soft); tx(x, mt.target ? Math.round(mt.progress * 100) + '%' : 'None yet', bx + 32, y + 150, '700 ' + (mt.target ? 80 : 56) + 'px ' + FD, CARD.ink); tx(x, mt.target ? 'of ' + money(mt.target) : '', bx + 32, y + 208, '400 30px ' + FD, CARD.ink);
   y += 316; tx(x, 'Last 7 days', 64, y, '700 40px ' + FD, CARD.ink); y += 30;
   const s7 = c.a.series.slice(-7), mx = Math.max(...s7.map(v => v.gmv)) || 1, bw = (W - 128 - 6 * 14) / 7;
   s7.forEach((v, i) => { const bx2 = 64 + i * (bw + 14), hh = v.gmv > 0 ? Math.max(10, v.gmv / mx * 150) : 6; rr(x, bx2, y + 150 - hh, bw, hh, [10, 10, 0, 0], v.gmv > 0 ? CARD.green : CARD.line); tx(x, DAY[dowOf(v.d)], bx2 + bw / 2, y + 192, '400 26px ' + FD, CARD.soft, 'center'); });
-  y += 244; const last = [...c.a.series].reverse().find(s => s.h > 0);
-  if (last) tx(x, `Last LIVE ${dShort(last.d)}: ${money(last.gmv)}, ${N(last.view)} viewers`, 64, y, '400 30px ' + FD, CARD.ink);
+  y += 244; const last = [...c.a.series].reverse().find(s => chAct(s.h, s.posts));
+  if (last) tx(x, ui.ch === 'video' ? `Last video day ${dShort(last.d)}: ${money(last.gmv)}, ${N(last.posts)} videos` : `Last LIVE ${dShort(last.d)}: ${money(last.gmv)}, ${N(last.view)} viewers`, 64, y, '400 30px ' + FD, CARD.ink);
   y += 70; tx(x, 'Selling most in the last 3 days', 64, y, '700 40px ' + FD, CARD.ink); y += 24;
   M.prod.hot.slice(0, 3).forEach(pr => { rr(x, 64, y, W - 128, 76, 18, CARD.paper); tx(x, fitText(x, pr.name + ' · ' + pr.merchant, '600 30px ' + FD, 700), 92, y + 49, '600 30px ' + FD, CARD.ink); tx(x, money(pr.price), W - 92, y + 49, '400 30px ' + FD, CARD.soft, 'right'); y += 86; });
   footer(x, W, H, 'All times in WIB');
@@ -1429,9 +1477,9 @@ function cardReport(cv, c) {
   if (r.change !== null) { const up = r.change >= 0, col = up ? CARD.green : CARD.red; tri(x, 64, 376, up, col, 30); tx(x, `${up ? 'Up' : 'Down'} ${Math.abs(Math.round(r.change * 100))}% from ${money(r.prevGmv)}`, 108, 376, '600 36px ' + FD, col); }
   let y = 430;
   if (r.targetWeek > 0) { const rt = Math.min(1.2, r.gmv / r.targetWeek); tx(x, `Target ${money(r.targetWeek)}, ${Math.round(r.gmv / r.targetWeek * 100)}% reached`, 64, y + 8, '400 30px ' + FD, CARD.ink); rr(x, 64, y + 28, W - 128, 26, 13, CARD.light); rr(x, 64, y + 28, Math.max(26, (W - 128) * Math.min(1, rt)), 26, 13, rt >= 1 ? CARD.green : CARD.amber); y += 92; }
-  const tw = (W - 128 - 24) / 2, th = 196, names = {hours: 'LIVE hours', vph: 'Viewers per hour', cvr: 'Conversion', aov: 'Order value'};
-  ['hours', 'vph', 'cvr', 'aov'].forEach((k, i) => { const l = r.levers[k], cx = 64 + (i % 2) * (tw + 24), cy = y + Math.floor(i / 2) * (th + 24), v = l.change, fill = v === null ? CARD.light : v >= .03 ? CARD.greenS : v <= -.03 ? CARD.redS : CARD.paper;
-    rr(x, cx, cy, tw, th, 24, fill); tx(x, names[k], cx + 30, cy + 54, '400 29px ' + FD, CARD.soft); tx(x, k === 'hours' ? Math.round(l.cur) + ' h' : k === 'vph' ? N(l.cur) : k === 'cvr' ? pc(l.cur, 2) : money(l.cur), cx + 30, cy + 124, '700 58px ' + FD, CARD.ink);
+  const tw = (W - 128 - 24) / 2, th = 196, names = {hours: 'LIVE hours', vph: 'Viewers per hour', cvr: 'Conversion', aov: 'Order value', posts: 'Video posts', vpp: 'Views per video', vcvr: 'Video conversion', vaov: 'Video order value'}, fmtL = (k, v) => k === 'hours' ? Math.round(v) + ' h' : k === 'cvr' || k === 'vcvr' ? pc(v, 2) : k === 'aov' || k === 'vaov' ? money(v) : N(v);
+  LEVKEYS().forEach((k, i) => { const l = r.levers[k], cx = 64 + (i % 2) * (tw + 24), cy = y + Math.floor(i / 2) * (th + 24), v = l.change, fill = v === null ? CARD.light : v >= .03 ? CARD.greenS : v <= -.03 ? CARD.redS : CARD.paper;
+    rr(x, cx, cy, tw, th, 24, fill); tx(x, names[k], cx + 30, cy + 54, '400 29px ' + FD, CARD.soft); tx(x, fmtL(k, l.cur), cx + 30, cy + 124, '700 58px ' + FD, CARD.ink);
     if (v !== null && Math.round(v * 100) !== 0) { tri(x, cx + 30, cy + 168, v >= 0, v >= 0 ? CARD.green : CARD.red, 20); tx(x, Math.abs(Math.round(v * 100)) + '%', cx + 60, cy + 168, '600 28px ' + FD, CARD.ink); } else tx(x, v === null ? 'nothing to compare yet' : 'same', cx + 30, cy + 168, '400 26px ' + FD, CARD.soft); });
   y += 2 * th + 24 + 70; tx(x, 'By day', 64, y, '700 40px ' + FD, CARD.ink); y += 24;
   const mx = Math.max(...r.days.map(v => v.gmv)) || 1, bw = (W - 128 - 6 * 14) / 7;
@@ -1480,8 +1528,10 @@ document.addEventListener('keydown', e => {
 /* What changed: the first thing to read about a creator. Same idea as the tracker's profile. */
 function whatChanged(c, P) {
   const a = agg(c, P.a, P.b), p = agg(c, P.pa, P.pb), la = lv(a), lp = lv(p);
-  const defs = [['LIVE hours', a.h, p.h, v => dec1(v) + ' h'], ['Viewers per hour', la.vph, lp.vph, N], ['Conversion', la.cvr, lp.cvr, v => pc(v, 2)], ['Order value', la.aov, lp.aov, money], ['Video posts', a.posts, p.posts, N], ['Views per video', la.vpp, lp.vpp, N],
-    ['LIVE GMV', a.lgmv, p.lgmv, money], ['Short video GMV', a.vgmv, p.vgmv, money], ['Orders', a.ord, p.ord, N]].map(x => ({n: x[0], cur: x[1], prev: x[2], f: x[3], d: ch(x[1], x[2])})).filter(x => x.d !== null);
+  const all9 = {hours: ['LIVE hours', a.h, p.h, v => dec1(v) + ' h'], vph: ['Viewers per hour', la.vph, lp.vph, N], cvr: ['Conversion', la.cvr, lp.cvr, v => pc(v, 2)], aov: ['Order value', la.aov, lp.aov, money], posts: ['Video posts', a.posts, p.posts, N], vpp: ['Views per video', la.vpp, lp.vpp, N],
+    vcvr: ['Video conversion', la.vcvr, lp.vcvr, v => pc(v, 2)], vaov: ['Video order value', la.vaov, lp.vaov, money], lgmv: ['LIVE GMV', a.lgmv, p.lgmv, money], vgmv: ['Short video GMV', a.vgmv, p.vgmv, money], ord: ['Orders', a.ord, p.ord, N]};
+  const order = ui.ch === 'live' ? ['lgmv', 'hours', 'vph', 'cvr', 'aov', 'ord'] : ui.ch === 'video' ? ['vgmv', 'posts', 'vpp', 'vcvr', 'vaov', 'ord'] : ['hours', 'vph', 'cvr', 'aov', 'posts', 'vpp', 'lgmv', 'vgmv', 'ord'];
+  const defs = order.map(k => all9[k]).map(x => ({n: x[0], cur: x[1], prev: x[2], f: x[3], d: ch(x[1], x[2])})).filter(x => x.d !== null);
   const up = defs.filter(x => x.d >= .05).sort((x, y) => y.d - x.d).slice(0, 5), down = defs.filter(x => x.d <= -.05).sort((x, y) => x.d - y.d).slice(0, 5);
   const prods = productsInRange(P.a, P.b, null, c.i, P.pa, P.pb).map(x => ({...x, d: x.cur - x.prev})), gain = prods.filter(x => x.d > 0).sort((x, y) => y.d - x.d)[0], drop = prods.filter(x => x.d < 0).sort((x, y) => x.d - y.d)[0];
   const wrow = x => h('div', {class: 'wrow'}, h('span', {}, x.n), h('span', {}, x.f(x.prev), ' → ', h('b', {}, x.f(x.cur)), ' ', chip((x.d >= 0 ? '▲ ' : '▼ ') + Math.abs(Math.round(x.d * 100)) + '%', x.d >= 0 ? '--growth' : '--rev', false)));
@@ -1496,16 +1546,21 @@ function profileTab(c, P) {
   const Xp = profile(c, P), a = Xp.a, me = Xp.me, T = TIERS[c.tier], hpd = a.ldays ? a.h / a.ldays : 0, show = a.show + a.view * 3.5, watch = a.views + a.view, watchP = Xp.p.views + Xp.p.view, fc = c.a.fc, mt = c.a.monthTarget, ch2 = fc.chance(mt.target);
   const list = items => h('ul', {}, items.map(x => h('li', {}, ...x)));
   return [whatChanged(c, P),
-    h('div', {class: 'mt'}, kstrip(3, kpi('Avg daily rank', Xp.avgRank ? '#' + dec1(Xp.avgRank) : '-', {sub: `in ${c.tier}, days with sales`}), kpi(`${P.m.k} GMV rank`, '#' + Xp.gmvRank, {sub: `of ${Xp.peers} in tier`}), kpi('Efficiency', a.h ? money(me.gph) + ' / hr' : 'No LIVE', {sub: a.h ? `${money(a.lgmv / Math.max(1, a.ses))} a session` : 'in these dates'}),
-      kpi('Above tier average', `${Xp.above} / 4`, {sub: 'GMV/hr, CTR, CVR, AOV'}), kpi('LIVE hours a day', dec1(hpd) + ' h', {sub: `target ${T.tH} h`}), kpi('Peer set', N(Xp.peers), {sub: `${c.tier} creators`}))),
+    h('div', {class: 'mt'}, kstrip(3, kpi('Avg daily rank', Xp.avgRank ? '#' + dec1(Xp.avgRank) : '-', {sub: `in ${c.tier}, days with sales`}), kpi(`${P.m.k} GMV rank`, '#' + Xp.gmvRank, {sub: `of ${Xp.peers} in tier`}), ui.ch === 'video' ? kpi('Efficiency', a.posts ? money(me.gpp) + ' / post' : 'No videos', {sub: `${N(a.posts)} posts in these dates`}) : kpi('Efficiency', a.h ? money(me.gph) + ' / hr' : 'No LIVE', {sub: a.h ? `${money(a.lgmv / Math.max(1, a.ses))} a session` : 'in these dates'}),
+      kpi('Above tier average', `${Xp.above} / 4`, {sub: 'GMV/hr, CTR, CVR, AOV'}), ui.ch === 'video' ? kpi('Videos a day', dec1(a.posts / Math.max(1, a.days)), {sub: `tier norm ${dec1(T.post * 1.3)}`}) : kpi('LIVE hours a day', dec1(hpd) + ' h', {sub: `target ${T.tH} h`}), kpi('Peer set', N(Xp.peers), {sub: `${c.tier} creators`}))),
     h('section', {class: 'card mt'}, h('div', {class: 'cols3'}, block('Highlights', list(Xp.HI)), block('Lowlights', list(Xp.LO)), block('Priority action', list(Xp.PA.map(x => [x]))))),
-    h('section', {class: 'card mt'}, h('div', {class: 'cols3'},
-      block('Overall GMV', mrow('Total GMV', money(a.gmv), dd(a.gmv, Xp.p.gmv)), mrow('LIVE GMV', money(a.lgmv)), mrow('Short video GMV', money(a.vgmv)), mrow('LIVE share', a.gmv ? pc(a.lgmv / a.gmv, 1) : '-')),
-      block('LIVE activeness', mrow('Sessions', N(a.ses)), mrow('Hours', dec1(a.h), dd(a.h, Xp.p.h)), mrow('GMV / hour', money(me.gph), dd(me.gph, Xp.was.gph)), mrow('GMV / session', money(a.lgmv / Math.max(1, a.ses)))),
-      block('LIVE performance', mrow('CTR', pc(me.ctr, 1)), mrow('CVR', pc(me.cvr, 1)), mrow('ERR', pc(me.err, 1)), mrow('AOV', money(me.aov))),
-      block('Traffic', mrow('Organic show PV', big(show)), mrow('Organic watch PV', big(watch), dd(watch, watchP)), mrow('Watch / show', show ? pc(watch / show, 1) : '-'), mrow('Ads show PV', big(a.ads))),
-      block('GMV source', [0, 1, 2, 3].map(k => mrow(SOURCES[k] + ' GMV', money(Xp.src[k])))),
-      block('November', mrow('Projected', money(fc.mu)), mrow('Target', mt.target ? money(mt.target) : '-'), mrow('Chance', ch2 == null ? '-' : Math.round(ch2 * 100) + '%'), mrow('Needed a day', mt.target ? money(fc.need(mt.target)) : '-'))))];
+    h('section', {class: 'card mt'}, h('div', {class: 'cols3'}, ...(() => {
+      const overall = block('Overall GMV', mrow('Total GMV', money(a.gmv), dd(a.gmv, Xp.p.gmv)), ...(ui.ch === 'all' ? [mrow('LIVE GMV', money(a.lgmv)), mrow('Short video GMV', money(a.vgmv)), mrow('LIVE share', a.gmv ? pc(a.lgmv / a.gmv, 1) : '-')]
+          : [mrow('Orders', N(a.ord), dd(a.ord, Xp.p.ord)), mrow('Order value', money(a.ord ? a.gmv / a.ord : 0)), mrow('Share of all GMV', pc(ratio(a.gmv, a.lgmv + a.vgmv), 1))]));
+      const liveAct = block('LIVE activeness', mrow('Sessions', N(a.ses)), mrow('Hours', dec1(a.h), dd(a.h, Xp.p.h)), mrow('GMV / hour', money(me.gph), dd(me.gph, Xp.was.gph)), mrow('GMV / session', money(a.lgmv / Math.max(1, a.ses))));
+      const livePerf = block('LIVE performance', mrow('CTR', pc(me.ctr, 1)), mrow('CVR', pc(me.cvr, 1)), mrow('ERR', pc(me.err, 1)), mrow('AOV', money(me.aov)));
+      const traffic = block('Traffic', mrow('Organic show PV', big(show)), mrow('Organic watch PV', big(watch), dd(watch, watchP)), mrow('Watch / show', show ? pc(watch / show, 1) : '-'), mrow('Ads show PV', big(a.ads)));
+      const audience = block('Audience', mrow('Viewers', big(a.view), dd(a.view, Xp.p.view)), mrow('Viewers / hour', N(a.h ? a.view / a.h : 0)), mrow('Product clicks', big(a.clk)), mrow('Engagement', pc(me.err, 1)));
+      const vidAct = block('Video activeness', mrow('Posts', N(a.posts), dd(a.posts, Xp.p.posts)), mrow('Posting days', N(a.days)), mrow('Views', big(a.views), dd(a.views, Xp.p.views)), mrow('Views / video', N(me.vpp), dd(me.vpp, Xp.was.vpp)));
+      const vidPerf = block('Video performance', mrow('GMV / post', money(me.gpp), dd(me.gpp, Xp.was.gpp)), mrow('Conversion', pc(me.vcvr, 2)), mrow('Order value', money(me.vaov)), mrow('Orders', N(a.vord)));
+      const src = block('GMV source', [0, 1, 2, 3].map(k => mrow(SOURCES[k] + ' GMV', money(Xp.src[k])))), nov = block('November', mrow('Projected', money(fc.mu)), mrow('Target', mt.target ? money(mt.target) : '-'), mrow('Chance', ch2 == null ? '-' : Math.round(ch2 * 100) + '%'), mrow('Needed a day', mt.target ? money(fc.need(mt.target)) : '-'));
+      return ui.ch === 'live' ? [overall, liveAct, livePerf, audience, src, nov] : ui.ch === 'video' ? [overall, vidAct, vidPerf, traffic, src, nov] : [overall, liveAct, livePerf, traffic, src, nov];
+    })()))];
 }
 function downloadKind(c, kind) { const cv = document.createElement('canvas'); drawCard(cv, c, kind).then(() => downloadCanvas(cv, fileNameFor(c, kind))); }
 
@@ -1528,13 +1583,13 @@ function creatorDetail(c, pos, total) {
           tg ? meterRow(Math.min(100, mt.progress * 100), fcs[1], `${Math.round(mt.progress * 100)}% reached`, '100%') : null,
           h('div', {style: 'display:flex;gap:8px;flex-wrap:wrap'}, h('button', {class: 'btn sm', onclick: () => goPage('Targets', {tq: c.id})}, 'Change target'), help('forecast', 'How it works')))))];
   } else if (tab === 'perf') {
-    const lev = ['hours', 'vph', 'cvr', 'aov', 'posts', 'vpp'].map(k => { const l = X.levers[k], v = l.change, w = v === null ? 0 : Math.min(50, Math.abs(v) * 50), f = x => k === 'hours' ? dec1(x) + ' h' : k === 'cvr' ? pc(x, 2) : k === 'aov' ? money(x) : N(x);
+    const lev = (ui.ch === 'all' ? ['hours', 'vph', 'cvr', 'aov', 'posts', 'vpp'] : LEVKEYS()).map(k => { const l = X.levers[k], v = l.change, w = v === null ? 0 : Math.min(50, Math.abs(v) * 50), f = x => k === 'hours' ? dec1(x) + ' h' : k === 'cvr' || k === 'vcvr' ? pc(x, 2) : k === 'aov' || k === 'vaov' ? money(x) : N(x);
       return h('div', {class: 'lever'}, h('div', {}, LEVN[k], h('small', {}, `${f(l.cur)}, before ${f(l.prev)}`)), h('div', {class: 'ltrack'}, v === null ? null : h('i', {class: v < 0 ? 'neg' : 'pos', style: `${v < 0 ? 'right:50%' : 'left:50%'};width:${w}%`})), h('div', {class: 'r'}, dd(l.cur, l.prev))); });
     const picks = X.bestSlots.map(s => s.b), ser = []; for (let i = P.a; i <= P.b; i++) ser.push({d: dk(i), live: c.L.gmv[i], vid: c.V.gmv[i]});
     body = [h('div', {class: 'grid g21'}, card(`Focus this week: ${X.focus.title}`, `${X.focus.sub} Last 7 days against the 7 before.`, h('div', {}, lev)),
         card('What to do', 'The three moves for this week.', h('ul', {class: 'ds', style: 'margin:0;padding-left:18px'}, X.focus.actions.map(a => h('li', {style: 'margin:6px 0'}, a))))),
-      h('div', {class: 'grid g2 mt'}, X.slots.length ? card('Best hours to go LIVE', `Orange = suggested (${X.bestSlots[0].evidence}). WIB.`, columns(X.slots.map(s => ({label: String(s.b * 2).padStart(2, '0'), value: s.gpv, c: picks.includes(s.b) ? '--ops' : s.n ? '--base' : '--faint'})), {fmt: v => '$' + v.toFixed(2), height: 190})) : null,
-        card(`Every day · ${P.label}`, 'LIVE and short video GMV.', area([{name: 'LIVE', values: ser.map(s => s.live), c: '--base'}, {name: 'Short video', values: ser.map(s => s.vid), c: '--ops'}], ser.map(s => String(dateKeyParts(s.d).d)), {fmt: short, height: 190})))];
+      h('div', {class: ui.ch === 'video' ? 'grid mt' : 'grid g2 mt'}, X.slots.length && ui.ch !== 'video' ? card('Best hours to go LIVE', `Orange = suggested (${X.bestSlots[0].evidence}). WIB.`, columns(X.slots.map(s => ({label: String(s.b * 2).padStart(2, '0'), value: s.gpv, c: picks.includes(s.b) ? '--ops' : s.n ? '--base' : '--faint'})), {fmt: v => '$' + v.toFixed(2), height: 190})) : null,
+        card(`Every day · ${P.label}`, 'LIVE and short video GMV.', area([{name: 'LIVE', values: ser.map(s => s.live), c: '--base'}, {name: 'Short video', values: ser.map(s => s.vid), c: '--ops'}].filter(s => ui.ch === 'all' || (ui.ch === 'live' ? s.name === 'LIVE' : s.name === 'Short video')), ser.map(s => String(dateKeyParts(s.d).d)), {fmt: short, height: 190})))];
   } else if (tab === 'compare') {
     const ww = compareWindows('wow', periodOptions('wow')[0].key), mm = compareWindows('mom', periodOptions('mom')[0].key);
     body = h('div', {class: 'grid g2'}, card('Week on week · same week last month', null, h('div', {}, compareNote(ww), compareTable(compareRows([c], ww), ww))), card('Month on month · this month against last month', null, h('div', {}, compareNote(mm), compareTable(compareRows([c], mm), mm))));
@@ -1550,6 +1605,8 @@ function creatorDetail(c, pos, total) {
     body = h('div', {class: 'grid gcards'}, card('Preview', null, h('div', {class: 'stack', style: 'gap:10px'}, seg(kinds.map(k => [k[0], k[1]]), kind, v => { ui.card = v; render(); }, 'Card'), cv)),
       card('What to send, and when', 'Cards never show boost numbers, so they are safe to send.', h('div', {}, kinds.map(k => h('div', {class: 'mrow', style: 'align-items:center'}, h('span', {}, h('b', {style: 'color:var(--text);font-weight:600'}, k[1]), h('span', {class: 'hint wrapcell', style: 'min-width:0'}, k[2])), h('button', {class: 'btn sm primary', onclick: () => downloadKind(c, k[0])}, 'Download'))))));
     setTimeout(() => drawCard(cv, c, kind), 0);
+  } else if (ui.ch === 'video') {
+    body = card('Boost · Livestream only', null, h('div', {}, h('p', {class: 'small', style: 'margin:0 0 10px'}, 'A boost adds viewers to a LIVE, so it only applies to Livestream. Switch the channel to see the boost call for this creator.'), h('button', {class: 'btn primary', onclick: () => { ui.ch = 'live'; analyze(); render(); }}, 'Show Livestream')));
   } else {
     let inner;
     if (b.verdict === 'go' || b.verdict === 'test') inner = h('div', {}, h('div', {class: 'big'}, `${money(b.perDay)} a boost, ${b.days} days`), h('p', {class: 'small', style: 'margin:4px 0 10px'}, `${b.verdict === 'test' ? 'Still thin, so start with a small test. ' : ''}Best time ${X.bestSlots.map(s => s.label).join(' or ')} WIB. Total this week ${money(b.week)}.`),
@@ -1585,7 +1642,7 @@ PAGES['Targets'] = () => {
   const dirty = () => [...document.querySelectorAll('.tinput')].filter(i => { const v = parseMoney(i.value); return String(v === null ? '' : v) !== i.dataset.orig; });
   const refresh = () => { const d = dirty(), bar = $('#savebar'); if (!bar) return; bar.style.display = d.length ? 'flex' : 'none'; $('#savecount').textContent = `${d.length} ${d.length === 1 ? 'target' : 'targets'} changed`; document.querySelectorAll('.tinput').forEach(i => { const v = parseMoney(i.value); i.classList.toggle('bad', v !== null && isNaN(v)); i.classList.toggle('dirty', d.includes(i)); }); };
   const save = () => { const d = dirty(); for (const i of d) { const v = parseMoney(i.value); if (v !== null && isNaN(v)) { i.focus(); toast(`The target for ${i.dataset.cid} isn’t a number yet. Example: 12k.`); return; } }
-    d.forEach(inp => { const v = parseMoney(inp.value), k = MONTH + '|' + inp.dataset.cid; if (v > 0) TGT[k] = v; else delete TGT[k]; });
+    d.forEach(inp => { const v = parseMoney(inp.value), k = tkey(inp.dataset.cid); if (v > 0) TGT[k] = v; else delete TGT[k]; });
     try { localStorage.setItem('co-targets', JSON.stringify(TGT)); } catch (e) {}
     analyze(); render(); toast(`${d.length} ${d.length === 1 ? 'target' : 'targets'} saved.`); };
   const tbl = table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 'g7', label: 'GMV 7 days', num: true, fmt: money}, {k: 'sug', label: 'Suggested', num: true, render: r => r.sug ? money(r.sug) : h('span', {class: 'muted'}, '-')},
@@ -1596,12 +1653,14 @@ PAGES['Targets'] = () => {
     {sortKey: null, pageSize: 20, state: ui.tab.tgState ||= (ui.tab.tq ? {q: ui.tab.tq.toLowerCase()} : {}), tools: [help('targets')]});
   ui.tab.tq = '';
   const bar = h('div', {class: 'savebar', id: 'savebar', style: 'display:none'}, h('span', {id: 'savecount'}), h('button', {class: 'btn sm', onclick: save}, 'Save targets'));
-  return [h('section', {class: 'card'}, verdictBox(FCS(chance)[1], `Targets · ${name}`, `${money(total)} across ${N(L.length)} creators`, `${customN} use a target from you, the rest use the suggestion. On course for ${money(fc.mu)}: a ${Math.round((chance || 0) * 100)}% chance to reach the total.`, 'Reached so far', money(sum(L, c => c.a.monthTarget.gmv)))),
-    row(card('Each creator’s target', 'Type 12000, 12k or 1.5m in the money shown at the top. Leave it empty to use the suggestion. Saved in this browser only (demo).', tbl)), bar];
+  return [h('section', {class: 'card'}, verdictBox(FCS(chance)[1], `Targets${chTag()} · ${name}`, `${money(total)} across ${N(L.length)} creators`, `${customN} use a target from you, the rest use the suggestion. On course for ${money(fc.mu)}: a ${Math.round((chance || 0) * 100)}% chance to reach the total.`, 'Reached so far', money(sum(L, c => c.a.monthTarget.gmv)))),
+    row(card('Each creator’s target', 'Type 12000, 12k or 1.5m in the money shown at the top. Leave it empty to use the suggestion. Targets are kept per channel. Saved in this browser only (demo).', tbl)), bar];
 };
 
 /* ================= Boost (internal): three tabs ================= */
 PAGES['Boost'] = () => {
+  if (ui.ch === 'video') return [verdictBox('--ops', 'Boost · internal, don\u2019t share with creators', 'Boosts only apply to Livestream', 'A boost adds viewers to a LIVE. Switch the channel to Livestream (or Livestream and Video) to see who to boost.'),
+    row(card('Switch channel', null, h('button', {class: 'btn primary', onclick: () => { ui.ch = 'live'; analyze(); render(); }}, 'Show Livestream')))];
   const st = SETTINGS, bev = M.boostEval, sm = bev.summary, n = tot(CREATORS, A - 6, A), gpvNet = n.view ? n.lgmv / n.view : 0, L = CREATORS.filter(F), tab = ui.tab.bt || 'who';
   const ok = L.filter(c => c.a.boost.week > 0).sort((a, b) => b.a.boost.week - a.a.boost.week), total = sum(ok, c => c.a.boost.week);
   const ranked = L.filter(c => c.a.cur.lgmv > 0 && c.a.boost.verdict !== 'off' && c.a.boost.verdict !== 'fix').sort((a, b) => b.a.boost.minRoas - a.a.boost.minRoas), cand = ranked.filter(c => c.a.cur.lgmv >= 1500).slice(0, 3);
@@ -1665,7 +1724,7 @@ PAGES['Upload data'] = () => {
 /* ================= Guide ================= */
 PAGES['Guide'] = () => {
   const steps = [['Put the files in', 'Open Upload data, drop the TikTok files in the box and wait for the done message.'], ['Read the Summary', 'The situation, then Fix, Push and Guard. Fix first, biggest loss at the top.'], ['Click the creator', 'Read the call and what to do. That is the main problem and the next step.'], ['Send the card', 'Open Cards to send on the creator page, click Download image and send it.']];
-  const order = ['summary', 'triage', 'monitor', 'forecast', 'dates', 'creator', 'cards', 'compare', 'sales', 'products', 'hours', 'targets', 'boost', 'data'];
+  const order = ['summary', 'channel', 'triage', 'monitor', 'forecast', 'dates', 'creator', 'cards', 'compare', 'sales', 'products', 'hours', 'targets', 'boost', 'data'];
   return [h('div', {class: 'grid g12'}, card('What to do each morning', null, h('div', {}, steps.map((s, i) => h('div', {class: 'guide-step'}, h('i', {}, String(i + 1)), h('div', {}, h('b', {}, s[0]), h('br'), s[1]))))),
       card('What the words mean', null, h('div', {}, WORDS.map(w => h('div', {class: 'word'}, h('b', {}, w[0]), h('div', {}, w[1])))))),
     row(card('Every page, explained', 'Open one to read it.', h('div', {}, order.map(k => h('details', {class: 'acc'}, h('summary', {}, h('b', {style: 'font-weight:600'}, HELP[k].t), h('span', {class: 'muted'}, HELP[k].a)), h('div', {class: 'acc-b ds dlg', style: 'padding:0 0 12px;gap:8px'}, ...helpBody(k)))))))];
@@ -1722,6 +1781,8 @@ const HELP = {
   data: {t: 'Upload data', a: 'Where TikTok files go into the app.', b: 'Every day or every week, before looking at the numbers.', c: 'Download LIVE Rooms, LIVE Products and Video Performance from TikTok and drop them in the box.', more: ['The same data never counts twice.', 'If a number changed, the newest one is used.', 'Times change to WIB on their own.', 'This demo uses sample data, so files are not read.']},
   boost: {t: 'Boost', a: 'Boost means paying TikTok so more people see a LIVE. This part is internal, so don’t share it with creators.', b: 'Before deciding whether to pay for a boost.', c: 'Look at the decision word, then read the reasons under the creator’s name.', more: ['Boost: the numbers make sense.', 'Small test: still thin, try a little first.', 'Hold off: the cost is bigger than the expected return.', 'Fix the products first: viewers aren’t buying yet, so a boost won’t help.', 'After a boost, log it so the app learns from the real result.', 'Campaign: special dates like 11.11. A multiplier of 1.3 gives that day 30% more of the target.']}
 };
+HELP.channel = {t: 'Video and Livestream', a: 'The switch at the top right splits every number into Livestream (LIVE) and Video (short video), or shows both together.', b: 'When you want to fix LIVE and video separately, because they work differently.', c: 'Pick All, Video or Livestream. Every page follows it: the numbers, the status, the Fix / Push / Guard call, the forecast, the targets and the cards.',
+  more: ['Livestream: hours, viewers per hour, conversion and order value drive GMV.', 'Video: posts, views per video, video conversion and order value drive GMV.', 'Targets are kept per channel, so a Livestream target and a Video target can differ.', 'Boost and the hour charts use LIVE sessions, so they are Livestream only.']};
 const WORDS = [['GMV', 'All the money from items sold.'], ['LIVE viewers', 'People who came into the LIVE.'], ['Viewers per hour', 'How many people came in during one hour of LIVE.'], ['Conversion', 'Out of 100 viewers, how many bought.'], ['Order value (AOV)', 'Average money from one purchase.'], ['CTR', 'Out of 100 viewers, how many clicked a product.'], ['CVR', 'Out of 100 clicks, how many became an order.'], ['ERR', 'Likes, comments and shares for each viewer.'],
   ['Show PV and watch PV', 'How often the content was shown, and how often it was watched.'], ['Tier and peer set', 'The creator’s group (KLS, Potential, Rising, New) and everyone in it.'], ['Fix / Push / Guard', 'The one call per creator: fix a loss, push a gain, guard what works.'], ['Commission', 'The creator’s share of each sale.'], ['WIB', 'Jakarta time. Every time in the app uses it.'], ['WoW', 'One week against the same week last month.'], ['MoM', 'This month against last month.']];
 const helpBody = k => { const x = HELP[k]; return [h('p', {}, h('b', {}, 'What is it? '), x.a), h('p', {}, h('b', {}, 'When is it used? '), x.b), h('p', {}, h('b', {}, 'What do you do? '), x.c), x.more ? h('ul', {}, x.more.map(m => h('li', {}, m))) : null]; };
@@ -1742,7 +1803,7 @@ function rangeBox(fg) {
     h('span', {class: 'muted small'}, `vs ${P.plabel}`)];
 }
 function render() {
-  try { localStorage.setItem('co-sim1', JSON.stringify({page: ui.page, theme: ui.theme})); } catch (e) {}
+  try { localStorage.setItem('co-sim1', JSON.stringify({page: ui.page, theme: ui.theme, ch: ui.ch})); } catch (e) {}
   document.documentElement.dataset.theme = ui.theme;
   $('#theme').textContent = ui.theme === 'dark' ? 'Light mode' : 'Dark mode';
   if (!PAGES_ALL.includes(ui.page)) ui.page = 'Summary';
@@ -1755,7 +1816,7 @@ function render() {
   put($('#filters'), ...rangeBox(fg), fg('Money', seg([['USD', 'USD'], ['IDR', 'IDR']], ui.cur, v => { ui.cur = v; render(); }, 'Money')), fg('Tier', seg([['', 'All'], ...TIER_LIST.map(t => [t, t])], ui.f.tier, v => { ui.f.tier = v; render(); }, 'Tier')),
     fg('Area', h('select', {'aria-label': 'Area', onchange: e => { ui.f.area = e.target.value; render(); }}, h('option', {value: ''}, 'All areas'),
       [['Province', 'p', PROVINCES], ['City', 'c', CITIES.map(x => x[0])]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v)))))));
-  const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])));
+  const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])), h('div', {class: 'chsw'}, seg([['all', 'All'], ['video', 'Video'], ['live', 'Livestream']], ui.ch, v => { ui.ch = v; analyze(); render(); }, 'Channel')));
   const y = $('main').scrollTop; put($('#page'), head, PAGES[ui.page]()); $('main').scrollTop = y;
 }
 $('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
@@ -1763,7 +1824,7 @@ $('#menu').onclick = () => document.body.classList.toggle('nav-open');
 $('#fbtn').onclick = () => document.body.classList.toggle('filters-open');
 $('#drawer').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.close(); };
 $('#modal').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.close(); };
-try { const s = JSON.parse(localStorage.getItem('co-sim1') || '{}'); if (s.theme) ui.theme = s.theme; if (s.page && PAGES_ALL.includes(s.page)) ui.page = s.page; } catch (e) {}
+try { const s = JSON.parse(localStorage.getItem('co-sim1') || '{}'); if (s.theme) ui.theme = s.theme; if (['all', 'live', 'video'].includes(s.ch)) ui.ch = s.ch; if (s.page && PAGES_ALL.includes(s.page)) ui.page = s.page; } catch (e) {}
 analyze();
 setRange('mtd');
 render();
