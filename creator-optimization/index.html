@@ -308,7 +308,6 @@ a.btn{color:inherit}
 .mover .who{flex:1}
 .mv-v{text-align:right;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;white-space:nowrap}
 .mv-v small{color:var(--muted);font-size:11px}
-.signals{display:flex;flex-direction:column}
 .signal{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
 .signal:first-child{border-top:none}
 .signal>i{width:8px;height:8px;border-radius:50%;background:var(--c);flex-shrink:0}
@@ -327,8 +326,10 @@ code.small{font-size:11px;white-space:normal;word-break:break-word;color:var(--m
 @media (max-width:820px){:root{--pad:16px}main{padding:0 14px 40px}.top,.filters{padding-left:14px;padding-right:14px}.ph{padding:18px 0 14px}h1{font-size:20px}.kpi .v{font-size:21px}}
 
 /* Creator Optimization additions: creator profile, levers, triage, cards */
-.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.prof-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .ava-xl{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:23px;font-weight:700;color:#fff;background:linear-gradient(145deg,#34c759,#1f8a3b);flex-shrink:0}
+.prof-h h2{margin:0;font-size:22px;letter-spacing:-.02em;font-weight:700}
+.prof-h .meta{color:var(--muted);font-size:12.5px;margin-top:2px}
 .exec ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.5}
 .exec li{margin:6px 0}
 .mrow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
@@ -382,7 +383,6 @@ code.small{font-size:11px;white-space:normal;word-break:break-word;color:var(--m
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
 .formgrid label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);font-weight:500}
 .ds{font-size:12.5px;line-height:1.55;color:var(--text)}
-@media (max-width:1180px){.g5{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:820px){.g5{grid-template-columns:repeat(2,minmax(0,1fr))}.lever{grid-template-columns:120px minmax(0,1fr) 60px}.word{grid-template-columns:110px minmax(0,1fr)}.preview{position:static}}
 .acc{border-top:1px solid var(--line)}
 .acc:first-child{border-top:none}
@@ -396,6 +396,84 @@ code.small{font-size:11px;white-space:normal;word-break:break-word;color:var(--m
 @media (max-width:820px){.ph .chips{width:100%}}
 #fbtn{display:none}
 @media (max-width:820px){#fbtn{display:inline-flex}.filters{display:none}body.filters-open .filters{display:flex}}
+
+/* Tighter, fuller layout: less air between blocks, numbers spread across the full width */
+:root{--pad:16px}
+main{padding:0 20px 36px}
+.top{padding:0 20px;height:46px}
+.filters{padding:7px 20px;gap:14px}
+.ph{padding:14px 0 10px;align-items:center}
+h1{font-size:20px}
+.sub{font-size:12.5px;margin:2px 0 0}
+.grid{gap:12px}
+.mt{margin-top:12px}
+.card{padding:14px var(--pad)}
+.card-h{margin-bottom:10px}
+.card-h h3{font-size:13.5px}
+.card-h p{font-size:12px;margin-top:2px}
+.kpi{padding:11px var(--pad) 12px}
+.kpi .v{font-size:21px}
+.tbl{margin:0 calc(var(--pad) * -1) -14px}
+th{padding:8px 12px}
+td{padding:5px 12px;height:40px}
+.page > .section-t{margin:18px 0 8px;font-size:14px}
+.page > .section-t + p{margin:0 0 8px!important}
+.verdict{padding:10px 16px}
+.verdict-v{font-size:18px}
+.verdict-n b{font-size:22px}
+.card:has(> .verdict:only-child){padding:0;border:none;background:none;box-shadow:none}
+.grid.kgrid:has(> .kpi){display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr))}
+.ins{padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;line-height:1.45}
+.ins:first-child{border-top:none;padding-top:0}
+.itag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;border-radius:4px;padding:1px 6px;margin-right:7px;vertical-align:1px;color:var(--c);background:color-mix(in srgb,var(--c) calc(var(--tint)*100%),transparent)}
+.ch4{margin:0 0 8px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px}
+.cols3 > div{padding:0 16px;border-left:1px solid var(--line)}
+.cols3 > div:nth-child(3n+1){padding-left:0;border-left:none}
+.cols3 > div:nth-child(n+4){border-top:1px solid var(--line);padding-top:14px;margin-top:0}
+.cols3 > div:nth-child(n+4):nth-child(3n+2),.cols3 > div:nth-child(n+4):nth-child(3n){border-left:1px solid var(--line)}
+.cols3 ul{margin:0;padding-left:16px;font-size:12.5px;line-height:1.5}
+.cols3 li{margin:5px 0}
+.wc{background:color-mix(in srgb,var(--base) 6%,var(--panel));border-color:color-mix(in srgb,var(--base) 22%,var(--line))}
+.wc-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.wc-h h3{margin:0;font-size:14px}
+.wc-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.wbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;min-width:0}
+.wbox .l{font-size:11.5px;color:var(--muted);font-weight:600}
+.wbox .v{font-size:21px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.3}
+.wbox h4{margin:0 0 6px;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700}
+.wbox.up h4{color:var(--growth)}.wbox.down h4{color:var(--rev)}
+.wrow{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.wrow:first-of-type{border-top:none}
+.chk{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:14px;align-items:start}
+.chk-main{min-width:0}
+.chk-list.card{position:sticky;top:8px;display:flex;flex-direction:column;max-height:calc(100vh - 150px);padding:0;overflow:hidden}
+.chk-top{padding:12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.chk-items{overflow:auto;flex:1;position:relative}
+.chk-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;padding:8px 12px;border-top:1px solid var(--line);border-radius:0}
+.chk-row:first-child{border-top:none}
+.chk-row:hover{background:var(--hover)}
+.chk-row.on{background:color-mix(in srgb,var(--base) 10%,var(--panel));box-shadow:inset 3px 0 0 var(--base)}
+.chk-row b{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+.chk-row small{color:var(--muted);font-size:11px;display:flex;gap:6px;align-items:center;min-width:0;white-space:nowrap;overflow:hidden}
+.chk-row .chip{font-size:10px;padding:0 5px}
+.chk-v{text-align:right;font-variant-numeric:tabular-nums}
+.chk-v small{justify-content:flex-end}
+.chk-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.gcards{grid-template-columns:minmax(0,420px) minmax(0,1fr);align-items:start}
+.prof-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.ava-xl{width:44px;height:44px;border-radius:13px;font-size:19px}
+.prof-h h2{font-size:18px}
+@media (max-width:1100px){.chk{grid-template-columns:minmax(0,1fr)}.chk-list.card{position:static;max-height:300px}.gcards{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){.grid.kgrid:has(> .kpi){grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:minmax(0,1fr)}.cols3 > div,.cols3 > div:nth-child(n){padding:12px 0 0;border-left:none;border-top:1px solid var(--line)}.cols3 > div:first-child{border-top:none;padding-top:0}.wc-g{grid-template-columns:minmax(0,1fr)}}
+.flabel{display:none}
+.fgroup + .fgroup{padding-left:12px}
+.filters{gap:12px}
+.wc-c{display:flex;flex-direction:column;gap:10px;min-width:0}
+.wc-c > :last-child{flex:1}
+.chk-top .seg{flex-wrap:nowrap;width:100%}
+.chk-top .seg button{flex:1 1 auto;font-size:11.5px;padding:4px 5px;white-space:nowrap}
+@media (max-width:820px){.top{height:auto;padding:8px 12px;flex-wrap:wrap}main{padding:0 12px 32px}.filters{padding:8px 12px}}
 </style>
 </head>
 <body>
@@ -1008,9 +1086,9 @@ const SC = {down: '--rev', up: '--growth', stable: '--base', new: '--muted', sto
 const statusChip = s => chip(STATUS[s], SC[s]);
 const bucketChip = b => chip(BK[b][0], BK[b][1], false);
 const chanceChip = c => { const s = FCS(c); return chip(c == null ? s[0] : `${s[0]} · ${Math.round(c * 100)}%`, s[1]); };
-const openCreator = (id, tab) => { ui.creator = id; ui.card = 'week'; ui.tab.ct = tab || 'profile'; render(); $('main').scrollTop = 0; };
+const openCreator = (id, tab, group) => { ui.page = 'Creator check'; ui.creator = id; ui.card = 'week'; ui.tab.ct = tab || 'profile'; ui.tab.ckf = group || 'all'; ui.tab.ckq = ''; ui.ckScroll = null; render(); $('main').scrollTop = 0; };
 const who = c => person(c.id, `${c.tier} · ${c.city}`);
-const goPage = (p, extra) => { ui.page = p; ui.creator = null; Object.assign(ui.tab, extra || {}); render(); $('main').scrollTop = 0; };
+const goPage = (p, extra) => { ui.page = p; Object.assign(ui.tab, extra || {}); render(); $('main').scrollTop = 0; };
 const line = (c, label, ...txt) => h('div', {class: 'signal', style: `--c:var(${c})`}, h('i'), h('span', {class: 'grow'}, h('b', {}, label + ' '), ...txt));
 const wrapText = t => h('span', {class: 'wrapcell'}, t);
 const help = (k, label) => h('button', {class: 'btn sm', onclick: () => showHelp(k)}, label || 'What is this?');
@@ -1150,12 +1228,15 @@ PAGES['Hours and days'] = () => {
       h('p', {class: 'muted small', style: 'margin:10px 0 0'}, 'TikTok exports give totals per session, so viewers and sales are spread evenly over the hours a session covers. Sessions over 8 hours are left out.'), help('hours')))];
 };
 
-/* ================= The four pages the team opens first. Each one: one sentence, four numbers, then one or two blocks. ================= */
+/* ================= The pages the team opens first. Each one: a headline, a full-width row of numbers, then blocks that fill the width. ================= */
+const kstrip = (cols, ...kpis) => h('div', {class: 'grid kgrid', style: `--cols:${cols}`}, ...kpis);
 const pickKpi = (label, value, sub, on, go, c) => { const k = kpi(label, value, {sub, c}); k.classList.add('pick'); if (on) k.classList.add('on'); k.tabIndex = 0; k.setAttribute('role', 'button'); k.setAttribute('aria-pressed', String(on));
   k.onclick = go; k.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; return k; };
-const verdictBox = (c, kicker, title, sub, nLabel, n) => h('div', {class: 'verdict', style: `--c:var(${c})`}, h('div', {}, h('div', {class: 'muted small'}, kicker), h('div', {class: 'verdict-v'}, title), h('div', {class: 'small'}, sub)),
-  n != null ? h('div', {class: 'verdict-n'}, h('span', {class: 'muted small'}, nLabel), h('b', {}, n)) : null);
+// One compact banner: what is going on, in a sentence. A card with only this inside loses its own border (see CSS).
+const verdictBox = (c, kicker, title, sub, nLabel, n) => h('div', {class: 'verdict', style: `--c:var(${c})`}, h('div', {}, h('div', {class: 'muted small'}, kicker),
+  h('div', {class: 'verdict-v'}, title), h('div', {class: 'small'}, sub)), n != null ? h('div', {class: 'verdict-n'}, h('span', {class: 'muted small'}, nLabel), h('b', {}, n)) : null);
 const BDESC = {fix: ['Fix', 'less GMV a week', 'Losing money, or set to miss the target'], push: ['Push', 'expected gain a week', 'Going up, with room to grow'], guard: ['Guard', 'GMV at stake', 'Top earners and early warnings'], watch: ['Watch', 'nothing to do now', 'Not enough data, or stable']};
+const insight = (tag, c, ...txt) => h('div', {class: 'ins', style: `--c:var(${c})`}, h('span', {class: 'itag'}, tag), ...txt);
 
 /* ================= Summary ================= */
 PAGES['Summary'] = () => {
@@ -1164,50 +1245,59 @@ PAGES['Summary'] = () => {
   const fc = netForecast(L), tg = sum(L, c => c.a.monthTarget.target), chance = fc.chance(tg);
   const quiet = L.filter(c => c.a.status === 'stopped' || c.a.status === 'inactive'), risk = sum(quiet, c => agg(c, P.pa, P.pb).gmv);
   const st = chg > .03 ? ['Growing', '--growth'] : chg < -.03 ? ['Declining', '--rev'] : ['Flat', '--ops'];
-  const situation = h('section', {class: 'card'}, verdictBox(st[1], `Where we stand · ${P.label} vs ${P.plabel}`, `${st[0]}: GMV ${dirTxt(chg)}`, `${money(tp.gmv)} became ${money(t.gmv)} across ${N(L.length)} creators, LIVE and short video.`, 'GMV', money(t.gmv)),
-    h('div', {class: 'signals', style: 'margin-top:8px'},
-      worst && lev[worst].change < 0 ? line('--rev', 'Biggest problem:', `${LEVN[worst]} ${dirTxt(lev[worst].change)}. Fix: ${LEVER_FIX[worst]}.`) : line('--growth', 'No big problem:', 'every lever is holding up.'),
-      best && lev[best].change > 0 ? line('--growth', 'Best news:', `${LEVN[best]} ${dirTxt(lev[best].change)}.`) : null,
-      fc.rem ? line('--base', 'November:', `on course for ${money(fc.mu)}${tg ? `, a ${Math.round(chance * 100)}% chance to reach the ${money(tg)} target.` : '.'}`) : line('--base', 'November:', `closed at ${money(fc.mtd)}.`),
-      risk > 0 ? line('--ops', 'At risk:', `${money(risk)} of last month's GMV came from ${N(quiet.length)} creators who went quiet.`) : null));
+  const act = (a, b) => L.filter(c => { const x = agg(c, a, b); return x.h > 0 || x.posts > 0; }).length, ac = act(P.a, P.b), acp = act(P.pa, P.pb);
+  const grp = (name, keep) => { const l = L.filter(keep), a = tot(l, P.a, P.b).gmv, b = tot(l, P.pa, P.pb).gmv; return {name, a, b, d: a - b}; };
+  const gs = [...TIER_LIST.map(k => grp(k + ' tier', c => c.tier === k)), ...CITIES.map(x => grp(x[0], c => c.city === x[0]))].filter(g => g.b > 0), gW = [...gs].sort((x, y) => x.d - y.d)[0], gB = [...gs].sort((x, y) => y.d - x.d)[0];
+  const grew = L.filter(c => c.a.status === 'up').length, fell = L.filter(c => c.a.status === 'down' || c.a.status === 'stopped').length;
   const tr = trendG(L, P);
-  const strip = h('div', {class: 'grid mt'}, kpi('GMV', money(t.gmv), {d: delta(t.gmv, tp.gmv), sub: `vs ${P.plabel}`, c: '--growth', spark: tr.now}), kpi('LIVE GMV', money(t.lgmv), {d: delta(t.lgmv, tp.lgmv), sub: `${pct(t.lgmv, t.gmv)}% of GMV`}),
-    kpi('Short video GMV', money(t.vgmv), {d: delta(t.vgmv, tp.vgmv)}), kpi('Orders', N(t.ord), {d: delta(t.ord, tp.ord), sub: `order value ${money(ratio(t.gmv, t.ord))}`}));
+  const head = verdictBox(st[1], `Summary · ${P.label} vs ${P.plabel}`, `${st[0]}: GMV ${dirTxt(chg)}`, `${money(tp.gmv)} became ${money(t.gmv)} across ${N(L.length)} creators, LIVE and short video.`);
+  const strip = kstrip(6, kpi('GMV', money(t.gmv), {d: delta(t.gmv, tp.gmv), sub: `from ${short(tp.gmv)}`, c: '--growth', spark: tr.now}), kpi('LIVE GMV', money(t.lgmv), {d: delta(t.lgmv, tp.lgmv), sub: `${pct(t.lgmv, t.gmv)}% of GMV`}),
+    kpi('Short video GMV', money(t.vgmv), {d: delta(t.vgmv, tp.vgmv), sub: `${pct(t.vgmv, t.gmv)}% of GMV`}), kpi('Orders', N(t.ord), {d: delta(t.ord, tp.ord), sub: `order value ${money(ratio(t.gmv, t.ord))}`}),
+    kpi('Active creators', N(ac), {d: delta(ac, acp), sub: `of ${N(L.length)}`}), kpi('LIVE viewers', big(t.view), {d: delta(t.view, tp.view), sub: `${big(t.views)} video views`}));
+  const insights = card('Key insights', 'What to know about this period', h('div', {},
+    worst && lev[worst].change < 0 ? insight('DRAG', '--rev', h('b', {}, `${LEVN[worst]} ${dirTxt(lev[worst].change)}.`), ` Fix: ${LEVER_FIX[worst]}.`) : insight('GOOD', '--growth', h('b', {}, 'No lever is falling.')),
+    best && lev[best].change > 0 ? insight('PUSH', '--growth', h('b', {}, `${LEVN[best]} ${dirTxt(lev[best].change)}.`), ' Keep it going.') : null,
+    gW && gW.d < 0 ? insight('FIX', '--rev', h('b', {}, `${gW.name} lost most:`), ` ${money(-gW.d)}, ${dirTxt(gW.d / gW.b)}.`) : null,
+    gB && gB.d > 0 ? insight('PUSH', '--growth', h('b', {}, `${gB.name} gained most:`), ` +${money(gB.d)}, ${dirTxt(gB.d / gB.b)}.`) : null,
+    fc.rem ? insight('FORECAST', '--base', h('b', {}, `November: ${money(fc.mu)}`), tg ? ` against a ${money(tg)} target, a ${Math.round(chance * 100)}% chance to reach it.` : '.') : insight('FORECAST', '--base', h('b', {}, `November closed at ${money(fc.mtd)}.`)),
+    risk > 0 ? insight('WATCH', '--ops', h('b', {}, `${money(risk)} at risk:`), ` ${N(quiet.length)} creators who made it last month have gone quiet.`) : null,
+    insight('CREATORS', '--muted', h('b', {}, `${N(grew)} grew`), `, ${N(fell)} fell or stopped.`)));
   const tri = L.map(c => ({c, ...c.a.tri}));
   const tcard = b => { const l = tri.filter(x => x.bucket === b).sort((x, y) => y.value - x.value), d = BDESC[b];
     return h('section', {class: 'card', style: `border-top:3px solid var(${BK[b][1]})`}, h('div', {class: 'card-h'}, h('div', {}, h('h3', {}, d[0]), h('p', {}, d[2])), h('div', {class: 'spacer'}), h('button', {class: 'btn sm', onclick: () => goPage('Fix · Push · Guard', {tri: b})}, 'See all')),
       h('div', {class: 'tri-n'}, h('b', {style: `color:var(${BK[b][1]})`}, N(l.length)), ' creators · ', h('b', {}, money(sum(l, x => x.value))), ' ' + d[1]),
-      l.length ? h('div', {class: 'movers'}, l.slice(0, 3).map(x => h('button', {class: 'mover', onclick: () => openCreator(x.c.id)}, who(x.c), h('span', {class: 'mv-v'}, h('b', {}, money(x.value)), h('small', {}, x.short))))) : h('p', {class: 'muted small'}, 'Nobody here for these filters.')); };
+      l.length ? h('div', {class: 'movers'}, l.slice(0, 5).map(x => h('button', {class: 'mover', onclick: () => openCreator(x.c.id)}, who(x.c), h('span', {class: 'mv-v'}, h('b', {}, money(x.value)), h('small', {}, x.short))))) : h('p', {class: 'muted small'}, 'Nobody here for these filters.')); };
   const bd = ui.tab.sbd || 'tier';
   const groups = bd === 'tier' ? TIER_LIST.map(k => ({name: k, tier: true, keep: c => c.tier === k, open: () => { ui.f.tier = k; render(); }}))
     : bd === 'city' ? CITIES.map(x => ({name: x[0], keep: c => c.city === x[0], open: () => { ui.f.area = 'c:' + x[0]; render(); }}))
     : [{name: 'LIVE', fmt: 'l', c: '--base'}, {name: 'Short video', fmt: 'v', c: '--ops'}];
-  const rows = groups.map(g => { if (g.fmt) { const l = g.fmt === 'l'; return {...g, g: l ? t.lgmv : t.vgmv, gp: l ? tp.lgmv : tp.vgmv, _open: () => goPage('Sales check', {skc: l ? '0' : '1'})}; }
-    const a = tot(L.filter(g.keep), P.a, P.b), b = tot(L.filter(g.keep), P.pa, P.pb); return {...g, g: a.gmv, gp: b.gmv, _open: g.open}; }).filter(r => r.g || r.gp);
+  const rows = groups.map(g => { if (g.fmt) { const l = g.fmt === 'l'; return {...g, g: l ? t.lgmv : t.vgmv, gp: l ? tp.lgmv : tp.vgmv, od: l ? t.lord : t.vord, n: L.filter(c => { const x = agg(c, P.a, P.b); return l ? x.h > 0 : x.posts > 0; }).length, _open: () => goPage('Sales check', {skc: l ? '0' : '1'})}; }
+    const l = L.filter(g.keep), a = tot(l, P.a, P.b), b = tot(l, P.pa, P.pb); return {...g, g: a.gmv, gp: b.gmv, od: a.ord, n: l.filter(c => { const x = agg(c, P.a, P.b); return x.h > 0 || x.posts > 0; }).length, _open: g.open}; }).filter(r => r.g || r.gp);
   const gT = sum(rows, r => r.g) || 1;
-  return [situation, strip,
+  return [head, h('div', {class: 'mt'}, strip),
+    h('div', {class: 'grid g21 mt'}, card('GMV by day', `${P.m.label} (solid) next to ${P.pm.label} (dashed).`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 250})), insights),
     h('div', {class: 'section-t'}, 'Where to fix, push and guard'),
     h('div', {class: 'grid g3'}, tcard('fix'), tcard('push'), tcard('guard')),
-    h('div', {class: 'grid g2 mt'}, card('GMV by day', `${P.m.label} (solid) next to ${P.pm.label} (dashed).`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 230})),
-      card('Where GMV comes from', null, table([{k: 'name', label: bd === 'tier' ? 'Tier' : bd === 'city' ? 'City' : 'Format', render: r => r.tier ? tierChip(r.name) : h('div', {class: 'who'}, r.c ? h('i', {class: 'dot-c', style: `background:var(${r.c})`}) : null, h('b', {style: 'font-weight:600'}, r.name))},
-        {k: 'g', label: 'GMV', num: true, fmt: money}, {k: 'chg', label: `vs ${P.plabel}`, num: true, render: r => dd(r.g, r.gp)}, {k: 'sh', label: 'Share', num: true, render: r => `${pct(r.g, gT)}%`}],
-        rows.map(r => ({...r, chg: ratio(r.g, r.gp), sh: r.g})), {search: false, sortKey: 'g', pageSize: 7}), seg([['tier', 'Tier'], ['city', 'City'], ['fmt', 'LIVE / video']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
+    row(card('Breakdown', 'Click a row to look closer.', table([{k: 'name', label: bd === 'tier' ? 'Tier' : bd === 'city' ? 'City' : 'Format', render: r => r.tier ? tierChip(r.name) : h('div', {class: 'who'}, r.c ? h('i', {class: 'dot-c', style: `background:var(${r.c})`}) : null, h('b', {style: 'font-weight:600'}, r.name))},
+      {k: 'g', label: 'GMV', num: true, fmt: money}, {k: 'gp', label: `GMV ${P.plabel}`, num: true, fmt: money}, {k: 'chg', label: 'Change', num: true, render: r => dd(r.g, r.gp)}, {k: 'sh', label: 'Share', num: true, render: r => meterRow(pct(r.g, gT), '--base', `${pct(r.g, gT)}%`, 70)},
+      {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'n', label: 'Active creators', num: true, fmt: N}], rows.map(r => ({...r, chg: ratio(r.g, r.gp), sh: r.g})), {search: false, sortKey: 'g', pageSize: 12}),
+      seg([['tier', 'Tier'], ['city', 'City'], ['fmt', 'LIVE / video']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
 };
 
 /* ================= Fix · Push · Guard ================= */
 PAGES['Fix · Push · Guard'] = () => {
   const L = CREATORS.filter(F), tri = L.map(c => ({c, ...c.a.tri})), f = ui.tab.tri || 'fix', cnt = b => tri.filter(x => x.bucket === b);
-  const strip = h('div', {class: 'grid'}, ['fix', 'push', 'guard', 'watch'].map(b => { const l = cnt(b); return pickKpi(BDESC[b][0], N(l.length), b === 'watch' ? BDESC[b][2] : `${money(sum(l, x => x.value))} ${BDESC[b][1]}`, f === b, () => { ui.tab.tri = b; render(); }, BK[b][1]); }));
+  const strip = kstrip(4, ...['fix', 'push', 'guard', 'watch'].map(b => { const l = cnt(b); return pickKpi(BDESC[b][0], N(l.length), b === 'watch' ? BDESC[b][2] : `${money(sum(l, x => x.value))} ${BDESC[b][1]}`, f === b, () => { ui.tab.tri = b; render(); }, BK[b][1]); }));
   const list = tri.filter(x => f === 'all' || x.bucket === f).sort((a, b) => a.rank - b.rank || b.value - a.value), d = BDESC[f];
-  const head = h('section', {class: 'card'}, verdictBox(f === 'all' ? '--base' : BK[f][1], 'Fix · Push · Guard · last 7 days and the November forecast', f === 'all' ? `${N(L.length)} creators, each with one action` : `${N(list.length)} creators to ${d[0].toLowerCase()}`,
-    f === 'all' ? 'Fix first, then Push, then Guard. Click a group above to see only those creators.' : `${d[2]}. The biggest money is at the top. Click a creator for the plan.`, f === 'all' || f === 'watch' ? 'Creators' : d[1].replace(/^./, x => x.toUpperCase()), f === 'all' || f === 'watch' ? N(list.length) : money(sum(list, x => x.value))));
+  const head = verdictBox(f === 'all' ? '--base' : BK[f][1], 'Fix · Push · Guard · last 7 days and the November forecast', f === 'all' ? `${N(L.length)} creators, each with one action` : `${N(list.length)} creators to ${d[0].toLowerCase()}`,
+    f === 'all' ? 'Fix first, then Push, then Guard. Click a group below to see only those creators.' : `${d[2]}. The biggest money is at the top. Click a creator to check them one by one.`, f === 'all' || f === 'watch' ? 'Creators' : d[1].replace(/^./, x => x.toUpperCase()), f === 'all' || f === 'watch' ? N(list.length) : money(sum(list, x => x.value)));
   return [head, h('div', {class: 'mt'}, strip),
     row(card(f === 'all' ? 'Every creator' : `${d[0]}: who and what to do`, null, table([{k: 'id', label: 'Creator', render: r => who(r.c)},
       {k: 'rank', label: 'Group', render: r => h('div', {}, bucketChip(r.bucket), h('div', {class: 'hint', style: 'margin-top:3px'}, r.short))},
       {k: 'action', label: 'What to do', render: r => h('span', {class: 'wrapcell'}, h('b', {style: 'font-weight:600'}, r.action), h('span', {class: 'hint', style: 'display:block;margin-top:2px'}, r.why))},
       {k: 'ch', label: 'November', render: r => h('div', {}, chanceChip(r.chance), h('div', {class: 'hint', style: 'margin-top:3px'}, money(r.c.a.fc.mu) + (r.tg ? ' of ' + money(r.tg) : '')))},
       {k: 'value', label: 'Money', num: true, fmt: money}],
-      list.map(x => ({...x, id: x.c.id, tg: x.c.a.monthTarget.target, chance: x.c.a.fc.chance(x.c.a.monthTarget.target), ch: x.c.a.fc.chance(x.c.a.monthTarget.target) ?? -1, _open: () => openCreator(x.c.id)})),
+      list.map(x => ({...x, id: x.c.id, tg: x.c.a.monthTarget.target, chance: x.c.a.fc.chance(x.c.a.monthTarget.target), ch: x.c.a.fc.chance(x.c.a.monthTarget.target) ?? -1, _open: () => openCreator(x.c.id, 'profile', f)})),
       {sortKey: null, pageSize: 12, state: ui.tab.triState ||= {}, tools: [f !== 'all' ? h('button', {class: 'btn sm', onclick: () => { ui.tab.tri = 'all'; render(); }}, 'Show everyone') : h('button', {class: 'btn sm', onclick: () => { ui.tab.tri = 'fix'; render(); }}, 'Back to Fix'), help('triage')]})))];
 };
 
@@ -1217,14 +1307,16 @@ PAGES['Monitor'] = () => {
   const counts = {}; rows.forEach(r => { counts[r.s] = (counts[r.s] || 0) + 1; });
   const active = (counts.down || 0) + (counts.up || 0) + (counts.stable || 0) + (counts.new || 0);
   let f = ui.tab.mst || 'down'; if (f === 'down' && !counts.down) f = 'active';
-  const list = rows.filter(r => f === 'active' ? ['down', 'up', 'stable', 'new'].includes(r.s) : f === 'all' ? true : r.s === f);
-  const down = rows.filter(r => r.s === 'down'), lost = sum(down, r => Math.max(0, r.prev.gmv - r.cur.gmv));
-  const opts = [['down', `Down ${counts.down || 0}`], ['up', `Up ${counts.up || 0}`], ['stable', `Stable ${counts.stable || 0}`], ['active', `All active ${active}`], ['all', `Everyone ${rows.length}`]];
+  const list = rows.filter(r => f === 'quiet' ? ['stopped', 'inactive'].includes(r.s) : f === 'active' ? ['down', 'up', 'stable', 'new'].includes(r.s) : f === 'all' ? true : r.s === f);
+  const down = rows.filter(r => r.s === 'down'), lost = sum(down, r => Math.max(0, r.prev.gmv - r.cur.gmv)), up = rows.filter(r => r.s === 'up'), gained = sum(up, r => Math.max(0, r.cur.gmv - r.prev.gmv));
+  const opts = [['down', `Down ${counts.down || 0}`], ['up', `Up ${counts.up || 0}`], ['stable', `Stable ${counts.stable || 0}`], ['new', `New data ${counts.new || 0}`], ['stopped', `Stopped ${counts.stopped || 0}`], ['inactive', `Inactive ${counts.inactive || 0}`], ['active', `All active ${active}`], ['all', `Everyone ${rows.length}`]];
   const sortLoss = f === 'down' ? (a, b) => (b.prev.gmv - b.cur.gmv) - (a.prev.gmv - a.cur.gmv) : (a, b) => b.cur.gmv - a.cur.gmv;
-  return [h('section', {class: 'card'}, verdictBox(down.length ? '--rev' : '--growth', `Monitor · ${P.label} vs ${P.plabel}`, down.length ? `${N(down.length)} creators are down, ${money(lost)} less GMV` : 'No creator is down', 'Biggest money gap first. Click a creator for the detail and the cards to send.', 'Creators', N(L.length))),
+  return [verdictBox(down.length ? '--rev' : '--growth', `Monitor · ${P.label} vs ${P.plabel}`, down.length ? `${N(down.length)} creators are down, ${money(lost)} less GMV` : 'No creator is down', 'Biggest money gap first. Click a creator to check them one by one.'),
+    h('div', {class: 'mt'}, kstrip(4, pickKpi('Down', N(counts.down || 0), `${money(lost)} less GMV`, f === 'down', () => { ui.tab.mst = 'down'; render(); }, '--rev'), pickKpi('Up', N(counts.up || 0), `${money(gained)} more GMV`, f === 'up', () => { ui.tab.mst = 'up'; render(); }, '--growth'),
+      pickKpi('Stable', N(counts.stable || 0), 'about the same', f === 'stable', () => { ui.tab.mst = 'stable'; render(); }), pickKpi('Stopped or inactive', N((counts.stopped || 0) + (counts.inactive || 0)), 'no LIVE or video', f === 'quiet', () => { ui.tab.mst = 'quiet'; render(); }, '--ops'))),
     row(card('Creators', null, table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 's', label: 'Status', render: r => statusChip(r.s)},
       {k: 'g', label: 'GMV', num: true, render: r => h('span', {}, money(r.g), ' ', dd(r.g, r.prev.gmv))}, {k: 'spark', label: 'Last 30 days', fixed: true, render: r => tspark(sparkOf(r.c, P), '--growth')},
-      {k: 'ch', label: 'November', render: r => chanceChip(r.c.a.fc.chance(r.c.a.monthTarget.target))}, {k: 'call', label: 'Group', render: r => bucketChip(r.c.a.tri.bucket)}],
+      {k: 'focus', label: 'Focus this week', render: r => r.c.a.focus.title}, {k: 'ch', label: 'November', render: r => chanceChip(r.c.a.fc.chance(r.c.a.monthTarget.target))}, {k: 'call', label: 'Group', render: r => bucketChip(r.c.a.tri.bucket)}],
       list.sort(sortLoss).map(r => ({...r, id: r.c.id, g: r.cur.gmv, ch: r.c.a.fc.chance(r.c.a.monthTarget.target) ?? -1, call: r.c.a.tri.rank, _open: () => openCreator(r.c.id)})),
       {sortKey: null, pageSize: 15, state: ui.tab.monState ||= {}, tools: [seg(opts, f, v => { ui.tab.mst = v; render(); }, 'Status'), h('button', {class: 'btn sm', onclick: () => bulkCards(list.map(r => r.c).filter(c => c.a.plan))}, 'Download plan cards'), help('monitor')]})))];
 };
@@ -1233,14 +1325,14 @@ PAGES['Monitor'] = () => {
 PAGES['Month-end forecast'] = () => {
   const L = CREATORS.filter(F), fc = netForecast(L), tg = sum(L, c => c.a.monthTarget.target), chance = fc.chance(tg), m = CUR_M, st = FCS(chance);
   const daily = dailyF(L, m.s, A, dayG), items = daily.map((v, i) => ({label: String(i + 1), value: v, c: '--growth'})).concat(fc.path.map((p, i) => ({label: String(A - m.s + 2 + i), value: p.v, c: '--faint'})));
-  const rows = L.filter(c => c.a.active).map(c => { const X = c.a, t = X.monthTarget.target, ch2 = X.fc.chance(t); return {c, id: c.id, mtd: X.fc.mtd, mu: X.fc.mu, lo: X.fc.lo, hi: X.fc.hi, tg: t, ch: ch2 ?? -1, need: t ? X.fc.need(t) : 0, call: X.tri.rank, _open: () => openCreator(c.id)}; });
+  const rows = L.filter(c => c.a.active).map(c => { const X = c.a, t = X.monthTarget.target, ch2 = X.fc.chance(t); return {c, id: c.id, mtd: X.fc.mtd, mu: X.fc.mu, lo: X.fc.lo, hi: X.fc.hi, tg: t, ch: ch2 ?? -1, need: t ? X.fc.need(t) : 0, call: X.tri.rank, _open: () => openCreator(c.id, 'forecast')}; });
   const buckets = [['On track', rows.filter(r => r.ch >= .65).length, '--growth'], ['At risk', rows.filter(r => r.ch >= .35 && r.ch < .65).length, '--ops'], ['Will miss', rows.filter(r => r.ch >= 0 && r.ch < .35).length, '--rev'], ['No target', rows.filter(r => r.ch < 0).length, '--muted']];
-  return [h('section', {class: 'card'}, verdictBox(st[1], `${m.label} · ${N(L.length)} creators`, fc.rem ? `On course for ${money(fc.mu)}${tg ? `: ${st[0].toLowerCase()} for the ${money(tg)} target` : ''}` : `${m.label} closed at ${money(fc.mtd)}`,
-      fc.rem ? `Likely between ${money(fc.lo)} and ${money(fc.hi)} if everyone keeps the pace of the last two weeks.` : 'The month is complete.', 'Month to date', money(fc.mtd))),
-    h('div', {class: 'grid mt'}, kpi('Projected month end', money(fc.mu), {sub: `likely ${short(fc.lo)} to ${short(fc.hi)}`}), kpi('Target', tg ? money(tg) : '-', {sub: tg ? `${Math.round(chance * 100)}% chance` : 'no target set'}), kpi('Days left', N(fc.rem), {sub: `${N(A - m.s + 1)} of ${m.n} days done`}), kpi('Needed a day', tg ? money(fc.need(tg)) : '-', {sub: 'to reach the target'})),
-    h('div', {class: 'grid g21 mt'}, card(`${m.label} by day`, 'Green = what happened. Grey = the forecast for each remaining day.', columns(items, {fmt: short, height: 230, ref: tg ? {value: tg / m.n, label: 'Target pace a day'} : undefined})),
+  return [verdictBox(st[1], `${m.label} · ${N(L.length)} creators`, fc.rem ? `On course for ${money(fc.mu)}${tg ? `: ${st[0].toLowerCase()} for the ${money(tg)} target` : ''}` : `${m.label} closed at ${money(fc.mtd)}`,
+      fc.rem ? `Likely between ${money(fc.lo)} and ${money(fc.hi)} if everyone keeps the pace of the last two weeks.` : 'The month is complete.'),
+    h('div', {class: 'mt'}, kstrip(4, kpi('Projected month end', money(fc.mu), {sub: `likely ${short(fc.lo)} to ${short(fc.hi)}`}), kpi('Target', tg ? money(tg) : '-', {sub: tg ? `${Math.round(chance * 100)}% chance` : 'no target set'}), kpi('Month to date', money(fc.mtd), {sub: `${N(A - m.s + 1)} of ${m.n} days done`}), kpi('Needed a day', tg ? money(fc.need(tg)) : '-', {sub: `to reach the target, ${N(fc.rem)} days left`}))),
+    h('div', {class: 'grid g21 mt'}, card(`${m.label} by day`, 'Green = what happened. Grey = the forecast for each remaining day.', columns(items, {fmt: short, height: 240, ref: tg ? {value: tg / m.n, label: 'Target pace a day'} : undefined})),
       card('Who reaches their target', 'On track = 65% chance or more. At risk = 35 to 65%. Will miss = under 35%.', hbars(buckets.map(b => ({label: b[0], value: b[1], c: b[2]})), {fmt: N, share: true}))),
-    row(card('Every creator at month end', 'Projected = if they keep the pace of their last two weeks.', table([
+    row(card('Every creator at month end', 'Projected = if they keep the pace of their last two weeks. Click a creator for the detail.', table([
       {k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 'mtd', label: 'So far', num: true, fmt: money},
       {k: 'mu', label: 'Projected', num: true, render: r => h('div', {}, h('b', {}, money(r.mu)), h('div', {class: 'hint'}, `${short(r.lo)} to ${short(r.hi)}`))}, {k: 'tg', label: 'Target', num: true, render: r => r.tg ? money(r.tg) : h('span', {class: 'muted'}, '-')},
       {k: 'ch', label: 'Chance', render: r => r.ch < 0 ? h('span', {class: 'muted'}, '-') : h('div', {}, meterRow(r.ch * 100, FCS(r.ch)[1], `${Math.round(r.ch * 100)}%`, 56), r.need > 0 ? h('div', {class: 'hint', style: 'margin-top:3px'}, `needs ${money(r.need)} a day`) : null)},
@@ -1271,22 +1363,6 @@ function profile(c, P) {
   if (!LO.length) LO.push(['No weak spot against the tier in these dates.']);
   const pr = gaps[0], PA = pr ? [`Priority gap: ${pr.name}.`, GAP_ACTION[pr.name], 'Check it against the tier again next week.'] : ['No gap against the tier: keep the routine.', c.a.focus.actions[0] + '.'];
   return {a, p, me, was, peers: peers.length, gmvRank: rankOf(pa, 'gmv'), avgRank: rn ? rs / rn : null, above, HI, LO, PA, src: srcV};
-}
-function profileCards(c, P) {
-  const X = profile(c, P), a = X.a, me = X.me, T = TIERS[c.tier], hpd = a.ldays ? a.h / a.ldays : 0, show = a.show + a.view * 3.5, watch = a.views + a.view, watchP = X.p.views + X.p.view;
-  const mrow = (l, v, d) => h('div', {class: 'mrow'}, h('span', {}, l), h('b', {}, v, d || null));
-  const strip = h('div', {class: 'grid'}, kpi('Avg daily rank', X.avgRank ? '#' + dec1(X.avgRank) : '-', {sub: `in ${c.tier}, days with sales`}), kpi(`${P.m.k} GMV rank`, '#' + X.gmvRank, {sub: `of ${X.peers} in tier`}),
-    kpi('Efficiency', a.h ? money(me.gph) + ' / hr' : 'No LIVE', {sub: a.h ? `${money(a.lgmv / Math.max(1, a.ses))} a session` : 'in these dates'}), kpi('Above tier average', `${X.above} / 4`, {sub: 'GMV/hr, CTR, CVR, AOV'}),
-    kpi('LIVE hours a day', dec1(hpd) + ' h', {sub: `target ${T.tH} h`, d: hpd >= T.tH ? chip('on target', '--growth', false) : null}), kpi('Peer set', N(X.peers), {sub: `${c.tier} creators`}));
-  const list = items => h('ul', {}, items.map(x => h('li', {}, ...x)));
-  const exec = h('div', {class: 'grid g3 mt exec'}, card('Highlights', null, list(X.HI)), card('Lowlights', null, list(X.LO)), card('Priority action', null, list(X.PA.map(x => [x]))));
-  const mc = h('div', {class: 'grid g5 mt'},
-    card('Overall GMV', null, h('div', {}, mrow('Total GMV', money(a.gmv), dd(a.gmv, X.p.gmv)), mrow('LIVE GMV', money(a.lgmv)), mrow('Short video GMV', money(a.vgmv)), mrow('LIVE share', a.gmv ? pc(a.lgmv / a.gmv, 1) : '-'))),
-    card('LIVE activeness', null, h('div', {}, mrow('Sessions', N(a.ses)), mrow('Hours', dec1(a.h), dd(a.h, X.p.h)), mrow('GMV / hour', money(me.gph), dd(me.gph, X.was.gph)), mrow('GMV / session', money(a.lgmv / Math.max(1, a.ses))))),
-    card('LIVE performance', null, h('div', {}, mrow('CTR', pc(me.ctr, 1)), mrow('CVR', pc(me.cvr, 1)), mrow('ERR', pc(me.err, 1)), mrow('AOV', money(me.aov)))),
-    card('Traffic', null, h('div', {}, mrow('Organic show PV', big(show)), mrow('Organic watch PV', big(watch), dd(watch, watchP)), mrow('Watch / show', show ? pc(watch / show, 1) : '-'), mrow('Ads show PV', big(a.ads)))),
-    card('GMV source', null, h('div', {}, [0, 1, 2, 3].map(k => mrow(SOURCES[k] + ' GMV', money(X.src[k]))))));
-  return [strip, exec, mc];
 }
 const fileNameFor = (c, kind) => c.id + '_' + ({week: 'plan_' + WEEK_START, today: 'today_' + TODAY, report: 'report_' + addDays(WEEK_START, -7)})[kind] + '.png';
 
@@ -1386,19 +1462,66 @@ async function bulkCards(list) {
   download('plan-cards_' + WEEK_START + '.zip', makeZip(files)); toast(`${list.length} plan cards downloaded.`);
 }
 
-/* ================= Creator page: the call first, then one tab at a time ================= */
+/* ================= Creator check: the list on the left, one creator on the right, step through one by one ================= */
 const CTABS = [['profile', 'Profile'], ['forecast', 'November'], ['perf', 'What to improve'], ['compare', 'Compare'], ['products', 'Products'], ['cards', 'Cards to send'], ['boost', 'Boost (internal)']];
-function viewCreator() {
-  const c = byId(ui.creator); if (!c) { ui.creator = null; return render(); }
+const mrow = (l, v, d) => h('div', {class: 'mrow'}, h('span', {}, l), h('b', {}, v, d || null));
+const block = (title, ...kids) => h('div', {}, h('h4', {class: 'ch4'}, title), ...kids);
+function stepCreator(d) {
+  const o = ui.ckOrder || []; if (!o.length) return;
+  const i = o.indexOf(ui.creator), n = i < 0 ? (d > 0 ? 0 : o.length - 1) : (i + d + o.length) % o.length;
+  ui.creator = o[n]; ui.card = 'week'; render();
+}
+document.addEventListener('keydown', e => {
+  if (ui.page !== 'Creator check' || e.metaKey || e.ctrlKey || e.altKey || !e.target.closest || e.target.closest('input,select,textarea,dialog') || document.querySelector('dialog[open]')) return;
+  if (e.key === 'ArrowRight' || e.key === 'j') stepCreator(1); else if (e.key === 'ArrowLeft' || e.key === 'k') stepCreator(-1); else return;
+  e.preventDefault();
+});
+
+/* What changed: the first thing to read about a creator. Same idea as the tracker's profile. */
+function whatChanged(c, P) {
+  const a = agg(c, P.a, P.b), p = agg(c, P.pa, P.pb), la = lv(a), lp = lv(p);
+  const defs = [['LIVE hours', a.h, p.h, v => dec1(v) + ' h'], ['Viewers per hour', la.vph, lp.vph, N], ['Conversion', la.cvr, lp.cvr, v => pc(v, 2)], ['Order value', la.aov, lp.aov, money], ['Video posts', a.posts, p.posts, N], ['Views per video', la.vpp, lp.vpp, N],
+    ['LIVE GMV', a.lgmv, p.lgmv, money], ['Short video GMV', a.vgmv, p.vgmv, money], ['Orders', a.ord, p.ord, N]].map(x => ({n: x[0], cur: x[1], prev: x[2], f: x[3], d: ch(x[1], x[2])})).filter(x => x.d !== null);
+  const up = defs.filter(x => x.d >= .05).sort((x, y) => y.d - x.d).slice(0, 5), down = defs.filter(x => x.d <= -.05).sort((x, y) => x.d - y.d).slice(0, 5);
+  const prods = productsInRange(P.a, P.b, null, c.i, P.pa, P.pb).map(x => ({...x, d: x.cur - x.prev})), gain = prods.filter(x => x.d > 0).sort((x, y) => y.d - x.d)[0], drop = prods.filter(x => x.d < 0).sort((x, y) => x.d - y.d)[0];
+  const wrow = x => h('div', {class: 'wrow'}, h('span', {}, x.n), h('span', {}, x.f(x.prev), ' → ', h('b', {}, x.f(x.cur)), ' ', chip((x.d >= 0 ? '▲ ' : '▼ ') + Math.abs(Math.round(x.d * 100)) + '%', x.d >= 0 ? '--growth' : '--rev', false)));
+  const lbox = (cls, title, list, empty) => h('div', {class: 'wbox ' + cls}, h('h4', {}, title), list.length ? list.map(wrow) : h('p', {class: 'muted small', style: 'margin:0'}, empty));
+  const pbox = (cls, title, x) => h('div', {class: 'wbox ' + cls}, h('h4', {}, title), x ? h('div', {}, h('b', {style: 'font-weight:600'}, x.name), h('div', {class: 'small muted'}, `${money(x.prev)} → ${money(x.cur)} · ${x.d >= 0 ? '+' : '−'}${money(Math.abs(x.d))}`)) : h('p', {class: 'muted small', style: 'margin:0'}, 'No product moved.'));
+  const big2 = (l, now, before, f) => h('div', {class: 'wbox'}, h('div', {class: 'l'}, l), h('div', {class: 'v'}, f(now)), h('div', {class: 'small'}, dd(now, before), h('span', {class: 'muted'}, ` from ${f(before)}`)));
+  return h('section', {class: 'card wc'}, h('div', {class: 'wc-h'}, h('h3', {}, 'What changed'), h('span', {class: 'muted small'}, `${P.label} against ${P.plabel}`)),
+    h('div', {class: 'wc-g'}, h('div', {class: 'wc-c'}, big2('GMV', a.gmv, p.gmv, money), lbox('up', 'Went up', up, 'Nothing rose more than 5%.'), pbox('up', 'Biggest product gain', gain)),
+      h('div', {class: 'wc-c'}, big2('Orders', a.ord, p.ord, N), lbox('down', 'Went down', down, 'Nothing fell more than 5%.'), pbox('down', 'Biggest product drop', drop))));
+}
+function profileTab(c, P) {
+  const Xp = profile(c, P), a = Xp.a, me = Xp.me, T = TIERS[c.tier], hpd = a.ldays ? a.h / a.ldays : 0, show = a.show + a.view * 3.5, watch = a.views + a.view, watchP = Xp.p.views + Xp.p.view, fc = c.a.fc, mt = c.a.monthTarget, ch2 = fc.chance(mt.target);
+  const list = items => h('ul', {}, items.map(x => h('li', {}, ...x)));
+  return [whatChanged(c, P),
+    h('div', {class: 'mt'}, kstrip(3, kpi('Avg daily rank', Xp.avgRank ? '#' + dec1(Xp.avgRank) : '-', {sub: `in ${c.tier}, days with sales`}), kpi(`${P.m.k} GMV rank`, '#' + Xp.gmvRank, {sub: `of ${Xp.peers} in tier`}), kpi('Efficiency', a.h ? money(me.gph) + ' / hr' : 'No LIVE', {sub: a.h ? `${money(a.lgmv / Math.max(1, a.ses))} a session` : 'in these dates'}),
+      kpi('Above tier average', `${Xp.above} / 4`, {sub: 'GMV/hr, CTR, CVR, AOV'}), kpi('LIVE hours a day', dec1(hpd) + ' h', {sub: `target ${T.tH} h`}), kpi('Peer set', N(Xp.peers), {sub: `${c.tier} creators`}))),
+    h('section', {class: 'card mt'}, h('div', {class: 'cols3'}, block('Highlights', list(Xp.HI)), block('Lowlights', list(Xp.LO)), block('Priority action', list(Xp.PA.map(x => [x]))))),
+    h('section', {class: 'card mt'}, h('div', {class: 'cols3'},
+      block('Overall GMV', mrow('Total GMV', money(a.gmv), dd(a.gmv, Xp.p.gmv)), mrow('LIVE GMV', money(a.lgmv)), mrow('Short video GMV', money(a.vgmv)), mrow('LIVE share', a.gmv ? pc(a.lgmv / a.gmv, 1) : '-')),
+      block('LIVE activeness', mrow('Sessions', N(a.ses)), mrow('Hours', dec1(a.h), dd(a.h, Xp.p.h)), mrow('GMV / hour', money(me.gph), dd(me.gph, Xp.was.gph)), mrow('GMV / session', money(a.lgmv / Math.max(1, a.ses)))),
+      block('LIVE performance', mrow('CTR', pc(me.ctr, 1)), mrow('CVR', pc(me.cvr, 1)), mrow('ERR', pc(me.err, 1)), mrow('AOV', money(me.aov))),
+      block('Traffic', mrow('Organic show PV', big(show)), mrow('Organic watch PV', big(watch), dd(watch, watchP)), mrow('Watch / show', show ? pc(watch / show, 1) : '-'), mrow('Ads show PV', big(a.ads))),
+      block('GMV source', [0, 1, 2, 3].map(k => mrow(SOURCES[k] + ' GMV', money(Xp.src[k])))),
+      block('November', mrow('Projected', money(fc.mu)), mrow('Target', mt.target ? money(mt.target) : '-'), mrow('Chance', ch2 == null ? '-' : Math.round(ch2 * 100) + '%'), mrow('Needed a day', mt.target ? money(fc.need(mt.target)) : '-'))))];
+}
+function downloadKind(c, kind) { const cv = document.createElement('canvas'); drawCard(cv, c, kind).then(() => downloadCanvas(cv, fileNameFor(c, kind))); }
+
+function creatorDetail(c, pos, total) {
   const X = c.a, P = period(), mt = X.monthTarget, b = X.boost, tri = X.tri, fc = X.fc, tg = mt.target, chance = fc.chance(tg), mName = MONFULL[+MONTH.slice(5) - 1], tab = ui.tab.ct || 'profile';
-  const call = h('section', {class: 'card'}, verdictBox(BK[tri.bucket][1], 'Where this creator stands · last 7 days and the November forecast', `${BK[tri.bucket][0]}: ${tri.short}`, tri.why, tri.bucket === 'fix' ? 'Less GMV a week' : tri.bucket === 'push' ? 'Expected gain a week' : 'GMV at stake', money(tri.value)),
-    h('div', {class: 'signals', style: 'margin-top:8px'}, line(BK[tri.bucket][1], 'Do this:', tri.action)));
+  const nav = h('div', {class: 'chk-nav'}, h('button', {class: 'btn sm', onclick: () => stepCreator(-1)}, '← Previous'), h('b', {class: 'small'}, pos >= 0 ? `${pos + 1} of ${N(total)}` : 'Not in this list'), h('button', {class: 'btn sm', onclick: () => stepCreator(1)}, 'Next →'),
+    h('span', {class: 'spacer'}), h('span', {class: 'hint'}, 'Keys: ← → or j k'));
+  const head = h('div', {class: 'prof-h'}, h('div', {class: 'ava-xl'}, c.id.replace(/[^a-z]/gi, '').charAt(0).toUpperCase()), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, '@' + c.id), h('div', {class: 'meta'}, `${c.name} · ${c.city}, ${c.prov} · ADTREE`)),
+    h('div', {class: 'chips', style: 'margin:0'}, tierChip(c.tier), statusChip(X.status), bucketChip(tri.bucket)));
+  const call = verdictBox(BK[tri.bucket][1], 'Where this creator stands · last 7 days and the November forecast', `${BK[tri.bucket][0]}: ${tri.short}`, [tri.why, h('br'), h('b', {}, 'Do this: '), tri.action], tri.bucket === 'fix' ? 'Less GMV a week' : tri.bucket === 'push' ? 'Expected gain a week' : 'GMV at stake', money(tri.value));
   const tabBar = h('div', {class: 'tools mt'}, seg(CTABS, tab, v => { ui.tab.ct = v; render(); }, 'Creator view'));
   let body;
-  if (tab === 'profile') body = profileCards(c, P);
+  if (tab === 'profile') body = profileTab(c, P);
   else if (tab === 'forecast') {
     const fcs = FCS(chance), mItems = X.series.filter(s => s.d >= MONTH + '-01').map(s => ({label: String(dateKeyParts(s.d).d), value: s.gmv, c: '--growth'})).concat(fc.path.map(p => ({label: String(dateKeyParts(p.d).d), value: p.v, c: '--faint'})));
-    body = [h('div', {class: 'grid'}, kpi('Projected month end', money(fc.mu), {sub: fc.rem ? `likely ${short(fc.lo)} to ${short(fc.hi)}` : 'month closed'}), kpi('Target', tg ? money(tg) : '-', {sub: tg ? (mt.custom ? 'set by you' : 'suggested') : 'none yet'}),
+    body = [kstrip(4, kpi('Projected month end', money(fc.mu), {sub: fc.rem ? `likely ${short(fc.lo)} to ${short(fc.hi)}` : 'month closed'}), kpi('Target', tg ? money(tg) : '-', {sub: tg ? (mt.custom ? 'set by you' : 'suggested') : 'none yet'}),
         kpi('So far', money(mt.gmv), {sub: tg ? `${Math.round(mt.progress * 100)}% of target` : `${N(CUR_M.n - fc.rem)} of ${CUR_M.n} days`}), kpi('Needed a day', tg ? money(fc.need(tg)) : '-', {sub: fc.rem ? `for the last ${fc.rem} days` : 'month closed'})),
       h('div', {class: 'grid g21 mt'}, card(`${mName} by day`, 'Green = what happened. Grey = the forecast for each remaining day.', columns(mItems, {fmt: short, height: 230, ref: tg ? {value: tg / CUR_M.n, label: 'Target pace a day'} : undefined})),
         card('Will they reach the target?', null, h('div', {class: 'stack', style: 'gap:10px'}, tg ? h('div', {}, chanceChip(chance), h('p', {class: 'small', style: 'margin:8px 0 0'}, `If the last two weeks continue: ${money(fc.mu)}. At October's pace it would end at ${money(fc.altMu)}.`)) : h('p', {class: 'muted small'}, 'Set a target to see the chance of reaching it.'),
@@ -1408,12 +1531,13 @@ function viewCreator() {
     const lev = ['hours', 'vph', 'cvr', 'aov', 'posts', 'vpp'].map(k => { const l = X.levers[k], v = l.change, w = v === null ? 0 : Math.min(50, Math.abs(v) * 50), f = x => k === 'hours' ? dec1(x) + ' h' : k === 'cvr' ? pc(x, 2) : k === 'aov' ? money(x) : N(x);
       return h('div', {class: 'lever'}, h('div', {}, LEVN[k], h('small', {}, `${f(l.cur)}, before ${f(l.prev)}`)), h('div', {class: 'ltrack'}, v === null ? null : h('i', {class: v < 0 ? 'neg' : 'pos', style: `${v < 0 ? 'right:50%' : 'left:50%'};width:${w}%`})), h('div', {class: 'r'}, dd(l.cur, l.prev))); });
     const picks = X.bestSlots.map(s => s.b), ser = []; for (let i = P.a; i <= P.b; i++) ser.push({d: dk(i), live: c.L.gmv[i], vid: c.V.gmv[i]});
-    body = [card(`Focus this week: ${X.focus.title}`, `${X.focus.sub} Last 7 days against the 7 before.`, h('div', {}, lev, h('ul', {class: 'ds', style: 'margin:12px 0 0;padding-left:18px'}, X.focus.actions.map(a => h('li', {}, a))))),
-      h('div', {class: 'grid g2 mt'}, X.slots.length ? card('Best hours to go LIVE', `Orange = suggested (${X.bestSlots[0].evidence}). WIB.`, columns(X.slots.map(s => ({label: String(s.b * 2).padStart(2, '0'), value: s.gpv, c: picks.includes(s.b) ? '--ops' : s.n ? '--base' : '--faint'})), {fmt: v => '$' + v.toFixed(2), height: 180})) : null,
-        card(`Every day · ${P.label}`, 'LIVE and short video GMV.', area([{name: 'LIVE', values: ser.map(s => s.live), c: '--base'}, {name: 'Short video', values: ser.map(s => s.vid), c: '--ops'}], ser.map(s => String(dateKeyParts(s.d).d)), {fmt: short, height: 180})))];
+    body = [h('div', {class: 'grid g21'}, card(`Focus this week: ${X.focus.title}`, `${X.focus.sub} Last 7 days against the 7 before.`, h('div', {}, lev)),
+        card('What to do', 'The three moves for this week.', h('ul', {class: 'ds', style: 'margin:0;padding-left:18px'}, X.focus.actions.map(a => h('li', {style: 'margin:6px 0'}, a))))),
+      h('div', {class: 'grid g2 mt'}, X.slots.length ? card('Best hours to go LIVE', `Orange = suggested (${X.bestSlots[0].evidence}). WIB.`, columns(X.slots.map(s => ({label: String(s.b * 2).padStart(2, '0'), value: s.gpv, c: picks.includes(s.b) ? '--ops' : s.n ? '--base' : '--faint'})), {fmt: v => '$' + v.toFixed(2), height: 190})) : null,
+        card(`Every day · ${P.label}`, 'LIVE and short video GMV.', area([{name: 'LIVE', values: ser.map(s => s.live), c: '--base'}, {name: 'Short video', values: ser.map(s => s.vid), c: '--ops'}], ser.map(s => String(dateKeyParts(s.d).d)), {fmt: short, height: 190})))];
   } else if (tab === 'compare') {
     const ww = compareWindows('wow', periodOptions('wow')[0].key), mm = compareWindows('mom', periodOptions('mom')[0].key);
-    body = [card('Week on week · same week last month', null, h('div', {}, compareNote(ww), compareTable(compareRows([c], ww), ww))), row(card('Month on month · this month against last month', null, h('div', {}, compareNote(mm), compareTable(compareRows([c], mm), mm))))];
+    body = h('div', {class: 'grid g2'}, card('Week on week · same week last month', null, h('div', {}, compareNote(ww), compareTable(compareRows([c], ww), ww))), card('Month on month · this month against last month', null, h('div', {}, compareNote(mm), compareTable(compareRows([c], mm), mm))));
   } else if (tab === 'products') {
     const rProd = productsInRange(P.a, P.b, null, c.i).sort((x, y) => y.cur - x.cur).slice(0, 5);
     body = [h('div', {class: 'grid g2'}, card('Best sellers in the dates picked', null, rProd.length ? h('div', {}, rProd.map(p => h('div', {class: 'mrow'}, h('span', {}, h('b', {style: 'color:var(--text);font-weight:600'}, p.name), h('span', {class: 'hint'}, ` · ${p.merchant}`)), h('b', {}, money(p.cur))))) : h('p', {class: 'muted small'}, 'No product sold in these dates.')),
@@ -1422,25 +1546,37 @@ function viewCreator() {
         X.recent.map(s => ({...s, start: `${dShort(dk(s.d))} ${String(Math.floor(s.start) % 24).padStart(2, '0')}:${String(Math.round((s.start % 1) * 60)).padStart(2, '0')}`})), {search: false, pageSize: 8})))];
   } else if (tab === 'cards') {
     const cv = h('canvas', {id: 'card', 'aria-label': 'Card for the creator'}), kind = ui.card;
-    body = card('Cards to send to the creator', 'Send Plan this week on Monday, Today every morning and Report at the start of the week. Cards never show boost numbers.', h('div', {class: 'stack', style: 'gap:12px;max-width:460px'},
-      seg([['week', 'Plan this week'], ['today', 'Today'], ['report', 'Report']], ui.card, v => { ui.card = v; render(); }, 'Card'), cv,
-      h('div', {}, h('button', {class: 'btn primary', onclick: () => downloadCanvas(cv, fileNameFor(c, kind))}, 'Download image'))));
+    const kinds = [['week', 'Plan this week', 'Send on Monday: the week’s target, a plan for every day and the products to pin.'], ['today', 'Today', 'Send each morning: today’s target, the start time and what sold in the last 3 days.'], ['report', 'Report', 'Send at the start of the week: how last week went against the week before.']];
+    body = h('div', {class: 'grid gcards'}, card('Preview', null, h('div', {class: 'stack', style: 'gap:10px'}, seg(kinds.map(k => [k[0], k[1]]), kind, v => { ui.card = v; render(); }, 'Card'), cv)),
+      card('What to send, and when', 'Cards never show boost numbers, so they are safe to send.', h('div', {}, kinds.map(k => h('div', {class: 'mrow', style: 'align-items:center'}, h('span', {}, h('b', {style: 'color:var(--text);font-weight:600'}, k[1]), h('span', {class: 'hint wrapcell', style: 'min-width:0'}, k[2])), h('button', {class: 'btn sm primary', onclick: () => downloadKind(c, k[0])}, 'Download'))))));
     setTimeout(() => drawCard(cv, c, kind), 0);
   } else {
     let inner;
     if (b.verdict === 'go' || b.verdict === 'test') inner = h('div', {}, h('div', {class: 'big'}, `${money(b.perDay)} a boost, ${b.days} days`), h('p', {class: 'small', style: 'margin:4px 0 10px'}, `${b.verdict === 'test' ? 'Still thin, so start with a small test. ' : ''}Best time ${X.bestSlots.map(s => s.label).join(' or ')} WIB. Total this week ${money(b.week)}.`),
-      h('div', {class: 'grid'}, kpi('Views per boost', '+' + N(b.extraViewers)), kpi('Expected GMV per boost', '+' + money(b.gain)), kpi('GMV per $1 of boost', b.roas.toFixed(1) + 'x'), kpi('Creator commission', `${money(b.commissionLow)} – ${money(b.commissionHigh)}`)));
+      kstrip(4, kpi('Views per boost', '+' + N(b.extraViewers)), kpi('Expected GMV per boost', '+' + money(b.gain)), kpi('GMV per $1 of boost', b.roas.toFixed(1) + 'x'), kpi('Creator commission', `${money(b.commissionLow)} – ${money(b.commissionHigh)}`)));
     else inner = h('div', {}, h('div', {class: 'big', style: 'font-size:22px'}, VERDICT[b.verdict]), h('p', {class: 'small', style: 'margin:4px 0 10px'}, {hold: `One viewer here brings about ${money(b.gpv)} of GMV, and 1,000 views cost ${money(M.cpvUsed)}. A boost should return ${b.minRoas.toFixed(2)}x GMV, under the ${SETTINGS.targetRoas}x target.`, fix: 'Fewer than 3 LIVE orders in the last 14 days. More viewers won’t turn into sales yet; fix the products and the selling first.', off: 'No LIVE in the last 7 days. Get back to LIVE before any boost.'}[b.verdict]),
-      b.verdict === 'hold' ? h('div', {class: 'grid'}, kpi('Budget to feel it', money(b.minBudget)), kpi('Views from that', '+' + N(b.minExtra)), kpi('Expected GMV', '+' + money(b.minGain)), kpi('GMV per $1', b.minRoas.toFixed(2) + 'x')) : null);
+      b.verdict === 'hold' ? kstrip(4, kpi('Budget to feel it', money(b.minBudget)), kpi('Views from that', '+' + N(b.minExtra)), kpi('Expected GMV', '+' + money(b.minGain)), kpi('GMV per $1', b.minRoas.toFixed(2) + 'x')) : null);
     body = card('Boost · internal, don’t share with the creator', null, h('div', {}, inner, reasonBox(c)));
   }
-  return [call, tabBar, body];
+  return [nav, head, call, tabBar, body];
 }
 
-function creatorHead(c) {
-  return h('div', {class: 'ph'}, h('div', {class: 'ava-xl'}, c.id.replace(/[^a-z]/gi, '').charAt(0).toUpperCase()), h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, '@' + c.id), h('p', {class: 'sub'}, `${c.name} · ${c.city}, ${c.prov} · ADTREE`)),
-    h('div', {class: 'chips', style: 'margin:0'}, tierChip(c.tier), statusChip(c.a.status), bucketChip(c.a.tri.bucket)), h('button', {class: 'btn sm', onclick: () => { ui.creator = null; render(); }}, 'Back to the list'));
-}
+PAGES['Creator check'] = () => {
+  const P = period(), L = CREATORS.filter(F), f = ui.tab.ckf || 'all', q = (ui.tab.ckq || '').trim().toLowerCase(), counts = b => L.filter(x => x.a.tri.bucket === b).length;
+  const rows = L.map(c => ({c, a: agg(c, P.a, P.b), p: agg(c, P.pa, P.pb), t: c.a.tri})).filter(r => (f === 'all' || r.t.bucket === f) && (!q || (r.c.id + ' ' + r.c.name + ' ' + r.c.city).toLowerCase().includes(q)))
+    .sort((x, y) => f === 'all' ? x.t.rank - y.t.rank || y.t.value - x.t.value : y.t.value - x.t.value);
+  ui.ckOrder = rows.map(r => r.c.id);
+  if (!byId(ui.creator)) ui.creator = ui.ckOrder[0] || CREATORS[0].id;
+  const c = byId(ui.creator);
+  const items = h('div', {class: 'chk-items'}, rows.length ? rows.map(r => h('button', {class: 'chk-row' + (r.c.id === c.id ? ' on' : ''), onclick: () => { ui.creator = r.c.id; ui.card = 'week'; render(); }},
+    avatar(r.c.id), h('div', {style: 'min-width:0'}, h('b', {}, r.c.id), h('small', {}, bucketChip(r.t.bucket), `${r.c.tier} · ${r.c.city}`)), h('div', {class: 'chk-v'}, h('b', {}, money(r.a.gmv)), h('small', {}, dd(r.a.gmv, r.p.gmv))))) : h('p', {class: 'muted small', style: 'padding:14px'}, 'Nobody matches. Clear the search or pick another group.'));
+  items.onscroll = () => { ui.ckScroll = items.scrollTop; };
+  setTimeout(() => { if (ui.ckScroll != null) items.scrollTop = ui.ckScroll; const el = items.querySelector('.on'); if (el && (el.offsetTop < items.scrollTop || el.offsetTop + el.offsetHeight > items.scrollTop + items.clientHeight)) items.scrollTop = Math.max(0, el.offsetTop - items.clientHeight / 2); }, 0);
+  const left = h('section', {class: 'card chk-list'}, h('div', {class: 'chk-top'},
+    h('input', {type: 'search', id: 'ckq', placeholder: `Find among ${N(L.length)} creators`, 'aria-label': 'Find a creator', value: ui.tab.ckq || '', oninput: e => { ui.tab.ckq = e.target.value; ui.ckScroll = 0; render(); const n = $('#ckq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }}),
+    seg([['all', `All ${L.length}`], ...['fix', 'push', 'guard', 'watch'].map(b => [b, `${BK[b][0]} ${counts(b)}`])], f, v => { ui.tab.ckf = v; ui.ckScroll = 0; render(); }, 'Group')), items);
+  return [h('div', {class: 'chk'}, left, h('div', {class: 'chk-main'}, creatorDetail(c, ui.ckOrder.indexOf(c.id), rows.length)))];
+};
 
 /* ================= Targets ================= */
 PAGES['Targets'] = () => {
@@ -1591,18 +1727,18 @@ const WORDS = [['GMV', 'All the money from items sold.'], ['LIVE viewers', 'Peop
 const helpBody = k => { const x = HELP[k]; return [h('p', {}, h('b', {}, 'What is it? '), x.a), h('p', {}, h('b', {}, 'When is it used? '), x.b), h('p', {}, h('b', {}, 'What do you do? '), x.c), x.more ? h('ul', {}, x.more.map(m => h('li', {}, m))) : null]; };
 function showHelp(k) { put($('#modal'), h('div', {class: 'dlg'}, h('h2', {}, HELP[k].t), ...helpBody(k), h('div', {class: 'foot'}, h('button', {class: 'btn', onclick: () => $('#modal').close()}, 'Got it')))); $('#modal').showModal(); }
 /* ================= shell ================= */
-const GROUPS = [['Today', '--growth', ['Summary', 'Fix · Push · Guard', 'Month-end forecast', 'Monitor']], ['Analyse', '--base', ['Compare', 'Sales check', 'Products', 'Hours and days']], ['Plan', '--ops', ['Targets', 'Boost']], ['Data and help', '--rev', ['Upload data', 'Guide']]];
+const GROUPS = [['Today', '--growth', ['Summary', 'Fix · Push · Guard', 'Creator check', 'Month-end forecast', 'Monitor']], ['Analyse', '--base', ['Compare', 'Sales check', 'Products', 'Hours and days']], ['Plan', '--ops', ['Targets', 'Boost']], ['Data and help', '--rev', ['Upload data', 'Guide']]];
 const PAGES_ALL = GROUPS.flatMap(g => g[2]);
-const PAGE_SUB = {'Summary': 'How GMV is doing, who to fix, push or guard, and how November will end.', 'Fix · Push · Guard': 'One action for every creator, with the money it is worth.', 'Monitor': 'Every creator against the same dates last month.',
+const PAGE_SUB = {'Creator check': 'Step through creators one by one: pick from the list, or use the arrow keys.', 'Summary': 'How GMV is doing, who to fix, push or guard, and how November will end.', 'Fix · Push · Guard': 'One action for every creator, with the money it is worth.', 'Monitor': 'Every creator against the same dates last month.',
   'Month-end forecast': 'Where each creator lands at the end of November if nothing changes.', 'Compare': 'Week on week and month on month.', 'Sales check': 'What sold in the dates picked, and who sold it.', 'Products': 'The items that sell most, and the ones rising.', 'Hours and days': 'When viewers buy, not just when they watch.',
   'Targets': 'Each creator\u2019s November target: the suggestion, or yours.', 'Boost': 'Internal: which boosts pay back.', 'Upload data': 'The TikTok exports behind every number.', 'Guide': 'Every page, explained slowly.'};
 function rangeBox(fg) {
-  const P = period(), iso = d => `2026-${String(MONTHS.indexOf(P.m) + 8).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const P = period(), custom = ui.range.k === 'custom', iso = d => `2026-${String(MONTHS.indexOf(P.m) + 8).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   const day = (k2, label) => h('input', {type: 'date', class: 'date-in', min: iso(1), max: iso(P.n), value: iso(k2 === 'd0' ? P.d0 : P.d1), 'aria-label': label, onchange: e => {
     const v = e.target.value; if (v.slice(0, 7) !== iso(1).slice(0, 7)) { toast(`Pick a day in ${P.m.label}.`); return render(); }
     const n = {...ui.range, k: 'custom', [k2]: Math.min(+v.slice(8), P.n)}; if (n.d0 > n.d1) [n.d0, n.d1] = [n.d1, n.d0]; ui.range = n; render(); }});
-  return [fg('Month', h('select', {'aria-label': 'Month', onchange: e => { ui.month = e.target.value; setRange('mtd'); render(); }}, MONTHS.slice(1).map(m => h('option', {value: m.k, selected: m.k === ui.month}, m.k === 'Nov' ? `${m.label} (to ${dShort(ANCHOR)})` : m.label)))),
-    fg('Dates', h('select', {'aria-label': 'Date range', onchange: e => { setRange(e.target.value); render(); }}, [...RANGES.filter(([k2]) => k2 !== 'month' || P.n === P.m.n), ['custom', 'Custom']].map(([k2, l]) => h('option', {value: k2, selected: ui.range.k === k2, disabled: k2 === 'custom'}, l))), day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To')),
+  return [fg('Month', h('select', {'aria-label': 'Month', onchange: e => { ui.month = e.target.value; setRange('mtd'); render(); }}, MONTHS.slice(1).map(m => h('option', {value: m.k, selected: m.k === ui.month}, m.k === 'Nov' ? `Nov 2026 · to ${dShort(ANCHOR)}` : m.k + ' 2026')))),
+    fg('Dates', h('select', {'aria-label': 'Date range', onchange: e => { setRange(e.target.value); render(); }}, [...RANGES.filter(([k2]) => k2 !== 'month' || P.n === P.m.n), ['custom', 'Custom dates']].map(([k2, l]) => h('option', {value: k2, selected: ui.range.k === k2}, l))), ...(custom ? [day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To')] : [])),
     h('span', {class: 'muted small'}, `vs ${P.plabel}`)];
 }
 function render() {
@@ -1612,16 +1748,15 @@ function render() {
   if (!PAGES_ALL.includes(ui.page)) ui.page = 'Summary';
   const group = GROUPS.find(g => g[2].includes(ui.page));
   put($('#nav'), GROUPS.map(([g, c, list]) => h('div', {class: 'navgroup'}, h('div', {class: 'navgroup-title'}, h('i', {style: `background:var(${c})`}), g),
-    list.map(p => h('button', {class: 'navitem' + (ui.page === p && !ui.creator ? ' on' : ''), style: `--c:var(${c})`, onclick: () => { ui.page = p; ui.creator = null; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p)))));
-  put($('#crumbs'), h('span', {}, 'Creator Optimization'), '/', h('span', {}, group[0]), '/', ui.creator ? [h('span', {}, ui.page), '/', h('b', {}, '@' + ui.creator)] : h('b', {}, ui.page));
+    list.map(p => h('button', {class: 'navitem' + (ui.page === p ? ' on' : ''), style: `--c:var(${c})`, onclick: () => { ui.page = p; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p)))));
+  put($('#crumbs'), h('span', {}, 'Creator Optimization'), '/', h('span', {}, group[0]), '/', ui.page === 'Creator check' && ui.creator ? [h('span', {}, ui.page), '/', h('b', {}, '@' + ui.creator)] : h('b', {}, ui.page));
   put($('#as'), h('span', {class: 'as-chip'}, 'Data to ', h('b', {}, `${dShort(ANCHOR)} 2026`), ' · loaded daily from TikTok exports'));
   const fg = (label, ...kids) => h('div', {class: 'fgroup'}, h('span', {class: 'flabel'}, label), ...kids);
   put($('#filters'), ...rangeBox(fg), fg('Money', seg([['USD', 'USD'], ['IDR', 'IDR']], ui.cur, v => { ui.cur = v; render(); }, 'Money')), fg('Tier', seg([['', 'All'], ...TIER_LIST.map(t => [t, t])], ui.f.tier, v => { ui.f.tier = v; render(); }, 'Tier')),
     fg('Area', h('select', {'aria-label': 'Area', onchange: e => { ui.f.area = e.target.value; render(); }}, h('option', {value: ''}, 'All areas'),
       [['Province', 'p', PROVINCES], ['City', 'c', CITIES.map(x => x[0])]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v)))))));
-  const c = ui.creator ? byId(ui.creator) : null;
-  const head = c ? creatorHead(c) : h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])));
-  const y = $('main').scrollTop; put($('#page'), head, c ? viewCreator() : PAGES[ui.page]()); $('main').scrollTop = y;
+  const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])));
+  const y = $('main').scrollTop; put($('#page'), head, PAGES[ui.page]()); $('main').scrollTop = y;
 }
 $('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
 $('#menu').onclick = () => document.body.classList.toggle('nav-open');
