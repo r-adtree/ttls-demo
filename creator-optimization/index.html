@@ -477,6 +477,7 @@ td{padding:5px 12px;height:40px}
 .chsw{margin-left:auto}
 .chsw .seg button.on{background:var(--base);color:#fff;box-shadow:none}
 @media (max-width:820px){.chsw{margin-left:0;width:100%}.chsw .seg{width:100%}.chsw .seg button{flex:1}}
+.freset{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -692,7 +693,7 @@ function opener(r) { return r && r._open || null; }
    plans, reports), extended to short video, traffic, GMV source, a month-end forecast per creator
    and a Fix / Push / Guard call for each one.
    ========================================================================================= */
-var ui = {page: 'Summary', ch: 'all', month: 'Nov', range: {k: 'mtd', d0: 1, d1: 15}, f: {tier: '', area: ''}, theme: 'light', tab: {}, cur: 'USD', creator: null, card: 'week'};
+var ui = {page: 'Summary', ch: 'all', month: 'Nov', range: {k: 'mtd', d0: 1, d1: 15}, f: {tier: '', area: '', lvl: '', ind: ''}, theme: 'light', tab: {}, cur: 'USD', creator: null, card: 'week'};
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], MONFULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], DAYFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const dec1 = v => (Math.round((v || 0) * 10) / 10).toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
@@ -816,6 +817,18 @@ CREATORS.forEach(c => {
   }
   c.srcM = {}; ['2026-08', '2026-09', '2026-10', '2026-11'].forEach(m => { const s = c.src.map(v => v * lnoise(.18)), t = s.reduce((a, b) => a + b, 0); c.srcM[m] = s.map(v => v / t); });
 });
+
+/* ---------- level and main industry: fixed per creator, worked out once from all the data loaded ---------- */
+// Main industry = where the creator earns most GMV. Level = rank by total GMV: top 10% Lv.4, next 20% Lv.3, next 30% Lv.2, next 25% Lv.1, the rest Lv.0.
+const IND = ['Dining', 'Accommodation', 'Things To Do'], LVL = ['Lv.0', 'Lv.1', 'Lv.2', 'Lv.3', 'Lv.4'];
+(function () {
+  const idx = {D: 0, S: 1, W: 2, F: 2}, ms = {}, g = CREATORS.map(() => [0, 0, 0]);
+  MERCH.forEach(m => { ms[m[0]] = idx[m[1]]; });
+  SALES.forEach(r => { g[r[1]][ms[PRODUCTS[r[0]].merchant]] += r[3]; });
+  const tot = g.map(s => s[0] + s[1] + s[2]);
+  CREATORS.forEach((c, i) => { c.ind = IND[g[i].indexOf(Math.max(...g[i]))]; });
+  CREATORS.map((c, i) => i).sort((a, b) => tot[b] - tot[a] || a - b).forEach((i, r) => { const p = r / CREATORS.length; CREATORS[i].lvl = LVL[p < .1 ? 4 : p < .3 ? 3 : p < .6 ? 2 : p < .85 ? 1 : 0]; });
+})();
 
 /* ---------- sums ---------- */
 // The channel switch: 'all' = Livestream + Video, 'live' = Livestream only, 'video' = short video only. Every headline number follows it.
@@ -1093,7 +1106,8 @@ function byId(id) { for (const c of CREATORS) if (c.id === id) return c; return 
 
 /* ---------- filters and the picked dates ---------- */
 const cityOk = c => { const a = ui.f.area; if (!a) return true; const v = a.slice(2); return a[0] === 'p' ? c.prov === v : c.city === v; };
-const F = c => (!ui.f.tier || c.tier === ui.f.tier) && cityOk(c);
+const F = c => (!ui.f.tier || c.tier === ui.f.tier) && (!ui.f.lvl || c.lvl === ui.f.lvl) && (!ui.f.ind || c.ind === ui.f.ind) && cityOk(c);
+const filtered = () => !!(ui.f.tier || ui.f.lvl || ui.f.ind || ui.f.area);
 const avail = m => Math.max(1, Math.min(m.n, A - m.s + 1));
 function period() {
   const mi = MONTHS.findIndex(x => x.k === ui.month), m = MONTHS[mi], pm = MONTHS[mi - 1], n = avail(m), d0 = Math.min(ui.range.d0, n), d1 = Math.min(ui.range.d1, n);
@@ -1113,7 +1127,7 @@ const statusChip = s => chip(STATUS[s], SC[s]);
 const bucketChip = b => chip(BK[b][0], BK[b][1], false);
 const chanceChip = c => { const s = FCS(c); return chip(c == null ? s[0] : `${s[0]} · ${Math.round(c * 100)}%`, s[1]); };
 const openCreator = (id, tab, group) => { ui.page = 'Creator check'; ui.creator = id; ui.card = 'week'; ui.tab.ct = tab || 'profile'; ui.tab.ckf = group || 'all'; ui.tab.ckq = ''; ui.ckScroll = null; render(); $('main').scrollTop = 0; };
-const who = c => person(c.id, `${c.tier} · ${c.city}`);
+const who = c => person(c.id, `${c.tier} · ${c.lvl} · ${c.city}`);
 const goPage = (p, extra) => { ui.page = p; Object.assign(ui.tab, extra || {}); render(); $('main').scrollTop = 0; };
 const line = (c, label, ...txt) => h('div', {class: 'signal', style: `--c:var(${c})`}, h('i'), h('span', {class: 'grow'}, h('b', {}, label + ' '), ...txt));
 const wrapText = t => h('span', {class: 'wrapcell'}, t);
@@ -1286,7 +1300,7 @@ PAGES['Summary'] = () => {
   const st = chg > .03 ? ['Growing', '--growth'] : chg < -.03 ? ['Declining', '--rev'] : ['Flat', '--ops'];
   const act = (a, b) => L.filter(c => { const x = agg(c, a, b); return chAct(x.h, x.posts); }).length, ac = act(P.a, P.b), acp = act(P.pa, P.pb);
   const grp = (name, keep) => { const l = L.filter(keep), a = tot(l, P.a, P.b).gmv, b = tot(l, P.pa, P.pb).gmv; return {name, a, b, d: a - b}; };
-  const gs = [...TIER_LIST.map(k => grp(k + ' tier', c => c.tier === k)), ...CITIES.map(x => grp(x[0], c => c.city === x[0]))].filter(g => g.b > 0), gW = [...gs].sort((x, y) => x.d - y.d)[0], gB = [...gs].sort((x, y) => y.d - x.d)[0];
+  const gs = [...TIER_LIST.map(k => grp(k + ' tier', c => c.tier === k)), ...LVL.map(k => grp(k + ' creators', c => c.lvl === k)), ...IND.map(k => grp(k + ' industry', c => c.ind === k)), ...CITIES.map(x => grp(x[0], c => c.city === x[0]))].filter(g => g.b > 0), gW = [...gs].sort((x, y) => x.d - y.d)[0], gB = [...gs].sort((x, y) => y.d - x.d)[0];
   const grew = L.filter(c => c.a.status === 'up').length, fell = L.filter(c => c.a.status === 'down' || c.a.status === 'stopped').length;
   const tr = trendG(L, P);
   const head = verdictBox(st[1], `Summary${chTag()} · ${P.label} vs ${P.plabel}`, `${st[0]}: GMV ${dirTxt(chg)}`, `${money(tp.gmv)} became ${money(t.gmv)} across ${N(L.length)} creators, ${CHNAME[ui.ch].toLowerCase()}.`);
@@ -1311,8 +1325,10 @@ PAGES['Summary'] = () => {
     return h('section', {class: 'card', style: `border-top:3px solid var(${BK[b][1]})`}, h('div', {class: 'card-h'}, h('div', {}, h('h3', {}, d[0]), h('p', {}, d[2])), h('div', {class: 'spacer'}), h('button', {class: 'btn sm', onclick: () => goPage('Fix · Push · Guard', {tri: b})}, 'See all')),
       h('div', {class: 'tri-n'}, h('b', {style: `color:var(${BK[b][1]})`}, N(l.length)), ' creators · ', h('b', {}, money(sum(l, x => x.value))), ' ' + d[1]),
       l.length ? h('div', {class: 'movers'}, l.slice(0, 5).map(x => h('button', {class: 'mover', onclick: () => openCreator(x.c.id)}, who(x.c), h('span', {class: 'mv-v'}, h('b', {}, money(x.value)), h('small', {}, x.short))))) : h('p', {class: 'muted small'}, 'Nobody here for these filters.')); };
-  const bd = ui.ch === 'all' ? (ui.tab.sbd || 'tier') : (ui.tab.sbd === 'city' ? 'city' : 'tier');
+  const bdOpts = [['tier', 'Tier'], ['lvl', 'Level'], ['ind', 'Industry'], ['city', 'City'], ...(ui.ch === 'all' ? [['fmt', 'LIVE / video']] : [])], bd = bdOpts.some(o => o[0] === ui.tab.sbd) ? ui.tab.sbd : 'tier';
   const groups = bd === 'tier' ? TIER_LIST.map(k => ({name: k, tier: true, keep: c => c.tier === k, open: () => { ui.f.tier = k; render(); }}))
+    : bd === 'lvl' ? LVL.slice().reverse().map(k => ({name: k, keep: c => c.lvl === k, open: () => { ui.f.lvl = k; render(); }}))
+    : bd === 'ind' ? IND.map(k => ({name: k, keep: c => c.ind === k, open: () => { ui.f.ind = k; render(); }}))
     : bd === 'city' ? CITIES.map(x => ({name: x[0], keep: c => c.city === x[0], open: () => { ui.f.area = 'c:' + x[0]; render(); }}))
     : [{name: 'LIVE', fmt: 'l', c: '--base'}, {name: 'Short video', fmt: 'v', c: '--ops'}];
   const rows = groups.map(g => { if (g.fmt) { const l = g.fmt === 'l'; return {...g, g: l ? t.lgmv : t.vgmv, gp: l ? tp.lgmv : tp.vgmv, od: l ? t.lord : t.vord, n: L.filter(c => { const x = agg(c, P.a, P.b); return l ? x.h > 0 : x.posts > 0; }).length, _open: () => goPage('Sales check', {skc: l ? '0' : '1'})}; }
@@ -1322,10 +1338,10 @@ PAGES['Summary'] = () => {
     h('div', {class: 'grid g21 mt'}, card('GMV by day', `${P.m.label} (solid) next to ${P.pm.label} (dashed).`, area([{name: P.m.k, values: tr.now, c: '--growth'}, {name: P.pm.k, values: tr.prev, c: '--muted', dash: true, fill: false}], tr.labels, {fmt: short, height: 250})), insights),
     h('div', {class: 'section-t'}, 'Where to fix, push and guard'),
     h('div', {class: 'grid g3'}, tcard('fix'), tcard('push'), tcard('guard')),
-    row(card('Breakdown', 'Click a row to look closer.', table([{k: 'name', label: bd === 'tier' ? 'Tier' : bd === 'city' ? 'City' : 'Format', render: r => r.tier ? tierChip(r.name) : h('div', {class: 'who'}, r.c ? h('i', {class: 'dot-c', style: `background:var(${r.c})`}) : null, h('b', {style: 'font-weight:600'}, r.name))},
+    row(card('Breakdown', 'Click a row to look closer.', table([{k: 'name', label: bdOpts.find(o => o[0] === bd)[1], render: r => r.tier ? tierChip(r.name) : h('div', {class: 'who'}, r.c ? h('i', {class: 'dot-c', style: `background:var(${r.c})`}) : null, h('b', {style: 'font-weight:600'}, r.name))},
       {k: 'g', label: 'GMV', num: true, fmt: money}, {k: 'gp', label: `GMV ${P.plabel}`, num: true, fmt: money}, {k: 'chg', label: 'Change', num: true, render: r => dd(r.g, r.gp)}, {k: 'sh', label: 'Share', num: true, render: r => meterRow(pct(r.g, gT), '--base', `${pct(r.g, gT)}%`, 70)},
       {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'n', label: 'Active creators', num: true, fmt: N}], rows.map(r => ({...r, chg: ratio(r.g, r.gp), sh: r.g})), {search: false, sortKey: 'g', pageSize: 12}),
-      seg(ui.ch === 'all' ? [['tier', 'Tier'], ['city', 'City'], ['fmt', 'LIVE / video']] : [['tier', 'Tier'], ['city', 'City']], bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
+      seg(bdOpts, bd, v => { ui.tab.sbd = v; render(); }, 'Break down by')))];
 };
 
 /* ================= Fix · Push · Guard ================= */
@@ -1568,8 +1584,8 @@ function creatorDetail(c, pos, total) {
   const X = c.a, P = period(), mt = X.monthTarget, b = X.boost, tri = X.tri, fc = X.fc, tg = mt.target, chance = fc.chance(tg), mName = MONFULL[+MONTH.slice(5) - 1], tab = ui.tab.ct || 'profile';
   const nav = h('div', {class: 'chk-nav'}, h('button', {class: 'btn sm', onclick: () => stepCreator(-1)}, '← Previous'), h('b', {class: 'small'}, pos >= 0 ? `${pos + 1} of ${N(total)}` : 'Not in this list'), h('button', {class: 'btn sm', onclick: () => stepCreator(1)}, 'Next →'),
     h('span', {class: 'spacer'}), h('span', {class: 'hint'}, 'Keys: ← → or j k'));
-  const head = h('div', {class: 'prof-h'}, h('div', {class: 'ava-xl'}, c.id.replace(/[^a-z]/gi, '').charAt(0).toUpperCase()), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, '@' + c.id), h('div', {class: 'meta'}, `${c.name} · ${c.city}, ${c.prov} · ADTREE`)),
-    h('div', {class: 'chips', style: 'margin:0'}, tierChip(c.tier), statusChip(X.status), bucketChip(tri.bucket)));
+  const head = h('div', {class: 'prof-h'}, h('div', {class: 'ava-xl'}, c.id.replace(/[^a-z]/gi, '').charAt(0).toUpperCase()), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, '@' + c.id), h('div', {class: 'meta'}, `${c.name} · ${c.city}, ${c.prov} · ${c.ind} · ADTREE`)),
+    h('div', {class: 'chips', style: 'margin:0'}, tierChip(c.tier), chip(c.lvl, '--base', false), statusChip(X.status), bucketChip(tri.bucket)));
   const call = verdictBox(BK[tri.bucket][1], 'Where this creator stands · last 7 days and the November forecast', `${BK[tri.bucket][0]}: ${tri.short}`, [tri.why, h('br'), h('b', {}, 'Do this: '), tri.action], tri.bucket === 'fix' ? 'Less GMV a week' : tri.bucket === 'push' ? 'Expected gain a week' : 'GMV at stake', money(tri.value));
   const tabBar = h('div', {class: 'tools mt'}, seg(CTABS, tab, v => { ui.tab.ct = v; render(); }, 'Creator view'));
   let body;
@@ -1626,7 +1642,7 @@ PAGES['Creator check'] = () => {
   if (!byId(ui.creator)) ui.creator = ui.ckOrder[0] || CREATORS[0].id;
   const c = byId(ui.creator);
   const items = h('div', {class: 'chk-items'}, rows.length ? rows.map(r => h('button', {class: 'chk-row' + (r.c.id === c.id ? ' on' : ''), onclick: () => { ui.creator = r.c.id; ui.card = 'week'; render(); }},
-    avatar(r.c.id), h('div', {style: 'min-width:0'}, h('b', {}, r.c.id), h('small', {}, bucketChip(r.t.bucket), `${r.c.tier} · ${r.c.city}`)), h('div', {class: 'chk-v'}, h('b', {}, money(r.a.gmv)), h('small', {}, dd(r.a.gmv, r.p.gmv))))) : h('p', {class: 'muted small', style: 'padding:14px'}, 'Nobody matches. Clear the search or pick another group.'));
+    avatar(r.c.id), h('div', {style: 'min-width:0'}, h('b', {}, r.c.id), h('small', {}, bucketChip(r.t.bucket), `${r.c.tier} · ${r.c.lvl} · ${r.c.city}`)), h('div', {class: 'chk-v'}, h('b', {}, money(r.a.gmv)), h('small', {}, dd(r.a.gmv, r.p.gmv))))) : h('p', {class: 'muted small', style: 'padding:14px'}, 'Nobody matches. Clear the search or pick another group.'));
   items.onscroll = () => { ui.ckScroll = items.scrollTop; };
   setTimeout(() => { if (ui.ckScroll != null) items.scrollTop = ui.ckScroll; const el = items.querySelector('.on'); if (el && (el.offsetTop < items.scrollTop || el.offsetTop + el.offsetHeight > items.scrollTop + items.clientHeight)) items.scrollTop = Math.max(0, el.offsetTop - items.clientHeight / 2); }, 0);
   const left = h('section', {class: 'card chk-list'}, h('div', {class: 'chk-top'},
@@ -1770,7 +1786,7 @@ const HELP = {
   triage: {t: 'Fix · Push · Guard', a: 'Every active creator gets one call, with the reason and the next step.', b: 'When planning the week: who gets a call, who gets a boost, who is left alone.', c: 'Fix first, biggest loss at the top. Then Push. Guard is a check, not a task.', more: ['Fix: GMV fell 20% or more, the creator stopped, or the forecast says they will miss the November target.', 'Push: GMV up, or stable with a boost that pays back or room for more LIVE hours.', 'Guard: a top earner that is fine, or GMV that still holds while viewers, hours or conversion slipped 12% or more.', 'Watch: new data, inactive, or stable near the target. Nothing to do this week.', 'Worth = less GMV a week (Fix), expected gain a week (Push) or GMV at stake this month (Guard).']},
   monitor: {t: 'Monitor', a: 'Every creator in one list, like a class register.', b: 'Every morning, to see who is dropping and needs help.', c: 'Look at Down. The top of the list needs help most. Click a name for the detail.', more: ['Up: selling more than before.', 'Down: sales or viewers fell a lot.', 'Stable: about the same.', 'New data: not enough data to compare yet.', 'Stopped: used to go LIVE or post, not any more.', 'Inactive: no LIVE or video in these dates or before.']},
   forecast: {t: 'Month-end forecast', a: 'What each creator, and all of them together, will make by the end of November if they keep going like this.', b: 'Mid-month, to see who will miss the target while there is still time.', c: 'Read the chance. Under 35% means act now; the Needed a day column says how much.', more: ['Pace: a typical day from the last 14 days, with the weekday pattern taken out.', 'Trend: the last 14 days against the 14 before, carried forward but fading.', 'Each remaining day: pace × weekday × campaign multiplier.', 'The range is where 80% of outcomes land; the chance is how often the total passes the target.', 'At October’s pace: what the month would make if the creator matched their October daily average instead.']},
-  dates: {t: 'Picking dates', a: 'The filters at the top set the dates, the money, the tier and the area for every page.', b: 'When you want last month, a particular week, or one city.', c: 'Pick a month and a range, or type both dates. Every number compares with the same dates last month.', more: ['The month-end forecast, plans, targets and boost always use the newest data, whatever dates are picked.']},
+  dates: {t: 'Picking dates', a: 'The filters at the top set the dates, the money, the tier, the level, the industry and the area for every page.', b: 'When you want last month, a particular week, or one city.', c: 'Pick a month and a range, or type both dates. Every number compares with the same dates last month.', more: ['The month-end forecast, plans, targets and boost always use the newest data, whatever dates are picked.']},
   creator: {t: 'Creator page', a: 'Click a creator and everything about them appears. Like one child’s report book.', b: 'When you want to know why a creator is up or down.', c: 'Read the profile first: rank, highlights, lowlights and the priority action. Then the call and the focus for this week.', more: ['The profile compares the creator with their tier (peer set) for the dates picked.', 'LIVE money comes from 4 things: hours, viewers, buyers and basket size. Short video adds posts and views.', 'Red bars mean that part fell; green means it rose.', 'Hours that earn the most: orange bars are the best times to go LIVE.']},
   cards: {t: 'Cards for creators', a: 'Ready-to-send pictures for creators. Little to read.', b: 'Send Plan this week on Monday, Today every morning, Report at the start of the week.', c: 'Open a creator, pick a card, click Download image and send it. For many creators at once, click Download plan cards on Monitor.', more: ['Cards never show boost numbers, so they are safe to send.']},
   compare: {t: 'Compare (WoW and MoM)', a: 'WoW is one week against the same week last month. MoM is this month against last month.', b: 'When you want to know if things are getting better or worse.', c: 'Pick WoW or MoM and the period. Leave the creator box empty for everyone, or type one name.', more: ['WoW: 1–7 Nov against 1–7 Oct. A month is split into 1–7, 8–14, 15–21, 22–28 and 29 to the end.', 'MoM: November against October. If the month isn’t over, the same dates are used, like 1–15 Nov against 1–15 Oct.']},
@@ -1802,6 +1818,7 @@ function rangeBox(fg) {
     fg('Dates', h('select', {'aria-label': 'Date range', onchange: e => { setRange(e.target.value); render(); }}, [...RANGES.filter(([k2]) => k2 !== 'month' || P.n === P.m.n), ['custom', 'Custom dates']].map(([k2, l]) => h('option', {value: k2, selected: ui.range.k === k2}, l))), ...(custom ? [day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To')] : [])),
     h('span', {class: 'muted small'}, `vs ${P.plabel}`)];
 }
+const filterSel = (label, key, all, list) => h('select', {'aria-label': label, onchange: e => { ui.f[key] = e.target.value; render(); }}, h('option', {value: ''}, all), list.map(v => h('option', {value: v, selected: ui.f[key] === v}, v)));
 function render() {
   try { localStorage.setItem('co-sim1', JSON.stringify({page: ui.page, theme: ui.theme, ch: ui.ch})); } catch (e) {}
   document.documentElement.dataset.theme = ui.theme;
@@ -1814,8 +1831,10 @@ function render() {
   put($('#as'), h('span', {class: 'as-chip'}, 'Data to ', h('b', {}, `${dShort(ANCHOR)} 2026`), ' · loaded daily from TikTok exports'));
   const fg = (label, ...kids) => h('div', {class: 'fgroup'}, h('span', {class: 'flabel'}, label), ...kids);
   put($('#filters'), ...rangeBox(fg), fg('Money', seg([['USD', 'USD'], ['IDR', 'IDR']], ui.cur, v => { ui.cur = v; render(); }, 'Money')), fg('Tier', seg([['', 'All'], ...TIER_LIST.map(t => [t, t])], ui.f.tier, v => { ui.f.tier = v; render(); }, 'Tier')),
+    fg('Level', filterSel('Level', 'lvl', 'All levels', LVL)), fg('Industry', filterSel('Industry', 'ind', 'All industries', IND)),
     fg('Area', h('select', {'aria-label': 'Area', onchange: e => { ui.f.area = e.target.value; render(); }}, h('option', {value: ''}, 'All areas'),
-      [['Province', 'p', PROVINCES], ['City', 'c', CITIES.map(x => x[0])]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v)))))));
+      [['Province', 'p', PROVINCES], ['City', 'c', CITIES.map(x => x[0])]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v)))))),
+    filtered() ? h('button', {class: 'btn sm freset', type: 'button', onclick: () => { ui.f = {tier: '', area: '', lvl: '', ind: ''}; render(); }}, 'Reset filters') : null);
   const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])), h('div', {class: 'chsw'}, seg([['all', 'All'], ['video', 'Video'], ['live', 'Livestream']], ui.ch, v => { ui.ch = v; analyze(); render(); }, 'Channel')));
   const y = $('main').scrollTop; put($('#page'), head, PAGES[ui.page]()); $('main').scrollTop = y;
 }
