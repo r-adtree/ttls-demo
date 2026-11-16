@@ -214,7 +214,6 @@ svg text{font-family:var(--font)}
 .fgroup + .fgroup{padding-left:14px;border-left:1px solid var(--line)}
 .filters .seg button{padding:3px 9px}
 @media (max-width:1360px){.flabel{display:none}.filters{gap:12px}.fgroup + .fgroup{padding-left:12px}}
-.flabel{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
 .filters .seg button.on{background:color-mix(in srgb,var(--base) 22%,var(--panel));color:var(--text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--base) 45%,transparent)}
 .dates{display:inline-flex;align-items:center;gap:6px}.dates input{height:26px;padding:2px 6px;font-size:12px}
 .rrow .nm b{display:block;font-size:12.5px}.rrow .nm small{color:var(--muted);font-size:11px}
@@ -464,9 +463,9 @@ td{padding:5px 12px;height:40px}
 .prof-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .ava-xl{width:44px;height:44px;border-radius:13px;font-size:19px}
 .prof-h h2{font-size:18px}
-@media (max-width:1100px){.chk{grid-template-columns:minmax(0,1fr)}.chk-list.card{position:static;max-height:300px}.gcards{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1100px){.gcards{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.chk{grid-template-columns:minmax(0,1fr)}.chk-list.card{position:static;max-height:300px}}
 @media (max-width:820px){.grid.kgrid:has(> .kpi){grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:minmax(0,1fr)}.cols3 > div,.cols3 > div:nth-child(n){padding:12px 0 0;border-left:none;border-top:1px solid var(--line)}.cols3 > div:first-child{border-top:none;padding-top:0}.wc-g{grid-template-columns:minmax(0,1fr)}}
-.flabel{display:none}
 .fgroup + .fgroup{padding-left:12px}
 .filters{gap:12px}
 .wc-c{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -477,7 +476,21 @@ td{padding:5px 12px;height:40px}
 .chsw{margin-left:auto}
 .chsw .seg button.on{background:var(--base);color:#fff;box-shadow:none}
 @media (max-width:820px){.chsw{margin-left:0;width:100%}.chsw .seg{width:100%}.chsw .seg button{flex:1}}
+
+/* Filter bar: one tidy row, grouped by what it does; Reset sits at the far end and never moves the rest */
+.filters{padding:7px 20px;gap:12px}
+.filters .fgroup{gap:8px}
+.filters .fgroup + .fgroup{padding-left:12px;border-left:1px solid var(--line)}
+.fsub{display:inline-flex;align-items:center;gap:6px}
 .freset{white-space:nowrap}
+.freset:disabled{opacity:.45;cursor:default}
+.chsw{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dgrid .dt{text-align:center}
+.dgrid>div{min-width:0}
+@media (max-width:820px){.filters .fgroup{width:100%;flex-wrap:wrap;border-left:none!important;padding-left:0!important}.filters .fgroup>select,.filters .fsub{flex:1 1 calc(50% - 8px)}.filters .fsub select{width:100%}.freset{width:100%}.chsw .seg{flex:1}}
+.tools .tend{margin-left:auto;display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+.tools .tend .count{margin-left:0}
+@media (max-width:820px){.filters{padding-left:12px;padding-right:12px}}
 </style>
 </head>
 <body>
@@ -636,7 +649,7 @@ function table(cols, rows, {pageSize = 10, sortKey, dir = -1, search = true, too
     const shown = list.slice(page * pageSize, page * pageSize + pageSize);
     put(box,
       search || tools ? h('div', {class: 'tools'}, search ? h('input', {type: 'search', placeholder: 'Filter', value: q, 'aria-label': 'Filter rows', style: 'width:200px', oninput: e => { q = e.target.value.toLowerCase(); page = 0; draw(); const i = box.querySelector('input'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }}) : null,
-        tools || null, h('span', {class: 'count'}, `${list.length} ${list.length === 1 ? 'row' : 'rows'}`), h('button', {class: 'btn sm', onclick: () => exportCsv(cols, list)}, 'Export CSV')) : null,
+        tools || null, h('span', {class: 'tend'}, h('span', {class: 'count'}, `${list.length} ${list.length === 1 ? 'row' : 'rows'}`), h('button', {class: 'btn sm', onclick: () => exportCsv(cols, list)}, 'Export CSV'))) : null,
       h('div', {class: 'tbl'}, h('table', {}, h('thead', {}, h('tr', {}, cols.map(c => h('th', {class: (c.num ? 'n ' : '') + (c.k && !c.fixed ? 'sort' : ''),
         onclick: c.k && !c.fixed ? () => { d = key === c.k ? -d : -1; key = c.k; draw(); } : null}, c.label, key === c.k ? (d > 0 ? ' ↑' : ' ↓') : '')))),
         h('tbody', {}, shown.length ? shown.map(r => { const open = opener(r); return h('tr', {class: open ? 'open' : null, onclick: open ? e => { if (!e.target.closest('button,select,input,a')) open(); } : null}, cols.map(c => h('td', {class: c.num ? 'n' : ''}, c.render ? c.render(r) : c.fmt ? c.fmt(r[c.k], r) : String(r[c.k] ?? '')))); })
@@ -1131,7 +1144,8 @@ const who = c => person(c.id, `${c.tier} · ${c.lvl} · ${c.city}`);
 const goPage = (p, extra) => { ui.page = p; Object.assign(ui.tab, extra || {}); render(); $('main').scrollTop = 0; };
 const line = (c, label, ...txt) => h('div', {class: 'signal', style: `--c:var(${c})`}, h('i'), h('span', {class: 'grow'}, h('b', {}, label + ' '), ...txt));
 const wrapText = t => h('span', {class: 'wrapcell'}, t);
-const help = (k, label) => h('button', {class: 'btn sm', onclick: () => showHelp(k)}, label || 'What is this?');
+// The page head carries one "About this page" button; only a labelled help stays where it is needed.
+const help = (k, label) => label ? h('button', {class: 'btn sm', onclick: () => showHelp(k)}, label) : null;
 function trendG(L, P) {
   const n = P.n, pn = Math.min(n, P.pm.n), a = P.m.s, b = a + n - 1;
   return {now: dailyF(L, a, b, dayG), prev: dailyF(L, P.pm.s, P.pm.s + pn - 1, dayG), live: dailyF(L, a, b, (c, i) => c.L.gmv[i]), vid: dailyF(L, a, b, (c, i) => c.V.gmv[i]), labels: Array.from({length: n}, (_, i) => String(i + 1))};
@@ -1196,7 +1210,7 @@ PAGES['Compare'] = () => {
 /* ================= Sales check ================= */
 const CHN = ['LIVE', 'Short video'];
 function salesRows(P, L) {
-  const keep = new Set(L.map(c => c.i)), chn = ui.ch === 'live' ? '0' : ui.ch === 'video' ? '1' : (ui.tab.skc || 'all'), map = {};
+  const keep = new Set(L.map(c => c.i)), chn = ui.ch === 'live' ? '0' : ui.ch === 'video' ? '1' : 'all', map = {};
   SALES.forEach(r => { if (r[2] < P.a || r[2] > P.b || !keep.has(r[1]) || (chn !== 'all' && r[5] !== +chn)) return; const k = r[0] + '|' + r[1], o = map[k] || (map[k] = {p: r[0], c: r[1], gmv: 0, ord: 0, ch: {}}); o.gmv += r[3]; o.ord += r[4]; o.ch[r[5]] = 1; });
   return Object.keys(map).map(k => { const o = map[k], Pd = PRODUCTS[o.p]; return {sku: Pd.name, merchant: Pd.merchant, pid: 'P' + (1000 + Pd.i), creator: CREATORS[o.c].id, ci: o.c, gmv: o.gmv, ord: o.ord, ch: Object.keys(o.ch).map(x => CHN[x]).join(' + ')}; });
 }
@@ -1217,7 +1231,7 @@ PAGES['Sales check'] = () => {
   const verdict = h('section', {class: 'card'}, h('div', {class: 'verdict', style: '--c:var(--base)'}, h('div', {}, h('div', {class: 'muted small'}, `Sales check · ${P.label}`), h('div', {class: 'verdict-v'}, rows.length ? `${money(total)} sold` : 'No sales in these dates'),
     h('div', {class: 'small'}, rows.length ? `${N(orders)} orders · ${uniq(rows, r => r.merchant)} merchants · ${uniq(rows, skuKey)} SKUs · ${uniq(rows, r => r.creator)} creators. Click a row to see who sold what.` : 'Pick other dates at the top.')), h('div', {class: 'verdict-n'}, h('span', {class: 'muted small'}, 'Orders'), h('b', {}, N(orders)))));
   return [verdict, row(card('What sold, and who sold it', 'LIVE sales count on the day the LIVE started; short video sales on the day of the order. Use the filter box for a merchant, SKU, product ID or creator.',
-    table(cols, groups, {sortKey: 'gmv', pageSize: 15, state: ui.tab.skState ||= {}, tools: [seg([['merchant', 'By merchant'], ['sku', 'By SKU'], ['creator', 'By creator']], g, v => { ui.tab.skg = v; render(); }, 'Group'), ui.ch === 'all' ? seg([['all', 'LIVE + video'], ['0', 'LIVE'], ['1', 'Short video']], ui.tab.skc || 'all', v => { ui.tab.skc = v; render(); }, 'Channel') : null]}), help('sales')))];
+    table(cols, groups, {sortKey: 'gmv', pageSize: 15, state: ui.tab.skState ||= {}, tools: [seg([['merchant', 'By merchant'], ['sku', 'By SKU'], ['creator', 'By creator']], g, v => { ui.tab.skg = v; render(); }, 'Group')]}), help('sales')))];
 };
 
 /* ================= Products ================= */
@@ -1331,7 +1345,7 @@ PAGES['Summary'] = () => {
     : bd === 'ind' ? IND.map(k => ({name: k, keep: c => c.ind === k, open: () => { ui.f.ind = k; render(); }}))
     : bd === 'city' ? CITIES.map(x => ({name: x[0], keep: c => c.city === x[0], open: () => { ui.f.area = 'c:' + x[0]; render(); }}))
     : [{name: 'LIVE', fmt: 'l', c: '--base'}, {name: 'Short video', fmt: 'v', c: '--ops'}];
-  const rows = groups.map(g => { if (g.fmt) { const l = g.fmt === 'l'; return {...g, g: l ? t.lgmv : t.vgmv, gp: l ? tp.lgmv : tp.vgmv, od: l ? t.lord : t.vord, n: L.filter(c => { const x = agg(c, P.a, P.b); return l ? x.h > 0 : x.posts > 0; }).length, _open: () => goPage('Sales check', {skc: l ? '0' : '1'})}; }
+  const rows = groups.map(g => { if (g.fmt) { const l = g.fmt === 'l'; return {...g, g: l ? t.lgmv : t.vgmv, gp: l ? tp.lgmv : tp.vgmv, od: l ? t.lord : t.vord, n: L.filter(c => { const x = agg(c, P.a, P.b); return l ? x.h > 0 : x.posts > 0; }).length, _open: () => { ui.ch = l ? 'live' : 'video'; analyze(); goPage('Sales check'); }}; }
     const l = L.filter(g.keep), a = tot(l, P.a, P.b), b = tot(l, P.pa, P.pb); return {...g, g: a.gmv, gp: b.gmv, od: a.ord, n: l.filter(c => { const x = agg(c, P.a, P.b); return x.h > 0 || x.posts > 0; }).length, _open: g.open}; }).filter(r => r.g || r.gp);
   const gT = sum(rows, r => r.g) || 1;
   return [head, h('div', {class: 'mt'}, strip),
@@ -1369,16 +1383,16 @@ PAGES['Monitor'] = () => {
   let f = ui.tab.mst || 'down'; if (f === 'down' && !counts.down) f = 'active';
   const list = rows.filter(r => f === 'quiet' ? ['stopped', 'inactive'].includes(r.s) : f === 'active' ? ['down', 'up', 'stable', 'new'].includes(r.s) : f === 'all' ? true : r.s === f);
   const down = rows.filter(r => r.s === 'down'), lost = sum(down, r => Math.max(0, r.prev.gmv - r.cur.gmv)), up = rows.filter(r => r.s === 'up'), gained = sum(up, r => Math.max(0, r.cur.gmv - r.prev.gmv));
-  const opts = [['down', `Down ${counts.down || 0}`], ['up', `Up ${counts.up || 0}`], ['stable', `Stable ${counts.stable || 0}`], ['new', `New data ${counts.new || 0}`], ['stopped', `Stopped ${counts.stopped || 0}`], ['inactive', `Inactive ${counts.inactive || 0}`], ['active', `All active ${active}`], ['all', `Everyone ${rows.length}`]];
+  const opts = [['down', `Down ${counts.down || 0}`], ['up', `Up ${counts.up || 0}`], ['stable', `Stable ${counts.stable || 0}`], ['new', `New ${counts.new || 0}`], ['stopped', `Stopped ${counts.stopped || 0}`], ['inactive', `Inactive ${counts.inactive || 0}`], ['active', `Active ${active}`], ['all', `All ${rows.length}`]];
   const sortLoss = f === 'down' ? (a, b) => (b.prev.gmv - b.cur.gmv) - (a.prev.gmv - a.cur.gmv) : (a, b) => b.cur.gmv - a.cur.gmv;
   return [verdictBox(down.length ? '--rev' : '--growth', `Monitor${chTag()} · ${P.label} vs ${P.plabel}`, down.length ? `${N(down.length)} creators are down, ${money(lost)} less GMV` : 'No creator is down', 'Biggest money gap first. Click a creator to check them one by one.'),
     h('div', {class: 'mt'}, kstrip(4, pickKpi('Down', N(counts.down || 0), `${money(lost)} less GMV`, f === 'down', () => { ui.tab.mst = 'down'; render(); }, '--rev'), pickKpi('Up', N(counts.up || 0), `${money(gained)} more GMV`, f === 'up', () => { ui.tab.mst = 'up'; render(); }, '--growth'),
       pickKpi('Stable', N(counts.stable || 0), 'about the same', f === 'stable', () => { ui.tab.mst = 'stable'; render(); }), pickKpi('Stopped or inactive', N((counts.stopped || 0) + (counts.inactive || 0)), 'no LIVE or video', f === 'quiet', () => { ui.tab.mst = 'quiet'; render(); }, '--ops'))),
-    row(card('Creators', null, table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 's', label: 'Status', render: r => statusChip(r.s)},
+    row(card('Creators', null, h('div', {}, h('div', {class: 'tools'}, seg(opts, f, v => { ui.tab.mst = v; render(); }, 'Status')), table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 's', label: 'Status', render: r => statusChip(r.s)},
       {k: 'g', label: 'GMV', num: true, render: r => h('span', {}, money(r.g), ' ', dd(r.g, r.prev.gmv))}, {k: 'spark', label: 'Last 30 days', fixed: true, render: r => tspark(sparkOf(r.c, P), '--growth')},
       {k: 'focus', label: 'Focus this week', render: r => r.c.a.focus.title}, {k: 'ch', label: 'November', render: r => chanceChip(r.c.a.fc.chance(r.c.a.monthTarget.target))}, {k: 'call', label: 'Group', render: r => bucketChip(r.c.a.tri.bucket)}],
       list.sort(sortLoss).map(r => ({...r, id: r.c.id, g: r.cur.gmv, ch: r.c.a.fc.chance(r.c.a.monthTarget.target) ?? -1, call: r.c.a.tri.rank, _open: () => openCreator(r.c.id)})),
-      {sortKey: null, pageSize: 15, state: ui.tab.monState ||= {}, tools: [seg(opts, f, v => { ui.tab.mst = v; render(); }, 'Status'), h('button', {class: 'btn sm', onclick: () => bulkCards(list.map(r => r.c).filter(c => c.a.plan))}, 'Download plan cards'), help('monitor')]})))];
+      {sortKey: null, pageSize: 15, state: ui.tab.monState ||= {}, tools: [h('button', {class: 'btn sm', onclick: () => bulkCards(list.map(r => r.c).filter(c => c.a.plan))}, 'Download plan cards')]}))))];
 };
 
 /* ================= Month-end forecast ================= */
@@ -1396,7 +1410,7 @@ PAGES['Month-end forecast'] = () => {
       {k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 'mtd', label: 'So far', num: true, fmt: money},
       {k: 'mu', label: 'Projected', num: true, render: r => h('div', {}, h('b', {}, money(r.mu)), h('div', {class: 'hint'}, `${short(r.lo)} to ${short(r.hi)}`))}, {k: 'tg', label: 'Target', num: true, render: r => r.tg ? money(r.tg) : h('span', {class: 'muted'}, '-')},
       {k: 'ch', label: 'Chance', render: r => r.ch < 0 ? h('span', {class: 'muted'}, '-') : h('div', {}, meterRow(r.ch * 100, FCS(r.ch)[1], `${Math.round(r.ch * 100)}%`, 56), r.need > 0 ? h('div', {class: 'hint', style: 'margin-top:3px'}, `needs ${money(r.need)} a day`) : null)},
-      {k: 'call', label: 'Group', render: r => bucketChip(r.c.a.tri.bucket)}], rows, {sortKey: 'ch', dir: 1, pageSize: 15, state: ui.tab.fcState ||= {}, tools: [help('forecast', 'How it works')]})))];
+      {k: 'call', label: 'Group', render: r => bucketChip(r.c.a.tri.bucket)}], rows, {sortKey: 'ch', dir: 1, pageSize: 15, state: ui.tab.fcState ||= {}, tools: []})))];
 };
 
 /* ================= Creator page: profile card on top, direction underneath ================= */
@@ -1729,7 +1743,7 @@ PAGES['Upload data'] = () => {
   const demo = () => toast('This is a demo with sample data, so files aren’t read here.');
   const drop = h('label', {class: 'drop', ondragover: e => { e.preventDefault(); drop.classList.add('over'); }, ondragleave: () => drop.classList.remove('over'), ondrop: e => { e.preventDefault(); drop.classList.remove('over'); demo(); }},
     h('input', {type: 'file', accept: '.xlsx', multiple: true, onchange: e => { e.target.value = ''; demo(); }}), h('b', {}, 'Pick or drop .xlsx files here'), h('span', {class: 'muted small'}, 'LIVE Rooms, LIVE Products and Video Performance are recognised on their own, and times change to WIB.'));
-  const grid = h('div', {class: 'dgrid', style: `grid-template-columns:80px repeat(${ds.length},minmax(30px,1fr))`}, h('div', {class: 'lab'}), ds.map(d => h('div', {class: 'dt'}, dShort(d.d))),
+  const grid = h('div', {class: 'dgrid', style: `grid-template-columns:80px repeat(${ds.length},minmax(18px,1fr))`}, h('div', {class: 'lab dt'}, dShort(ds[ds.length - 1].d).split(' ')[1]), ds.map(d => h('div', {class: 'dt'}, dShort(d.d).split(' ')[0])),
     h('div', {class: 'lab'}, 'Rooms'), ds.map(d => h('div', {class: d.rooms ? 'y' : 'n', title: `${d.rooms} sessions`}, d.rooms ? '✓' : '-')), h('div', {class: 'lab'}, 'Products'), ds.map(() => h('div', {class: 'y'}, '✓')), h('div', {class: 'lab'}, 'Video'), ds.map(d => h('div', {class: d.posts ? 'y' : 'n', title: `${d.posts} videos`}, d.posts ? '✓' : '-')));
   return [h('section', {class: 'card'}, verdictBox('--growth', 'Upload data', `Data complete to ${dShort(ANCHOR)}: ${ND} days`, `${N(sum(CREATORS, c => c.ses.length))} LIVE sessions, ${N(SALES.length)} product rows and ${N(tot(CREATORS, 0, A).posts)} videos, all matching. In the real app the TikTok exports are dropped here every morning.`, 'Towards 90 days', Math.min(100, Math.round(ND / 90 * 100)) + '%')),
     row(drop), h('div', {class: 'grid g2 mt'}, card('Last 14 days', '✓ there and matching · - no sales that day.', grid),
@@ -1741,7 +1755,7 @@ PAGES['Upload data'] = () => {
 PAGES['Guide'] = () => {
   const steps = [['Put the files in', 'Open Upload data, drop the TikTok files in the box and wait for the done message.'], ['Read the Summary', 'The situation, then Fix, Push and Guard. Fix first, biggest loss at the top.'], ['Click the creator', 'Read the call and what to do. That is the main problem and the next step.'], ['Send the card', 'Open Cards to send on the creator page, click Download image and send it.']];
   const order = ['summary', 'channel', 'triage', 'monitor', 'forecast', 'dates', 'creator', 'cards', 'compare', 'sales', 'products', 'hours', 'targets', 'boost', 'data'];
-  return [h('div', {class: 'grid g12'}, card('What to do each morning', null, h('div', {}, steps.map((s, i) => h('div', {class: 'guide-step'}, h('i', {}, String(i + 1)), h('div', {}, h('b', {}, s[0]), h('br'), s[1]))))),
+  return [h('div', {class: 'grid g12', style: 'align-items:start'}, card('What to do each morning', null, h('div', {}, steps.map((s, i) => h('div', {class: 'guide-step'}, h('i', {}, String(i + 1)), h('div', {}, h('b', {}, s[0]), h('br'), s[1]))))),
       card('What the words mean', null, h('div', {}, WORDS.map(w => h('div', {class: 'word'}, h('b', {}, w[0]), h('div', {}, w[1])))))),
     row(card('Every page, explained', 'Open one to read it.', h('div', {}, order.map(k => h('details', {class: 'acc'}, h('summary', {}, h('b', {style: 'font-weight:600'}, HELP[k].t), h('span', {class: 'muted'}, HELP[k].a)), h('div', {class: 'acc-b ds dlg', style: 'padding:0 0 12px;gap:8px'}, ...helpBody(k)))))))];
 };
@@ -1814,10 +1828,11 @@ function rangeBox(fg) {
   const day = (k2, label) => h('input', {type: 'date', class: 'date-in', min: iso(1), max: iso(P.n), value: iso(k2 === 'd0' ? P.d0 : P.d1), 'aria-label': label, onchange: e => {
     const v = e.target.value; if (v.slice(0, 7) !== iso(1).slice(0, 7)) { toast(`Pick a day in ${P.m.label}.`); return render(); }
     const n = {...ui.range, k: 'custom', [k2]: Math.min(+v.slice(8), P.n)}; if (n.d0 > n.d1) [n.d0, n.d1] = [n.d1, n.d0]; ui.range = n; render(); }});
-  return [fg('Month', h('select', {'aria-label': 'Month', onchange: e => { ui.month = e.target.value; setRange('mtd'); render(); }}, MONTHS.slice(1).map(m => h('option', {value: m.k, selected: m.k === ui.month}, m.k === 'Nov' ? `Nov 2026 · to ${dShort(ANCHOR)}` : m.k + ' 2026')))),
+  return [fg('Month', h('select', {'aria-label': 'Month', onchange: e => { ui.month = e.target.value; setRange('mtd'); render(); }}, MONTHS.slice(1).map(m => h('option', {value: m.k, selected: m.k === ui.month}, m.k + ' 2026')))),
     fg('Dates', h('select', {'aria-label': 'Date range', onchange: e => { setRange(e.target.value); render(); }}, [...RANGES.filter(([k2]) => k2 !== 'month' || P.n === P.m.n), ['custom', 'Custom dates']].map(([k2, l]) => h('option', {value: k2, selected: ui.range.k === k2}, l))), ...(custom ? [day('d0', 'From'), h('span', {class: 'muted small'}, 'to'), day('d1', 'To')] : [])),
     h('span', {class: 'muted small'}, `vs ${P.plabel}`)];
 }
+const HELPK = {'Summary': 'summary', 'Fix · Push · Guard': 'triage', 'Creator check': 'creator', 'Month-end forecast': 'forecast', 'Monitor': 'monitor', 'Compare': 'compare', 'Sales check': 'sales', 'Products': 'products', 'Hours and days': 'hours', 'Targets': 'targets', 'Boost': 'boost', 'Upload data': 'data'};
 const filterSel = (label, key, all, list) => h('select', {'aria-label': label, onchange: e => { ui.f[key] = e.target.value; render(); }}, h('option', {value: ''}, all), list.map(v => h('option', {value: v, selected: ui.f[key] === v}, v)));
 function render() {
   try { localStorage.setItem('co-sim1', JSON.stringify({page: ui.page, theme: ui.theme, ch: ui.ch})); } catch (e) {}
@@ -1829,13 +1844,16 @@ function render() {
     list.map(p => h('button', {class: 'navitem' + (ui.page === p ? ' on' : ''), style: `--c:var(${c})`, onclick: () => { ui.page = p; render(); $('main').scrollTop = 0; document.body.classList.remove('nav-open'); }}, p)))));
   put($('#crumbs'), h('span', {}, 'Creator Optimization'), '/', h('span', {}, group[0]), '/', ui.page === 'Creator check' && ui.creator ? [h('span', {}, ui.page), '/', h('b', {}, '@' + ui.creator)] : h('b', {}, ui.page));
   put($('#as'), h('span', {class: 'as-chip'}, 'Data to ', h('b', {}, `${dShort(ANCHOR)} 2026`), ' · loaded daily from TikTok exports'));
-  const fg = (label, ...kids) => h('div', {class: 'fgroup'}, h('span', {class: 'flabel'}, label), ...kids);
-  put($('#filters'), ...rangeBox(fg), fg('Money', seg([['USD', 'USD'], ['IDR', 'IDR']], ui.cur, v => { ui.cur = v; render(); }, 'Money')), fg('Tier', seg([['', 'All'], ...TIER_LIST.map(t => [t, t])], ui.f.tier, v => { ui.f.tier = v; render(); }, 'Tier')),
-    fg('Level', filterSel('Level', 'lvl', 'All levels', LVL)), fg('Industry', filterSel('Industry', 'ind', 'All industries', IND)),
-    fg('Area', h('select', {'aria-label': 'Area', onchange: e => { ui.f.area = e.target.value; render(); }}, h('option', {value: ''}, 'All areas'),
-      [['Province', 'p', PROVINCES], ['City', 'c', CITIES.map(x => x[0])]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v)))))),
-    filtered() ? h('button', {class: 'btn sm freset', type: 'button', onclick: () => { ui.f = {tier: '', area: '', lvl: '', ind: ''}; render(); }}, 'Reset filters') : null);
-  const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])), h('div', {class: 'chsw'}, seg([['all', 'All'], ['video', 'Video'], ['live', 'Livestream']], ui.ch, v => { ui.ch = v; analyze(); render(); }, 'Channel')));
+  const NOFILTER = ['Upload data', 'Guide'];
+  const fsub = (label, ...kids) => h('span', {class: 'fsub'}, ...kids);
+  put($('#filters'), h('div', {class: 'fgroup'}, ...rangeBox(fsub)), h('div', {class: 'fgroup'}, seg([['USD', 'USD'], ['IDR', 'IDR']], ui.cur, v => { ui.cur = v; render(); }, 'Money')),
+    h('div', {class: 'fgroup'}, filterSel('Tier', 'tier', 'All tiers', TIER_LIST), filterSel('Level', 'lvl', 'All levels', LVL), filterSel('Industry', 'ind', 'All industries', IND),
+      h('select', {'aria-label': 'Area', onchange: e => { ui.f.area = e.target.value; render(); }}, h('option', {value: ''}, 'All areas'),
+        [['Province', 'p', PROVINCES], ['City', 'c', CITIES.map(x => x[0])]].map(([l, t, list]) => h('optgroup', {label: l}, list.map(v => h('option', {value: `${t}:${v}`, selected: ui.f.area === `${t}:${v}`}, v))))),
+      h('button', {class: 'btn sm freset', type: 'button', 'aria-label': 'Reset filters', disabled: !filtered(), onclick: () => { ui.f = {tier: '', area: '', lvl: '', ind: ''}; render(); }}, 'Reset')));
+  $('#filters').style.display = NOFILTER.includes(ui.page) ? 'none' : ''; $('#fbtn').style.display = NOFILTER.includes(ui.page) ? 'none' : '';
+  const head = h('div', {class: 'ph'}, h('div', {style: 'flex:1;min-width:0'}, h('h1', {}, ui.page), h('p', {class: 'sub'}, PAGE_SUB[ui.page])), h('div', {class: 'chsw'}, HELPK[ui.page] ? h('button', {class: 'btn sm', type: 'button', onclick: () => showHelp(HELPK[ui.page])}, 'About this page') : null,
+    NOFILTER.includes(ui.page) ? null : seg([['all', 'All'], ['video', 'Video'], ['live', 'Livestream']], ui.ch, v => { ui.ch = v; analyze(); render(); }, 'Channel')));
   const y = $('main').scrollTop; put($('#page'), head, PAGES[ui.page]()); $('main').scrollTop = y;
 }
 $('#theme').onclick = () => { ui.theme = ui.theme === 'dark' ? 'light' : 'dark'; render(); };
