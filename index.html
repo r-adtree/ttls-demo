@@ -35,6 +35,7 @@ select{cursor:pointer}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--base);box-shadow:0 0 0 3px color-mix(in srgb,var(--base) 22%,transparent)}
 :focus-visible{outline:2px solid var(--base);outline-offset:2px}
 .btn{background:var(--panel2);border:1px solid var(--line);font-weight:500;height:30px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+a.btn{color:inherit;text-decoration:none}
 .btn:hover{background:var(--hover)}
 .btn.primary{background:var(--base);border-color:var(--base);color:#fff;font-weight:600}
 .btn.primary:hover{filter:brightness(1.08)}
@@ -538,18 +539,22 @@ const ICON = {
 };
 const icon = (k, s = 16) => h('span', {html: `<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`, style: 'display:inline-flex'});
 const MODS = {
-  acq: {name: 'Acquisition Hub', c: '--growth', blurb: 'Recruit creators and see who really counts as new for CA.', pages: ['Overview', 'Daily Tracker', 'Creator Mining', 'Impact Calculator', 'Partnership', 'Bound Cash', 'New Active Rate']},
+  acq: {name: 'Acquisition Hub', c: '--growth', blurb: 'Recruit creators and see who really counts as new for CA.', ext: 'acquisition-hub/', extNote: 'Recruiting end to end: leads, claims, onboarding, bound cash and the new active rate.', pages: ['Overview', 'Daily Tracker', 'Creator Mining', 'Impact Calculator', 'Partnership', 'Bound Cash', 'New Active Rate']},
   bench: {name: 'Benchmark', c: '--base', blurb: 'What good looks like per industry, level and content type.', pages: ['Accommodation', 'Dining', 'Things to Do']},
   bank: {name: 'Databank', c: '--base', blurb: 'One record per creator and merchant, used by every team.', pages: ['Data Pool', 'Expiring', 'Merchant Onboarding', 'Merchant Operations']},
   prog: {name: 'Program & Leaderboard', c: '--rev', blurb: 'Every program run by Campaign Specialists and every campaign created from the leaderboard.', pages: ['Campaign Overview', 'Campaign Setup', 'Campaign History']},
   pay: {name: 'Payout Center', c: '--rev', blurb: 'All creator program spending, from estimate to paid.', pages: ['Overall Overview', 'Creator Acquisition', 'Creator Manager']},
-  opt: {name: 'Creator Optimization', c: '--ops', blurb: 'Who to push, when and why, with rules the team can see.', pages: ['Overall Overview', 'GMV Diagnostics', 'Daily Tracker', 'Incubation', 'VIP', 'Level Up Pipeline', 'Activation Push', 'Creator Labeling']},
-  perf: {name: 'Performance Analytics', c: '--ops', blurb: 'Results by creator or merchant, industry, content format and level.', pages: ['Creator', 'Merchant']},
+  opt: {name: 'Creator Optimization', c: '--ops', blurb: 'Who to push, when and why, with rules the team can see.', ext: 'creator-optimization/', extNote: 'Monitor, Fix / Push / Guard, a month-end forecast per creator, cards to send and boost decisions.', pages: ['Overall Overview', 'GMV Diagnostics', 'Daily Tracker', 'Incubation', 'VIP', 'Level Up Pipeline', 'Activation Push', 'Creator Labeling']},
+  perf: {name: 'Performance Analytics', c: '--ops', blurb: 'Results by creator or merchant, industry, content format and level.', ext: 'performance-analytics/', extNote: 'The business view: the current situation, GMV growth formulas, targets, creators, merchants and areas.', pages: ['Creator', 'Merchant']},
   match: {name: 'Matchmaking Hub', c: '--growth', blurb: 'Fill campaigns with the right creators.', pages: ['Campaign Overview', 'Collaboration List', 'Creator Match']},
   revt: {name: 'Revenue Tracker', c: '--rev', blurb: 'Revenue against the TikTok target and run rate.', pages: ['TikTok Target']},
   tgt: {name: 'Targets', c: '--base', blurb: 'Who sets each target, how it is calculated, and the programs the team runs.', pages: ['Main Targets', 'Creator Targets', 'Program Library']},
 };
 const ALL = Object.keys(MODS);
+// Modules that also exist as full standalone demos. Relative links, so they work on GitHub Pages and locally.
+const fullDemos = () => [h('div', {class: 'section-t'}, 'Full modules'),
+  h('div', {class: 'grid g3'}, ALL.filter(id => MODS[id].ext).map(id => { const m = MODS[id];
+    return card(m.name, m.extNote, h('div', {class: 'fillv'}, h('div'), h('div', {}, h('a', {class: 'btn sm primary', href: m.ext}, 'Open the full module')))); }))];
 const idx = (mod, page) => MODS[mod].pages.indexOf(page);
 const ROLES = {
   ceo: {label: 'T1 Executive (CEO)', mods: ['revt', 'perf', 'pay', 'tgt'], scope: 'Business performance and money', approve: 'high', exec: true},
@@ -1592,6 +1597,7 @@ function execHome() {
       card('Scorecard', 'Where the business stands against its goals this month.', h('div', {class: 'stack', style: 'gap:14px;justify-content:center;flex:1'},
         progressLine('Revenue vs TikTok target', mtd, rev.target), progressLine('GMV vs main target', a.gmv, target), progressLine('Campaign GMV vs campaign targets', cg, sum(camps, c => c.target)),
         progressLine('Creator spend vs budget cap', spend, tval('spend')), h('div', {class: 'callout' + (run >= rev.target ? ' good' : '')}, run >= rev.target ? `Revenue is on pace to hit the ${Rp(rev.target)} target.` : `At today’s pace revenue ends ${Rp(rev.target - run)} under target. ${Rp((rev.target - mtd) / 3)} per day is needed for the last 3 days.`)))),
+    fullDemos(),
     h('div', {class: 'grid g3 mt'}, gmvMix(L, a, true),
       card('GMV by city', null, hbars(cities, {fmt: Rp, c: '--ops'})),
       card('Where creator money goes', `Total ${Rp(spend)} across programs.`, hbars(progs, {fmt: Rp, c: '--rev'}))),
@@ -1672,7 +1678,7 @@ function home() {
 
   if (R().intern || !can('opt') && !can('perf')) {
     const extra = can('revt') ? PAGES['revt:TikTok Target']().slice(0, 2) : [h('div', {class: 'grid'}, kpi('Leads assigned to you', N(myLeads().length), {c: '--growth'}), kpi('Ready to claim', N(myLeads().filter(l => !l.claimedBy && !l.dup).length)), kpi('Claimed', N(myLeads().filter(l => l.claimedBy).length)))];
-    return [...extra, h('div', {class: 'section-t'}, 'Operations pulse'), tiles, row(inbox)];
+    return [...extra, h('div', {class: 'section-t'}, 'Operations pulse'), tiles, fullDemos(), row(inbox)];
   }
   const target = R().book ? sum(L, c => c.target) : tval('gmv'), tgt = target / 4.33, top = [...L].sort((x, y) => y.gmv - x.gmv).slice(0, 7); // a CM's own book uses its creators' targets
   const team = CMS.filter(cm => L.some(c => c.cm === cm)).map(cm => { const l = L.filter(c => c.cm === cm), ac = l.filter(c => c.posts > 0), g = sum(l, c => c.gmv);
@@ -1683,7 +1689,7 @@ function home() {
       kpi('Orders', N(k(a.orders))), kpi('AOV', Rp(a.gmv / Math.max(1, a.orders))), kpi('CTR', rate(a.clicks, a.views), {sub: 'clicks ÷ views'}), kpi('CVR', rate(a.orders, a.clicks), {sub: 'orders ÷ clicks'}),
       kpi('Active creators', N(act.length), {sub: `of ${N(L.length)}`}), kpi('Selling rate', pct(sold.length, act.length) + '%', {sub: 'sold ÷ active'}), kpi('GMV per active creator', Rp(k(a.gmv / Math.max(1, act.length)))), kpi('LIVE hours', N(k(a.live)))),
     h('div', {class: 'grid g21 mt'}, card('Weekly GMV vs target', R().book ? 'Dashed line = your creators’ targets per week.' : 'Dashed line = the main GMV target per week (Targets module).', area([{name: 'Redemption GMV', values: weekly(L), c: '--ops'}, {name: 'Weekly target', values: WEEKS.map(() => tgt), c: '--muted', dash: true, fill: false}], WEEKS, {fmt: short, height: 240, zero: false})), inbox),
-    h('div', {class: 'section-t'}, 'Operations pulse'), tiles,
+    h('div', {class: 'section-t'}, 'Operations pulse'), tiles, fullDemos(),
     h('div', {class: 'grid g3 mt'}, card('Creator activation', 'From the whole book to creators who hit their target.', h('div', {class: 'stack fillv'},
         funnel([['In book', L.length], ['Posted', act.length], ['Sold', sold.length], ['Hit target', L.filter(c => c.gmv >= c.target).length]], '--ops'),
         h('div', {class: 'section-t', style: 'margin:6px 0 0'}, 'Active rate by level'),
@@ -1725,7 +1731,7 @@ function render() {
   const page = $('#page');
   if (ui.mod === 'home') { put($('#crumbs'), h('b', {}, 'Dashboard')); put(page, home()); return reword(page); }
   const m = MODS[ui.mod], name = m.pages[ui.tab] || m.pages[0];
-  put($('#crumbs'), h('span', {style: `color:var(${m.c});display:inline-flex`}, icon(ui.mod, 14)), h('span', {}, m.name), '/', h('b', {}, name));
+  put($('#crumbs'), h('span', {style: `color:var(${m.c});display:inline-flex`}, icon(ui.mod, 14)), h('span', {}, m.name), '/', h('b', {}, name), m.ext ? h('a', {class: 'btn sm', href: m.ext, style: 'margin-left:8px'}, 'Open the full module') : null);
   put(page,
     PAGES[`${ui.mod}:${name}`]());
   reword(page); reword($('#crumbs'));
