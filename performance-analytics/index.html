@@ -387,6 +387,7 @@ button.srow:hover{background:var(--hover)}
 @media (max-width:820px){:root{--pad:16px}main{padding:0 14px 40px}.top,.filters{padding-left:14px;padding-right:14px}.ph{padding:18px 0 14px}h1{font-size:20px}.kpi .v{font-size:21px}}
 .pcell{display:flex;flex-wrap:wrap;gap:4px;max-width:440px}
 .pcell span{font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--panel2);white-space:nowrap;color:var(--muted)}
+.pcell span.zero{background:none;border:1px dashed var(--line);color:var(--faint)}
 .pcell b{font-weight:600;color:var(--text)}
 @media (min-width:641px){.srow{grid-template-columns:minmax(0,1.2fr) minmax(70px,1fr) 150px 72px;grid-template-areas:"n b v s";padding:7px 10px}
   .srow-n{grid-area:n}.srow-b{grid-area:b}.srow-v{grid-area:v;justify-content:flex-end}.srow-s{grid-area:s;min-width:0}
@@ -806,14 +807,16 @@ function lpairs(a, b, keep) {
   }
   return [...map.values()].map(x => ({...x, prods: D.brands[x.mi].products.map(p => ({name: p.name, gr: x.gr * p.share, od: x.od * p.share}))}));
 }
-const prodCell = ps => h('div', {class: 'pcell'}, ps.filter(p => p.gr > 0).sort((p, q) => q.gr - p.gr).map(p => h('span', {}, p.name, ' ', h('b', {}, Rp(p.gr)))));
+const prodCell = ps => h('div', {class: 'pcell'}, [...ps].sort((p, q) => q.gr - p.gr).map(p => p.gr > 0 ? h('span', {}, p.name, ' ', h('b', {}, Rp(p.gr))) : h('span', {class: 'zero'}, p.name, ' · no sale')));
 // only: inside a profile the other side is the profile itself, so its column is left out.
 // A creator's profile shows all their sales whatever level is picked at the top.
 const anyLvl = f => { const l = ui.f.lvl; ui.f.lvl = ''; try { return f(); } finally { ui.f.lvl = l; } };
 function pairTable(rows, {by, live, open, pageSize = 15, search = true, only}) {
+  const show = only ? 'all' : ui.tab.pshow || 'all';
   const mCol = {k: 'mn', label: live ? 'Brand' : 'Merchant', render: r => person(r.mn, r.msub)}, cCol = {k: 'h', label: 'Creator', render: r => person(r.h, `${r.lvl} · ${r.city}`)};
   return table([...(by === 'creator' ? [cCol, mCol] : [mCol, cCol]).slice(0, only ? 1 : 2), {k: 'np', label: live ? 'Sessions' : 'New posts', num: true, fmt: N}, {k: 'od', label: 'Orders', num: true, fmt: N},
-    {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'what', label: 'What they sold', fixed: true, render: r => prodCell(r.prods)}], rows.map(r => ({...r, _open: () => open(r)})), {sortKey: 'gr', pageSize, search});
+    {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'what', label: 'What they sold', fixed: true, render: r => prodCell(r.prods)}], rows.filter(r => show === 'all' || (show === 'none') === !(r.gr > 0)).map(r => ({...r, _open: () => open(r)})),
+    {sortKey: 'gr', pageSize, search, tools: only ? null : seg([['all', 'All'], ['sold', 'Sold'], ['none', live ? 'LIVE, no sale yet' : 'Posted, no sale yet']], show, v => { ui.tab.pshow = v; render(); }, 'Show')});
 }
 function daily(list, a, b, f) { const out = new Array(b - a + 1).fill(0); for (const s of list) { const c = s.c; if (!s.linked) continue; for (let d = a; d <= b; d++) out[d - a] += f(c, d); } return out; }
 const gmvDay = (c, d) => c.V.gr[d] + (c.L ? c.L.lgr[d] : 0);
@@ -1179,9 +1182,10 @@ PAGES['Merchant · LIVE'] = () => {
         off.map(row0), {search: false, sortKey: 'gr', pageSize: 8})))];
   }
   if (tab === 'products') {
-    const P2 = B.flatMap(x => x.prod.map(pp => ({...pp, brand: x.br.name, bi: x.br.i, bg: x.gr})));
+    const P2 = B.flatMap(x => x.prod.map(pp => ({...pp, brand: x.br.name, bi: x.br.i, bg: x.gr, live: x.crs.size, nosale: [...x.crs.values()].filter(g => !(g > 0)).length})));
     return [...head, row(card('Products', 'Product GMV = room GMV × the product’s share of the room’s sales.', table([{k: 'name', label: 'Product', render: r => person(r.p.name, r.brand)}, {k: 'price', label: 'Price', num: true, fmt: Rp},
-      {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share of brand', num: true, fmt: v => v + '%'}],
+      {k: 'od', label: 'Orders', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}, {k: 'sh', label: 'Share of brand', num: true, fmt: v => v + '%'},
+      {k: 'live', label: 'Creators LIVE with it', num: true, fmt: N}, {k: 'nosale', label: 'LIVE, no sale yet', num: true, fmt: N}],
       P2.map(r => ({...r, name: r.p.name, price: r.p.price, sh: pct(r.gr, r.bg), _open: () => openBrand(r.bi)})), {sortKey: 'gr', pageSize: 15})))];
   }
   if (tab === 'brands') return [...head, row(card('All brands', 'Click a brand for its products.', table([{k: 'name', label: 'Brand', render: x => person(x.br.name, `${x.br.products.length} products`)}, {k: 'promoted', label: 'Promoted', render: x => promoChip(x.br.promoted, '--rev')},
@@ -1743,7 +1747,7 @@ function openCreator(i) {
     sec('Level', next ? progressLine(`On pace for ${P.m.label} vs ${next} (${Rp(BENCH[next])})`, pace, BENCH[next]) : h('div', {class: 'muted small'}, 'Top level.'),
       h('div', {class: 'small muted', style: 'margin-top:6px'}, `Keeps ${s.lvl} at ${Rp(BENCH[s.lvl])} a month. ${P.pm.label}: ${Rp(pm.gmv)}.`),
       h('div', {class: 'timeline', style: 'margin-top:8px'}, [...c.hist].reverse().map(([d, l], k, arr) => h('div', {class: 'ev', style: `--c:var(${LVC[l]})`}, h('i'), h('div', {}, k === arr.length - 1 ? `Started at ${l}` : `Moved to ${l}`, h('small', {}, k === arr.length - 1 ? 'first level we have' : 'level log')), h('time', {}, d ? dLab(d) : 'Before Aug'))))),
-    sec('Where they sell and what (video)', pairTable(anyLvl(() => vpairs(P.a, P.b, s2 => s2.c.i === i)), {by: 'merchant', open: r => openMerchant(r.mi), pageSize: 6, search: false, only: true})),
+    sec('Where they sell and what (video)', pairTable((rows => [...rows, ...links.filter(l => !rows.some(r => r.mi === l.m.i)).map(l => ({mi: l.m.i, ci: i, mn: l.m.name, msub: `${l.m.ind} · ${l.m.city} · nothing in these dates`, h: c.handle, lvl: s.lvl, city: c.city, np: 0, od: 0, gr: 0, prods: vprods(l.m, 0, 0)}))])(anyLvl(() => vpairs(P.a, P.b, s2 => s2.c.i === i))), {by: 'merchant', open: r => openMerchant(r.mi), pageSize: 6, search: false, only: true})),
     c.L ? sec('LIVE brands they sell', pairTable(anyLvl(() => lpairs(P.a, P.b, s2 => s2.c.i === i)), {by: 'merchant', live: true, open: r => openBrand(r.mi), pageSize: 6, search: false, only: true})) : null,
     rooms.length ? sec('Last LIVE sessions', table([{k: 'd', label: 'Day', render: r => `${dLab(r.d)} · ${r.hr}:00`}, {k: 'b', label: 'Brand', render: r => D.brands[r.b].name}, {k: 'dur', label: 'Minutes', num: true}, {k: 'vw', label: 'Viewers', num: true, fmt: N}, {k: 'gr', label: 'GMV', num: true, fmt: Rp}], rooms, {search: false, pageSize: 8})) : null,
     sec('Content quality', props([['Avg duration', c.cq.dur + ' s'], ['Completion', c.cq.comp.toFixed(1) + '%'], ['Like rate', c.cq.like.toFixed(1) + '%'], ['Comment rate', c.cq.com.toFixed(2) + '%'], ['Last new post', ago(s.last, P.b)], ['Industry', c.ind]]))],

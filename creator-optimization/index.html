@@ -1252,18 +1252,27 @@ function productsInRange(a, b, L, ci, pa, pb) {
   SALES.forEach(r => { if (ci !== undefined && r[1] !== ci) return; if (keep && !keep.has(r[1])) return; if (ui.ch === 'live' && r[5] !== 0 || ui.ch === 'video' && r[5] !== 1) return;
     const inCur = r[2] >= a && r[2] <= b, inPrev = pa !== undefined && r[2] >= pa && r[2] <= pb; if (!inCur && !inPrev) return;
     const p = map[r[0]] || (map[r[0]] = {i: r[0], cur: 0, prev: 0, ord: 0, cr: {}}); if (inCur) { p.cur += r[3]; p.ord += r[4]; p.cr[r[1]] = 1; } else p.prev += r[3]; });
-  return Object.keys(map).map(k => { const p = map[k], Pd = PRODUCTS[p.i]; return {name: Pd.name, merchant: Pd.merchant, cur: p.cur, prev: p.prev, ord: p.ord, price: p.ord ? p.cur / p.ord : Pd.price, creators: Object.keys(p.cr).length, change: p.prev > 0 ? p.cur / p.prev - 1 : null}; });
+  return Object.keys(map).map(k => { const p = map[k], Pd = PRODUCTS[p.i]; return {pi: p.i, name: Pd.name, merchant: Pd.merchant, cur: p.cur, prev: p.prev, ord: p.ord, price: p.ord ? p.cur / p.ord : Pd.price, creators: Object.keys(p.cr).length, change: p.prev > 0 ? p.cur / p.prev - 1 : null}; });
 }
 PAGES['Products'] = () => {
   const P = period(), L = CREATORS.filter(F), tab = ui.tab.pt || 'top', list = productsInRange(P.a, P.b, L, undefined, P.pa, P.pb), all = list.filter(p => p.cur > 0);
   const merch = {}; list.forEach(p => { const m = merch[p.merchant] || (merch[p.merchant] = {label: p.merchant, value: 0, prev: 0}); m.value += p.cur; m.prev += p.prev; });
   const byTop = all.slice().sort((a, b) => b.cur - a.cur), top = byTop[0], rising = all.filter(p => p.cur > p.prev && p.creators >= 3 && p.ord >= 10).sort((a, b) => (b.cur - b.prev) - (a.cur - a.prev));
-  const rows = (tab === 'up' ? rising : byTop).map(p => ({...p, gain: p.cur - p.prev}));
+  // Creators who carry the product and posted or went LIVE in these dates, whether it sold for them or not.
+  const showing = pi => L.filter(c => c.prods.includes(pi)).map(c => { const x = agg(c, P.a, P.b); return {c, x}; }).filter(o => chAct(o.x.h, o.x.posts));
+  const whoShows = p => { const sold = {}; SALES.forEach(r => { if (r[0] !== p.pi || r[2] < P.a || r[2] > P.b || (ui.ch === 'live' && r[5] !== 0) || (ui.ch === 'video' && r[5] !== 1)) return; const o = sold[r[1]] || (sold[r[1]] = {g: 0, o: 0}); o.g += r[3]; o.o += r[4]; });
+    const list = showing(p.pi).map(({c, x}) => ({id: c.id, c, h: x.h, posts: x.posts, ord: (sold[c.i] || {}).o || 0, gmv: (sold[c.i] || {}).g || 0, _open: () => openCreator(c.id)}));
+    drawer([avatar(p.name), h('div', {style: 'flex:1;min-width:0'}, h('h2', {}, p.name), h('div', {class: 'muted small'}, `${p.merchant} · ${list.length} creators showed it, ${list.filter(r => !r.gmv).length} with no sale yet`))],
+      [sec(`Who showed it in ${P.label}`, table([{k: 'id', label: 'Creator', render: r => who(r.c)}, {k: 'h', label: 'LIVE hours', num: true, fmt: v => v.toFixed(1)}, {k: 'posts', label: 'Video posts', num: true, fmt: N},
+        {k: 'ord', label: 'Orders', num: true, fmt: N}, {k: 'gmv', label: 'GMV', num: true, render: r => r.gmv ? money(r.gmv) : chip('No sale yet', '--muted', false)}], list, {search: false, sortKey: 'gmv', pageSize: 12}))], [h('span', {class: 'muted small'}, `${P.label} · sample data`)]); };
+  // products creators showed in these dates that sold nothing at all still get a row
+  const unsold = PRODUCTS.filter(pr => !list.some(p => p.pi === pr.i) && showing(pr.i).length).map(pr => ({pi: pr.i, name: pr.name, merchant: pr.merchant, cur: 0, prev: 0, ord: 0, price: pr.price, creators: 0, change: null}));
+  const rows = (tab === 'up' ? rising : [...byTop, ...unsold]).map(p => ({...p, gain: p.cur - p.prev, shown: showing(p.pi).length, _open: () => whoShows(p)}));
   const ml = Object.values(merch).sort((a, b) => b.value - a.value).slice(0, 10);
   const verdict = h('section', {class: 'card'}, h('div', {class: 'verdict', style: '--c:var(--ops)'}, h('div', {}, h('div', {class: 'muted small'}, `Products · ${P.label}`), h('div', {class: 'verdict-v'}, top ? top.name : 'No sales in these dates'),
     h('div', {class: 'small'}, top ? `Best seller: ${money(top.cur)} from ${N(top.ord)} orders, sold by ${top.creators} creators (${top.merchant}). ${rising.length} products are rising against ${P.plabel}.` : 'Pick other dates at the top.')), h('div', {class: 'verdict-n'}, h('span', {class: 'muted small'}, 'Products sold'), h('b', {}, N(all.length)))));
   return [verdict, h('div', {class: 'grid g21 mt'}, card(tab === 'up' ? 'Rising products' : 'Best sellers', tab === 'up' ? 'Sold by 3 or more creators, 10 or more orders, and more GMV than the same dates last month.' : 'The products that brought in the most GMV. Pin means putting one in the most visible spot during LIVE.',
-      table([{k: 'name', label: 'Product', render: r => person(r.name, r.merchant)}, {k: 'price', label: 'Avg price', num: true, fmt: money}, {k: 'ord', label: 'Orders', num: true, fmt: N}, {k: 'creators', label: 'Creators', num: true, fmt: N},
+      table([{k: 'name', label: 'Product', render: r => person(r.name, r.merchant)}, {k: 'price', label: 'Avg price', num: true, fmt: money}, {k: 'ord', label: 'Orders', num: true, fmt: N}, {k: 'creators', label: 'Sold by', num: true, fmt: N}, {k: 'shown', label: 'Showed it', num: true, fmt: N},
         {k: 'cur', label: 'GMV', num: true, fmt: money}, {k: 'change', label: `vs ${P.plabel}`, num: true, render: r => r.change === null ? chip('new', '--muted', false) : dd(r.cur, r.prev)}],
         rows, {sortKey: tab === 'up' ? 'gain' : 'cur', pageSize: 12, state: ui.tab.pState ||= {}, tools: seg([['top', 'Best sellers'], ['up', 'Rising']], tab, v => { ui.tab.pt = v; render(); }, 'Show')})),
     card('Top merchants', 'Share of GMV in these dates.', ml.length ? hbars(ml, {fmt: short, c: '--ops', share: true}) : h('p', {class: 'muted small'}, 'Nothing sold.'), help('products')))];
